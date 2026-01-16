@@ -4022,11 +4022,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\CINEMA MANAGEMENT.csproj",
-      "projectName": "CINEMA MANAGEMENT",
-      "projectPath": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\CINEMA MANAGEMENT.csproj",
+      "projectUniqueName": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\CINEMA_MANAGEMENT.csproj",
+      "projectName": "CINEMA_MANAGEMENT",
+      "projectPath": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\CINEMA_MANAGEMENT.csproj",
       "packagesPath": "C:\\Users\\LAPTOP\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\obj\\",
+      "outputPath": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

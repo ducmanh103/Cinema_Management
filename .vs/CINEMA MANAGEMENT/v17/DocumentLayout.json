@@ -1,38 +1,42 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\",
+  "WorkspaceRootPath": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema management\\views\\movies\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|solutionrelative:views\\movies\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema_management\\cinema_management.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|solutionrelative:cinema_management.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema management\\views\\movies\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|solutionrelative:views\\movies\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema_management\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|solutionrelative:controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema management\\models\\showtime.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|solutionrelative:models\\showtime.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema_management\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema management\\models\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|solutionrelative:models\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema_management\\views\\movies\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|solutionrelative:views\\movies\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema management\\data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|solutionrelative:data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema_management\\views\\movies\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|solutionrelative:views\\movies\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema management\\data\\cinemadbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|solutionrelative:data\\cinemadbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema_management\\models\\showtime.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|solutionrelative:models\\showtime.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema management\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|solutionrelative:controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema_management\\models\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|solutionrelative:models\\errorviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema management\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA MANAGEMENT.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema_management\\data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|solutionrelative:data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|c:\\users\\laptop\\source\\repos\\cinema_management\\data\\cinemadbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{34F1034B-EDBD-458E-812A-B59134967284}|CINEMA_MANAGEMENT.csproj|solutionrelative:data\\cinemadbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -42,116 +46,122 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 2,
               "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Program.cs",
+              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Program.cs",
+              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAABUAAAAAAAAAAAAAACkAAAAKAAAAAAAAAA==",
+              "ViewState": "AgIAABEAAAAAAAAAAABRwCkAAAAKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-01-16T08:57:16.043Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Index.cshtml",
-              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Views\\Movies\\Index.cshtml",
-              "RelativeDocumentMoniker": "Views\\Movies\\Index.cshtml",
-              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Views\\Movies\\Index.cshtml",
-              "RelativeToolTip": "Views\\Movies\\Index.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAAFAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-01-16T09:40:17.515Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "create.cshtml",
-              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Views\\Movies\\create.cshtml",
-              "RelativeDocumentMoniker": "Views\\Movies\\create.cshtml",
-              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Views\\Movies\\create.cshtml",
-              "RelativeToolTip": "Views\\Movies\\create.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-01-16T09:40:14.132Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "Showtime.cs",
-              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Models\\Showtime.cs",
-              "RelativeDocumentMoniker": "Models\\Showtime.cs",
-              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Models\\Showtime.cs",
-              "RelativeToolTip": "Models\\Showtime.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-16T09:34:47.817Z",
+              "Title": "CINEMA_MANAGEMENT.csproj",
+              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\CINEMA_MANAGEMENT.csproj",
+              "RelativeDocumentMoniker": "CINEMA_MANAGEMENT.csproj",
+              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\CINEMA_MANAGEMENT.csproj",
+              "RelativeToolTip": "CINEMA_MANAGEMENT.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-01-16T12:04:53.425Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "ErrorViewModel.cs",
-              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Models\\ErrorViewModel.cs",
-              "RelativeDocumentMoniker": "Models\\ErrorViewModel.cs",
-              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Models\\ErrorViewModel.cs",
-              "RelativeToolTip": "Models\\ErrorViewModel.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-16T09:34:45.757Z",
-              "EditorCaption": ""
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Views\\Movies\\Index.cshtml",
+              "RelativeDocumentMoniker": "Views\\Movies\\Index.cshtml",
+              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Views\\Movies\\Index.cshtml",
+              "RelativeToolTip": "Views\\Movies\\Index.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAASwBsAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-01-16T09:40:17.515Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 4,
-              "Title": "DbInitializer.cs",
-              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Data\\DbInitializer.cs",
-              "RelativeDocumentMoniker": "Data\\DbInitializer.cs",
-              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Data\\DbInitializer.cs",
-              "RelativeToolTip": "Data\\DbInitializer.cs",
-              "ViewState": "AgIAACgAAAAAAAAAAAAQwAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-16T09:34:36.573Z",
-              "EditorCaption": ""
+              "Title": "create.cshtml",
+              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Views\\Movies\\create.cshtml",
+              "RelativeDocumentMoniker": "Views\\Movies\\create.cshtml",
+              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Views\\Movies\\create.cshtml",
+              "RelativeToolTip": "Views\\Movies\\create.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-01-16T09:40:14.132Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 5,
-              "Title": "CinemaDbContext.cs",
-              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Data\\CinemaDbContext.cs",
-              "RelativeDocumentMoniker": "Data\\CinemaDbContext.cs",
-              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Data\\CinemaDbContext.cs",
-              "RelativeToolTip": "Data\\CinemaDbContext.cs",
+              "Title": "Showtime.cs",
+              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Models\\Showtime.cs",
+              "RelativeDocumentMoniker": "Models\\Showtime.cs",
+              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Models\\Showtime.cs",
+              "RelativeToolTip": "Models\\Showtime.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-16T09:34:32.208Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-01-16T09:34:47.817Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 6,
-              "Title": "HomeController.cs",
-              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Controllers\\HomeController.cs",
-              "RelativeDocumentMoniker": "Controllers\\HomeController.cs",
-              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA MANAGEMENT\\Controllers\\HomeController.cs",
-              "RelativeToolTip": "Controllers\\HomeController.cs",
+              "Title": "ErrorViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Models\\ErrorViewModel.cs",
+              "RelativeDocumentMoniker": "Models\\ErrorViewModel.cs",
+              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Models\\ErrorViewModel.cs",
+              "RelativeToolTip": "Models\\ErrorViewModel.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-16T09:34:45.757Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "DbInitializer.cs",
+              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Data\\DbInitializer.cs",
+              "RelativeDocumentMoniker": "Data\\DbInitializer.cs",
+              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Data\\DbInitializer.cs",
+              "RelativeToolTip": "Data\\DbInitializer.cs",
+              "ViewState": "AgIAACgAAAAAAAAAAAAQwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-16T09:34:36.573Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "HomeController.cs",
+              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Controllers\\HomeController.cs",
+              "RelativeDocumentMoniker": "Controllers\\HomeController.cs",
+              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Controllers\\HomeController.cs",
+              "RelativeToolTip": "Controllers\\HomeController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAeAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-01-16T09:34:27.592Z",
               "EditorCaption": ""
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "CinemaDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Data\\CinemaDbContext.cs",
+              "RelativeDocumentMoniker": "Data\\CinemaDbContext.cs",
+              "ToolTip": "C:\\Users\\LAPTOP\\source\\repos\\CINEMA_MANAGEMENT\\Data\\CinemaDbContext.cs",
+              "RelativeToolTip": "Data\\CinemaDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-16T09:34:32.208Z"
             }
           ]
         }
