@@ -1,0 +1,49 @@
+/* _content/CINEMA MANAGEMENT/Views/Shared/_Layout.cshtml.rz.scp.css */
+/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
+for details on configuring this project to bundle and minify static web assets. */
+
+a.navbar-brand[b-sb2zmlcvgk] {
+  white-space: normal;
+  text-align: center;
+  word-break: break-all;
+}
+
+a[b-sb2zmlcvgk] {
+  color: #0077cc;
+}
+
+.btn-primary[b-sb2zmlcvgk] {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+.nav-pills .nav-link.active[b-sb2zmlcvgk], .nav-pills .show > .nav-link[b-sb2zmlcvgk] {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+.border-top[b-sb2zmlcvgk] {
+  border-top: 1px solid #e5e5e5;
+}
+.border-bottom[b-sb2zmlcvgk] {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow[b-sb2zmlcvgk] {
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+button.accept-policy[b-sb2zmlcvgk] {
+  font-size: 1rem;
+  line-height: inherit;
+}
+
+.footer[b-sb2zmlcvgk] {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px;
+}
