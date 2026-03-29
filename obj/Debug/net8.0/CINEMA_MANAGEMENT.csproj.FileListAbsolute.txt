@@ -131,10 +131,16 @@ C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\staticwebassets.
 C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\CINEMA_M.76E20E32.Up2Date
 C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\CINEMA_MANAGEMENT.dll
 C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\refint\CINEMA_MANAGEMENT.dll
 C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\CINEMA_MANAGEMENT.pdb
 C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\CINEMA_MANAGEMENT.genruntimeconfig.cache
 C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\ref\CINEMA_MANAGEMENT.dll
+C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\CINEMA_MANAGEMENT.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\bin\Debug\net8.0\BCrypt.Net-Next.dll
+C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\bin\Debug\net8.0\Microsoft.OpenApi.dll
+C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\LAPTOP\source\repos\CINEMA_MANAGEMENT\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

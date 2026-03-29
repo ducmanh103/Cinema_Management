@@ -1,29 +1,102 @@
-﻿@model IEnumerable<CinemaManagement.Models.Movie>
+@model IEnumerable<CinemaManagement.Models.Movie>
+@{
+    ViewData["Title"] = "Danh sách phim";
+    Layout = "_Layout";
+}
 
-<h2>Movies</h2>
-<a asp-action="Create" class="btn btn-primary">Add Movie</a>
-
-<table class="table mt-3">
-    <tr>
-        <th>Title</th>
-        <th>Duration</th>
-        <th>Status</th>
-        <th>Genres</th>
-        <th></th>
-    </tr>
-    @foreach (var m in Model)
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="section-title mb-0" style="color:#e50914">Phim Đang Chiếu</h2>
+    @if (User.IsInRole("Admin"))
     {
-        <tr>
-            <td>@m.Title</td>
-            <td>@m.Duration</td>
-            <td>@m.Status</td>
-            <td>
-                @string.Join(", ", m.MovieGenres.Select(g => g.Genre.GenreName))
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@m.MovieId">Edit</a> |
-                <a asp-action="Delete" asp-route-id="@m.MovieId">Delete</a>
-            </td>
-        </tr>
+        <a asp-action="Create" class="btn btn-danger" id="create-movie-btn">
+            <i class="bi bi-plus-circle"></i> Thêm phim
+        </a>
     }
-</table>
+</div>
+
+<div class="row g-4 mb-5">
+@foreach (var movie in Model.Where(m => m.Status == "Now Showing"))
+{
+    <div class="col-sm-6 col-md-4 col-lg-3">
+        <div class="movie-card">
+            <div class="movie-poster-wrapper">
+                @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                {
+                    <img src="@movie.PosterUrl" class="movie-poster" alt="@movie.Title" loading="lazy" />
+                }
+                else
+                {
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark" style="font-size:4rem">🎬</div>
+                }
+                <div class="movie-badge-status badge bg-danger">Đang chiếu</div>
+            </div>
+            <div class="p-3">
+                <h6 class="card-title fw-bold text-truncate mb-2" style="font-size: 1.1rem;">@movie.Title</h6>
+                <div class="d-flex justify-content-between text-muted small mb-2">
+                    <span><i class="bi bi-clock"></i> @movie.Duration'</span>
+                    <span class="text-truncate ps-2" style="max-width: 60%">
+                        @string.Join(", ", movie.MovieGenres.Select(mg => mg.Genre?.GenreName))
+                    </span>
+                </div>
+                <div class="mt-3 d-flex gap-2">
+                    <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@movie.MovieId"
+                       class="btn btn-primary-custom flex-fill w-100 fw-bold">
+                        <i class="bi bi-ticket-perforated"></i> Đặt vé
+                    </a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@movie.MovieId" class="btn btn-outline-light">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+</div>
+
+@if (Model.Any(m => m.Status == "Coming Soon"))
+{
+    <h2 class="section-title mb-4" style="color:#ffc107">Phim Sắp Chiếu</h2>
+    <div class="row g-4 mb-5">
+    @foreach (var movie in Model.Where(m => m.Status == "Coming Soon"))
+    {
+        <div class="col-sm-6 col-md-4 col-lg-3">
+            <div class="movie-card" style="opacity: 0.9;">
+                <div class="movie-poster-wrapper" style="filter: grayscale(30%);">
+                    @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                    {
+                        <img src="@movie.PosterUrl" class="movie-poster" alt="@movie.Title" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark" style="font-size:4rem">🎬</div>
+                    }
+                    <div class="movie-badge-status badge bg-warning text-dark">Sắp chiếu</div>
+                </div>
+                <div class="p-3">
+                    <h6 class="card-title fw-bold text-truncate mb-2" style="font-size: 1.1rem;">@movie.Title</h6>
+                    <div class="text-muted small mb-2 text-truncate">
+                        Khởi chiếu: @movie.ReleaseDate?.ToString("dd/MM/yyyy")
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-secondary w-100" disabled>
+                            <i class="bi bi-calendar-x"></i> Chưa mở bán
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="text-center mt-5 text-muted p-5 glass rounded-4">
+        <i class="bi bi-camera-reels" style="font-size:4rem; color: #555;"></i>
+        <h4 class="mt-3">Chưa có phim nào</h4>
+        <p>Danh sách phim hiện đang trống.</p>
+    </div>
+}

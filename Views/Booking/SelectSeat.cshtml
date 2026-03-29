@@ -1,0 +1,349 @@
+@using CinemaManagement.Models.ViewModels
+@model List<SeatStatusDto>
+@{
+    ViewData["Title"] = "Chọn ghế | " + ViewBag.Showtime?.MovieTitle;
+    Layout = "_Layout";
+    var showtime = ViewBag.Showtime as ShowtimeDto;
+}
+
+<style>
+/* Seat Map Container */
+.cinema-hall {
+    background: #0f1115;
+    border-radius: 16px;
+    padding: 2rem 1rem 100px 1rem; /* Pad bottom for sticky panel */
+    position: relative;
+    border: 1px solid #222;
+    overflow-x: auto;
+}
+
+/* Screen Curve */
+.screen-container {
+    perspective: 1000px;
+    margin-bottom: 3rem;
+    padding-top: 1rem;
+}
+.screen {
+    background: linear-gradient(to bottom, #d6d6d6 0%, #ffffff 50%, #444444 100%);
+    height: 12px;
+    width: 65%;
+    margin: 0 auto;
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    transform: rotateX(-30deg);
+    box-shadow: 0 10px 40px rgba(255, 255, 255, 0.4), 0 0 15px rgba(229, 9, 20, 0.3);
+    position: relative;
+}
+.screen-glow {
+    position: absolute;
+    top: 5px;
+    left: 5%;
+    right: 5%;
+    height: 50px;
+    background: radial-gradient(ellipse at top, rgba(229, 9, 20, 0.15), transparent 70%);
+    pointer-events: none;
+}
+.screen-text {
+    text-align: center;
+    color: #888;
+    font-size: 0.8rem;
+    letter-spacing: 5px;
+    margin-top: 15px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+/* Seats Design */
+.seat-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.row-label {
+    width: 24px;
+    color: #666;
+    font-weight: 600;
+    text-align: center;
+    line-height: 38px;
+    margin-right: 15px;
+    margin-left: -39px;
+}
+.seat-item {
+    width: 38px;
+    height: 34px;
+    border-radius: 8px 8px 4px 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: transparent; /* Text only shows on hover/selected visually maybe */
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+.seat-item::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 4px;
+    right: 4px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(0,0,0,0.2);
+}
+
+.seat-item:hover:not(.booked) {
+    transform: scale(1.15) translateY(-2px);
+    color: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    z-index: 2;
+}
+
+/* Status variants */
+.seat-std.available {
+    background: #4a5c60; /* Dark cyan-ish grey */
+    border: 1px solid #5d747a;
+}
+.seat-vip.available {
+    background: #b58500; /* Rich gold */
+    border: 1px solid #d49c00;
+}
+.seat-couple.available {
+    background: #9c27b0;
+    border: 1px solid #ba68c8;
+}
+
+.seat-item.booked {
+    background: #2a2a2a !important;
+    border: 1px solid #333 !important;
+    cursor: not-allowed;
+    color: #444 !important;
+}
+
+.seat-item.selected {
+    background: var(--primary) !important;
+    border: 1px solid #ff4d4d !important;
+    color: white !important;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
+}
+
+/* Fixed Bottom Panel */
+.booking-summary-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 15, 15, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 15px 0;
+    z-index: 1000;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    transform: translateY(110%);
+    transition: transform 0.3s cubic-bezier(0.2, 0, 0.2, 1);
+}
+.booking-summary-panel.active {
+    transform: translateY(0);
+}
+
+/* Aisle spacer */
+.seat-spacer {
+    width: 20px;
+}
+</style>
+
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@showtime?.MovieId" class="text-light text-decoration-none border rounded-pill px-3 py-1 bg-dark">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+    @if (showtime != null)
+        {
+        <div class="text-end">
+            <h4 class="mb-1 text-light">@showtime.MovieTitle</h4>
+            <div class="text-muted small">
+                @showtime.StartTime.ToString("HH:mm") • @showtime.StartTime.ToString("dd/MM/yyyy") • @showtime.RoomName
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Legend -->
+<div class="d-flex justify-content-center gap-4 mb-4 flex-wrap bg-dark p-3 rounded-pill" style="border: 1px solid #333;">
+    <div class="d-flex align-items-center gap-2">
+        <div class="seat-item seat-std available" style="width:24px;height:24px;"></div>
+        <span class="small fw-bold">Ghế Thường</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <div class="seat-item seat-vip available" style="width:24px;height:24px;"></div>
+        <span class="small fw-bold text-warning">Ghế VIP</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <div class="seat-item selected" style="width:24px;height:24px;"></div>
+        <span class="small fw-bold text-danger">Đang chọn</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <div class="seat-item booked" style="width:24px;height:24px;"></div>
+        <span class="small text-muted">Đã đặt</span>
+    </div>
+</div>
+
+<div class="cinema-hall">
+    <!-- Screen -->
+    <div class="screen-container">
+        <div class="screen"></div>
+        <div class="screen-glow"></div>
+        <div class="screen-text">MÀN HÌNH</div>
+    </div>
+
+    <!-- Map -->
+    <div id="seat-grid" class="d-flex flex-column align-items-center">
+        @{
+            var seatsByRow = Model.GroupBy(s => s.SeatNumber[0]).OrderBy(g => g.Key);
+        }
+        @foreach (var row in seatsByRow)
+        {
+            <div class="seat-row">
+                <div class="row-label">@row.Key</div>
+                @{
+                    int colIndex = 0;
+                    var sortedSeats = row.OrderBy(s => s.SeatNumber).ToList();
+                }
+                @foreach (var seat in sortedSeats)
+                {
+                    colIndex++;
+                    // Aisle breaks (e.g. after seat 2 and seat 4 in a 6-seat row)
+                    if (colIndex == 3 || colIndex == 5) { <div class="seat-spacer"></div> }
+
+                    string typeClass = seat.SeatType == "VIP" ? "seat-vip" : "seat-std";
+                    string statusClass = seat.IsBooked ? "booked" : "available";
+                    
+                    <div class="seat-item @typeClass @statusClass"
+                         data-seat-id="@seat.SeatId" 
+                         data-seat-num="@seat.SeatNumber" 
+                         data-seat-type="@seat.SeatType"
+                         data-price="@showtime?.Price"
+                         title="@seat.SeatNumber — @(seat.IsBooked ? "Đã đặt" : seat.SeatType)">
+                        @seat.SeatNumber.Substring(1)
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Sticky Bottom Booking Summary -->
+<div class="booking-summary-panel" id="booking-panel">
+    <div class="container">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <form asp-controller="Booking" asp-action="Confirm" method="post" id="booking-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ShowtimeId" value="@showtime?.ShowtimeId" />
+                <input type="hidden" name="SeatId" id="selected-seat-id" />
+                
+                <div class="row align-items-center">
+                    <div class="col-md-5 d-flex gap-3 align-items-center">
+                        <div style="background: rgba(229,9,20,0.1); padding: 10px; border-radius: 12px; border: 1px solid rgba(229,9,20,0.3);">
+                            <i class="bi bi-person-seat text-danger fs-3"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Ghế đang chọn</div>
+                            <h4 class="mb-0 text-light fw-bold" id="panel-seat-num">--</h4>
+                            <div class="text-warning small fw-bold" id="panel-seat-type"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mt-3 mt-md-0 border-start border-secondary ps-md-4">
+                        <div class="text-muted small">Tạm tính</div>
+                        <h3 class="mb-0 fw-bold" style="color: var(--primary);" id="panel-total">0 đ</h3>
+                        
+                        <div class="mt-2 d-flex align-items-center gap-2">
+                            <i class="bi bi-credit-card text-muted"></i>
+                            <select name="PaymentMethod" class="form-select form-select-sm border-0 shadow-none bg-transparent text-light p-0" style="cursor: pointer;">
+                                <option value="Cash" class="text-dark">Tiền mặt tại quầy</option>
+                                <option value="Card" class="text-dark">Ví điện tử Momo</option>
+                                <option value="Momo" class="text-dark">Thẻ tín dụng / ATM</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mt-3 mt-md-0 text-md-end">
+                        <button type="submit" class="btn btn-primary-custom btn-lg w-100 fw-bold rounded-pill shadow-lg" id="btn-pay">
+                            Thanh Toán
+                        </button>
+                    </div>
+                </div>
+            </form>
+        }
+        else
+        {
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="text-light mb-1">Bạn chưa đăng nhập</h5>
+                    <p class="text-muted mb-0">Vui lòng đăng nhập để tiến hành đặt ghế và thanh toán.</p>
+                </div>
+                <a asp-controller="Account" asp-action="Login" class="btn btn-danger rounded-pill px-4 fw-bold">Đăng nhập</a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let selectedSeat = null;
+        const panel = document.getElementById('booking-panel');
+        const numDisplay = document.getElementById('panel-seat-num');
+        const typeDisplay = document.getElementById('panel-seat-type');
+        const totalDisplay = document.getElementById('panel-total');
+        const hiddenId = document.getElementById('selected-seat-id');
+
+        document.querySelectorAll('.seat-item.available').forEach(seat => {
+            seat.addEventListener('click', function () {
+                // Deselect previous
+                if (selectedSeat) {
+                    selectedSeat.classList.remove('selected');
+                }
+
+                // Toggle logic
+                if (selectedSeat === this) {
+                    selectedSeat = null;
+                    panel.classList.remove('active');
+                    return;
+                }
+
+                // Select new
+                selectedSeat = this;
+                selectedSeat.classList.add('selected');
+                
+                const seatId = this.dataset.seatId;
+                const seatNum = this.dataset.seatNum;
+                const seatType = this.dataset.seatType;
+                
+                // VIP / Couple seats usually cost more. 
+                // Currently system has base price, let's just format it.
+                // If you want price logic: let price = basePrice * (seatType=="VIP"? 1.2 : 1);
+                let price = parseFloat(this.dataset.price) || 0;
+                // Add 15k surcharge for VIP visually just for fun (in real sys this comes from backend calculation)
+                if (seatType === "VIP") price += 15000;
+                
+                let formattedPrice = new Intl.NumberFormat('vi-VN').format(price) + ' đ';
+
+                // Update panel details
+                if (hiddenId) hiddenId.value = seatId;
+                if (numDisplay) numDisplay.innerText = seatNum;
+                if (typeDisplay) typeDisplay.innerText = "Loại ghế: " + seatType;
+                if (totalDisplay) totalDisplay.innerText = formattedPrice;
+
+                // Show panel
+                panel.classList.add('active');
+            });
+        });
+    });
+</script>
+}

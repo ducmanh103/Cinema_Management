@@ -1,0 +1,102 @@
+@using CinemaManagement.Models
+@model List<Showtime>
+@{
+    ViewData["Title"] = "Quản lý suất chiếu";
+    Layout = "_AdminLayout";
+}
+
+<!-- Content Header -->
+<section class="content-header">
+    <h1>
+        Suất chiếu
+        <small>Danh sách lịch chiếu phim</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li class="active">Suất chiếu</li>
+    </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-calendar"></i> Danh sách suất chiếu</h3>
+                    <div class="box-tools pull-right">
+                        <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <div class="margin-bottom">
+                       <a asp-controller="Showtimes" asp-action="Create" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm suất chiếu mới</a>
+                    </div>
+                    <table id="showtimes-table" class="table table-bordered table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Phim</th>
+                                <th>Rạp</th>
+                                <th>Phòng chiếu</th>
+                                <th>Giờ chiếu</th>
+                                <th>Giá vé</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var showtime in Model)
+                            {
+                                <tr>
+                                    <td>@showtime.ShowtimeId</td>
+                                    <td><strong>@showtime.Movie.Title</strong></td>
+                                    <td>@showtime.Room.Theater.TheaterName</td>
+                                    <td>@showtime.Room.RoomName</td>
+                                    <td>@showtime.StartTime.ToString("HH:mm dd/MM/yyyy")</td>
+                                    <td>@showtime.Price.ToString("N0") ₫</td>
+                                    <td>
+                                        @if (showtime.StartTime > DateTime.Now)
+                                        {
+                                            <span class="label label-success">Sắp chiếu</span>
+                                        }
+                                        else if (showtime.StartTime <= DateTime.Now && showtime.StartTime.AddMinutes(showtime.Movie.Duration) > DateTime.Now)
+                                        {
+                                            <span class="label label-warning">Đang chiếu</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="label label-default">Đã chiếu</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-controller="Showtimes" asp-action="Edit" asp-route-id="@showtime.ShowtimeId" class="btn btn-xs btn-info"><i class="fa fa-edit"></i> Sửa</a>
+                                        <a asp-controller="Showtimes" asp-action="Details" asp-route-id="@showtime.ShowtimeId" class="btn btn-xs btn-default"><i class="fa fa-eye"></i> Chi tiết</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('#showtimes-table').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Vietnamese.json"
+                },
+                "order": [[4, "desc"]], // Sắp xếp theo giờ chiếu mặc định
+                "pageLength": 25,
+                "responsive": true,
+                "columnDefs": [
+                    { "orderable": false, "targets": [7] }
+                ]
+            });
+        });
+    </script>
+}

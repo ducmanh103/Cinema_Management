@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>@ViewData["Title"] - 🎬 CinemaHub Admin</title>
+
+    <!-- Bootstrap 3 (AdminLTE) -->
+    <link rel="stylesheet" href="~/adminlte/bootstrap/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="~/adminlte/plugins/font-awesome/css/font-awesome.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="~/adminlte/plugins/ionicons/css/ionicons.min.css">
+    <!-- AdminLTE theme -->
+    <link rel="stylesheet" href="~/adminlte/dist/css/AdminLTE.min.css">
+    <link rel="stylesheet" href="~/adminlte/dist/css/skins/skin-blue.min.css">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="~/adminlte/plugins/datatables/dataTables.bootstrap.css">
+
+    <style>
+        .logo-text { font-size: 18px; font-weight: 700; }
+        .sidebar-menu > li.active > a { border-left: 4px solid #fff; }
+        .content-wrapper { min-height: calc(100vh - 101px); }
+        .small-box .icon i { font-size: 70px; }
+    </style>
+</head>
+<body class="hold-transition skin-blue sidebar-mini">
+<div class="wrapper">
+
+    <!-- Main Header -->
+    <header class="main-header">
+        <!-- Logo -->
+        <a asp-controller="Admin" asp-action="Index" class="logo">
+            <span class="logo-mini"><b>C</b>H</span>
+            <span class="logo-lg"><b>Cinema</b>Hub Admin</span>
+        </a>
+        <!-- Navbar -->
+        <nav class="navbar navbar-static-top" role="navigation">
+            <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+                <span class="sr-only">Toggle navigation</span>
+            </a>
+            <div class="navbar-custom-menu">
+                <ul class="nav navbar-nav">
+                    <!-- User dropdown -->
+                    <li class="dropdown user user-menu">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <i class="fa fa-user-circle fa-lg"></i>
+                            <span class="hidden-xs">@(User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Admin")</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li class="user-header" style="background:#3c8dbc">
+                                <i class="fa fa-user-circle fa-4x"></i>
+                                <p>
+                                    @(User.FindFirst("FullName")?.Value ?? User.Identity?.Name)
+                                    <small>@(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Admin")</small>
+                                </p>
+                            </li>
+                            <li class="user-footer">
+                                <div class="pull-left">
+                                    <a asp-controller="Home" asp-action="Index" class="btn btn-default btn-flat">
+                                        <i class="fa fa-home"></i> Trang chủ
+                                    </a>
+                                </div>
+                                <div class="pull-right">
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="inline-form">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-danger btn-flat">
+                                            <i class="fa fa-sign-out"></i> Đăng xuất
+                                        </button>
+                                    </form>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Left Sidebar -->
+    <aside class="main-sidebar">
+        <section class="sidebar">
+            <!-- Sidebar user info -->
+            <div class="user-panel">
+                <div class="pull-left image">
+                    <i class="fa fa-user-circle fa-3x" style="color:#aaa; margin-top:5px"></i>
+                </div>
+                <div class="pull-left info">
+                    <p>@(User.FindFirst("FullName")?.Value ?? User.Identity?.Name)</p>
+                    <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
+                </div>
+            </div>
+
+            <!-- Sidebar Menu -->
+            <ul class="sidebar-menu">
+                <li class="header">QUẢN TRỊ</li>
+
+                <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                    <a asp-controller="Admin" asp-action="Index">
+                        <i class="fa fa-dashboard"></i> <span>Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Movies" ? "active" : "")">
+                    <a asp-controller="Admin" asp-action="Movies">
+                        <i class="fa fa-film"></i> <span>Quản lý phim</span>
+                    </a>
+                </li>
+
+                <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Users" ? "active" : "")">
+                    <a asp-controller="Admin" asp-action="Users">
+                        <i class="fa fa-users"></i> <span>Quản lý người dùng</span>
+                    </a>
+                </li>
+
+                <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Showtimes" ? "active" : "")">
+                    <a asp-controller="Admin" asp-action="Showtimes">
+                        <i class="fa fa-calendar"></i> <span>Suất chiếu</span>
+                    </a>
+                </li>
+
+                <li class="header">CÔNG CỤ</li>
+
+                <li>
+                    <a href="/swagger" target="_blank">
+                        <i class="fa fa-code"></i> <span>Swagger API</span>
+                        <small class="label pull-right bg-green">API</small>
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-controller="Home" asp-action="Index">
+                        <i class="fa fa-home"></i> <span>Về trang chính</span>
+                    </a>
+                </li>
+            </ul>
+        </section>
+    </aside>
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+        <!-- Alerts -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible" style="margin:15px 15px 0">
+                <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                <i class="fa fa-check-circle"></i> @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible" style="margin:15px 15px 0">
+                <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                <i class="fa fa-exclamation-triangle"></i> @TempData["Error"]
+            </div>
+        }
+
+        @RenderBody()
+    </div>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="pull-right hidden-xs">
+            <b>CinemaHub</b> Admin Panel
+        </div>
+        <strong>&copy; 2026 CinemaHub.</strong> All rights reserved.
+    </footer>
+
+</div><!-- ./wrapper -->
+
+<!-- jQuery 2 -->
+<script src="~/adminlte/plugins/jQuery/jQuery-2.1.4.min.js"></script>
+<!-- Bootstrap 3 -->
+<script src="~/adminlte/bootstrap/js/bootstrap.min.js"></script>
+<!-- SlimScroll -->
+<script src="~/adminlte/plugins/slimScroll/jquery.slimscroll.min.js"></script>
+<!-- FastClick -->
+<script src="~/adminlte/plugins/fastclick/fastclick.min.js"></script>
+<!-- AdminLTE App -->
+<script src="~/adminlte/dist/js/app.min.js"></script>
+<!-- DataTables -->
+<script src="~/adminlte/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="~/adminlte/plugins/datatables/dataTables.bootstrap.min.js"></script>
+
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

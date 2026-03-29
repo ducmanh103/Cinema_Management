@@ -1,5 +1,4 @@
-﻿namespace CinemaManagement.Models
-
+namespace CinemaManagement.Models
 {
     using System;
     using System.Collections.Generic;
@@ -13,13 +12,12 @@
 
         [ForeignKey("Movie")]
         public int MovieId { get; set; }
-        public virtual Movie Movie { get; set; }
+        public virtual Movie Movie { get; set; } = null!;
 
         [ForeignKey("Room")]
         public int RoomId { get; set; }
-        public virtual Room Room { get; set; }
+        public virtual Room Room { get; set; } = null!;
 
-        public virtual ICollection<Ticket> Tickets { get; set; }
+        public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
     }
-
 }

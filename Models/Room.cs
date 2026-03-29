@@ -1,5 +1,4 @@
-﻿namespace CinemaManagement.Models
-
+namespace CinemaManagement.Models
 {
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
@@ -10,14 +9,15 @@
         [Key]
         public int RoomId { get; set; }
 
-        public string RoomName { get; set; }
+        [Required]
+        public string RoomName { get; set; } = string.Empty;
         public int SeatCount { get; set; }
 
         [ForeignKey("Theater")]
         public int TheaterId { get; set; }
-        public virtual Theater Theater { get; set; }
+        public virtual Theater Theater { get; set; } = null!;
 
-        public virtual ICollection<Showtime> Showtimes { get; set; }
+        public virtual ICollection<Seat> Seats { get; set; } = new List<Seat>();
+        public virtual ICollection<Showtime> Showtimes { get; set; } = new List<Showtime>();
     }
-
 }

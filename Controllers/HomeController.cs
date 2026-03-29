@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using CinemaManagement.Models;
+using CinemaManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaManagement.Controllers
@@ -7,14 +8,23 @@ namespace CinemaManagement.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly IMovieService _movieService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, IMovieService movieService)
         {
             _logger = logger;
+            _movieService = movieService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            var allMovies = await _movieService.GetAllMoviesAsync();
+            var nowShowing = allMovies.Where(m => m.Status == "Now Showing").ToList();
+            var comingSoon = allMovies.Where(m => m.Status == "Coming Soon").ToList();
+
+            ViewBag.NowShowing = nowShowing;
+            ViewBag.ComingSoon = comingSoon;
+            
             return View();
         }
 

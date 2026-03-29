@@ -1,0 +1,67 @@
+@using CinemaManagement.Models.ViewModels
+@model List<TicketDto>
+@{
+    ViewData["Title"] = "Vé của tôi";
+    Layout = "_Layout";
+}
+
+<h2 class="mb-4" style="color:#e50914"><i class="bi bi-ticket-fill"></i> Vé của tôi</h2>
+
+@if (!Model.Any())
+{
+    <div class="text-center mt-5 text-muted">
+        <i class="bi bi-ticket" style="font-size:3rem"></i>
+        <p class="mt-2">Bạn chưa đặt vé nào.</p>
+        <a asp-controller="Movies" asp-action="Index" class="btn btn-danger">
+            <i class="bi bi-film"></i> Khám phá phim
+        </a>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var ticket in Model)
+        {
+            <div class="col-md-6">
+                <div class="card" style="background:#1e1e1e; border:1px solid @(ticket.Status == "Booked" ? "#2a572a" : "#4a1a1a")">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 style="color:#fff">@ticket.MovieTitle</h5>
+                            @if (ticket.Status == "Booked")
+                            {
+                                <span class="badge bg-success">Đã đặt</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Đã huỷ</span>
+                            }
+                        </div>
+                        <div class="row text-muted small mt-2">
+                            <div class="col-6"><i class="bi bi-clock"></i> @ticket.StartTime.ToString("HH:mm — dd/MM/yyyy")</div>
+                            <div class="col-6"><i class="bi bi-door-closed"></i> @ticket.RoomName</div>
+                            <div class="col-6"><i class="bi bi-person-seat"></i> Ghế: <strong style="color:#fff">@ticket.SeatNumber</strong></div>
+                            <div class="col-6" style="color:#ffd700"><i class="bi bi-currency-dollar"></i> @ticket.Price.ToString("N0") VND</div>
+                        </div>
+                        <div class="mt-2 small text-muted">
+                            <i class="bi bi-credit-card"></i> Thanh toán: @ticket.PaymentStatus
+                            &nbsp;|&nbsp;
+                            <i class="bi bi-calendar-check"></i> Đặt lúc @ticket.BookingTime.ToString("HH:mm dd/MM/yyyy")
+                        </div>
+                    </div>
+                    @if (ticket.Status == "Booked" && ticket.StartTime > DateTime.Now)
+                    {
+                        <div class="card-footer" style="background:#181818; border-top:1px solid #333">
+                            <form asp-action="Cancel" asp-route-id="@ticket.TicketId" method="post"
+                                  onsubmit="return confirm('Bạn có chắc muốn huỷ vé này?')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger" id="cancel-ticket-@ticket.TicketId">
+                                    <i class="bi bi-x-circle"></i> Huỷ vé
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

@@ -1,3 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --primary: #e50914;
+  --primary-hover: #b80710;
+  --dark: #0f0f0f;
+  --darker: #050505;
+  --card-bg: #1a1a1a;
+  --glass-bg: rgba(26, 26, 26, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-main: #f5f5f5;
+  --text-muted: #a0a0a0;
+  --gold: #f5c518;
+}
+
 html {
   font-size: 14px;
 }
@@ -8,15 +23,124 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
 body {
-  margin-bottom: 60px;
+  background-color: var(--dark);
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--darker);
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Cards & Hover Effects */
+.movie-card {
+  background: var(--card-bg);
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+}
+
+.movie-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+  border-color: #444;
+}
+
+.movie-poster-wrapper {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 2/3;
+  background: #222;
+}
+
+.movie-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.movie-card:hover .movie-poster {
+  transform: scale(1.05);
+}
+
+.movie-badge-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Buttons */
+.btn-primary-custom {
+  background: var(--primary);
+  border: none;
+  color: white;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-primary-custom:hover {
+  background: var(--primary-hover);
+  color: white;
+}
+.btn-primary-custom:active {
+  transform: scale(0.96);
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* Form Controls */
+.form-control, .form-select {
+  background-color: #1f1f1f !important;
+  border: 1px solid #333 !important;
+  color: #fff !important;
+  border-radius: 8px;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 0.25rem rgba(229, 9, 20, 0.25) !important;
+}
+
+/* Focus styles */
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus {
+  box-shadow: 0 0 0 0.25rem rgba(229, 9, 20, 0.25);
 }

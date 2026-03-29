@@ -1,32 +1,80 @@
-﻿@model CinemaManagement.Models.Movie
+@model CinemaManagement.Models.Movie
 @{
-    var genres = ViewBag.Genres as List<CinemaManagement.Models.Genre>;
-    var selected = ViewBag.SelectedGenres as List<int>;
+    ViewData["Title"] = "Sửa phim";
+    Layout = "_Layout";
+    var genres = ViewBag.Genres as List<CinemaManagement.Models.Genre> ?? new();
+    var selectedGenres = ViewBag.SelectedGenres as List<int> ?? new();
 }
 
-<h2>Edit Movie</h2>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card" style="background:#1e1e1e; border:1px solid #333">
+            <div class="card-body p-4">
+                <h3 class="mb-4" style="color:#e50914"><i class="bi bi-pencil"></i> Sửa phim</h3>
 
-<form asp-action="Edit" method="post">
-    <input type="hidden" asp-for="MovieId" />
+                <form asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input asp-for="MovieId" type="hidden" />
 
-    <label>Title</label>
-    <input asp-for="Title" class="form-control" />
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="Title" class="form-label">Tên phim *</label>
+                            <input asp-for="Title" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-title" />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Duration" class="form-label">Thời lượng (phút)</label>
+                            <input asp-for="Duration" type="number" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-duration" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ReleaseDate" class="form-label">Ngày phát hành</label>
+                            <input asp-for="ReleaseDate" type="date" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-release" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Status" class="form-label">Trạng thái</label>
+                            <select asp-for="Status" class="form-select" style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-status">
+                                <option value="Now Showing">Đang chiếu</option>
+                                <option value="Coming Soon">Sắp chiếu</option>
+                                <option value="Ended">Đã kết thúc</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PosterUrl" class="form-label">URL Poster</label>
+                            <input asp-for="PosterUrl" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-poster" />
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label">Mô tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"
+                                      style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-desc"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Thể loại</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                @foreach (var g in genres)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="selectedGenres"
+                                               value="@g.GenreId" id="edit-genre-@g.GenreId"
+                                               @(selectedGenres.Contains(g.GenreId) ? "checked" : "") />
+                                        <label class="form-check-label" for="edit-genre-@g.GenreId">@g.GenreName</label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
 
-    <label>Duration</label>
-    <input asp-for="Duration" class="form-control" />
-
-    <label>Status</label>
-    <input asp-for="Status" class="form-control" />
-
-    <label>Genres</label>
-    @foreach (var g in genres)
-    {
-        <div>
-            <input type="checkbox" name="selectedGenres" value="@g.GenreId"
-                   @(selected.Contains(g.GenreId) ? "checked" : "") />
-            @g.GenreName
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-danger" id="update-movie-btn">
+                            <i class="bi bi-check-circle"></i> Cập nhật
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+                    </div>
+                </form>
+            </div>
         </div>
-    }
+    </div>
+</div>
 
-    <button type="submit" class="btn btn-primary mt-2">Update</button>
-</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

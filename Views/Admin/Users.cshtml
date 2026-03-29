@@ -1,0 +1,144 @@
+@using CinemaManagement.Models.ViewModels
+@using CinemaManagement.Models
+@model List<UserDto>
+@{
+    ViewData["Title"] = "Quản lý người dùng";
+    Layout = "_AdminLayout";
+    var roles = ViewBag.Roles as List<Role> ?? new();
+}
+
+<!-- Content Header -->
+<section class="content-header">
+    <h1>
+        Quản lý người dùng
+        <small>Danh sách tài khoản</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li class="active">Người dùng</li>
+    </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-users"></i> Danh sách người dùng (@Model.Count)</h3>
+                    <div class="box-tools pull-right">
+                        <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <table id="users-table" class="table table-bordered table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>Vai trò</th>
+                                <th>Trạng thái</th>
+                                <th>Đổi vai trò</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model)
+                            {
+                                <tr>
+                                    <td>@user.UserId</td>
+                                    <td><strong>@user.Username</strong></td>
+                                    <td>@user.FullName</td>
+                                    <td>@user.Email</td>
+                                    <td>
+                                        @if (user.RoleName == "Admin")
+                                        {
+                                            <span class="label label-danger">Admin</span>
+                                        }
+                                        else if (user.RoleName == "Staff")
+                                        {
+                                            <span class="label label-warning">Staff</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="label label-primary">Customer</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (user.Status == "Active")
+                                        {
+                                            <span class="label label-success">Hoạt động</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="label label-default">Bị khoá</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <form asp-action="ChangeRole" method="post" class="form-inline change-role-form">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.UserId" />
+                                                <select name="roleId" class="form-control input-sm" style="width:110px">
+                                                    @foreach (var role in roles)
+                                                    {
+                                                        if (role.RoleId == user.RoleId)
+                                                        {
+                                                            <option value="@role.RoleId" selected>@role.RoleName</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@role.RoleId">@role.RoleName</option>
+                                                        }
+                                                    }
+                                                </select>
+                                                <button type="submit" class="btn btn-xs btn-info" style="margin-left:4px">
+                                                    <i class="fa fa-save"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span>@user.RoleName</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <form asp-action="ToggleUserStatus" asp-route-id="@user.UserId" method="post" class="inline-form">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit"
+                                                    class="btn btn-xs @(user.Status == "Active" ? "btn-warning" : "btn-success")"
+                                                    onclick="return confirm('@(user.Status == "Active" ? "Khoá" : "Mở khoá") người dùng @user.Username?')">
+                                                <i class="fa fa-@(user.Status == "Active" ? "lock" : "unlock")"></i>
+                                                @(user.Status == "Active" ? "Khoá" : "Mở khoá")
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('#users-table').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Vietnamese.json"
+                },
+                "pageLength": 25,
+                "responsive": true,
+                "columnDefs": [
+                    { "orderable": false, "targets": [6, 7] }
+                ]
+            });
+        });
+    </script>
+}

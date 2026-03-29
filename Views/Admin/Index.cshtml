@@ -1,0 +1,183 @@
+@using CinemaManagement.Models.ViewModels
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_AdminLayout";
+    var recentTickets = ViewBag.RecentTickets as List<TicketDto> ?? new();
+}
+
+<!-- Content Header -->
+<section class="content-header">
+    <h1>
+        Dashboard
+        <small>Cinema Management</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="#"><i class="fa fa-dashboard"></i> Admin</a></li>
+        <li class="active">Dashboard</li>
+    </ol>
+</section>
+
+<!-- Main content -->
+<section class="content">
+
+    <!-- Stats Row -->
+    <div class="row">
+        <div class="col-lg-3 col-xs-6">
+            <div class="small-box bg-aqua">
+                <div class="inner">
+                    <h3>@ViewBag.TotalMovies</h3>
+                    <p>Tổng phim</p>
+                </div>
+                <div class="icon"><i class="fa fa-film"></i></div>
+                <a asp-action="Movies" class="small-box-footer">Xem tất cả <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <div class="col-lg-3 col-xs-6">
+            <div class="small-box bg-green">
+                <div class="inner">
+                    <h3>@ViewBag.TotalUsers</h3>
+                    <p>Người dùng</p>
+                </div>
+                <div class="icon"><i class="fa fa-users"></i></div>
+                <a asp-action="Users" class="small-box-footer">Xem tất cả <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <div class="col-lg-3 col-xs-6">
+            <div class="small-box bg-yellow">
+                <div class="inner">
+                    <h3>@ViewBag.TotalTickets</h3>
+                    <p>Tổng vé đặt</p>
+                </div>
+                <div class="icon"><i class="fa fa-ticket"></i></div>
+                <a asp-action="Showtimes" class="small-box-footer">Xem suất chiếu <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <div class="col-lg-3 col-xs-6">
+            <div class="small-box bg-red">
+                <div class="inner">
+                    <h3 style="font-size:26px">@(((decimal)ViewBag.TotalRevenue).ToString("N0")) ₫</h3>
+                    <p>Doanh thu</p>
+                </div>
+                <div class="icon"><i class="fa fa-money"></i></div>
+                <a href="#" class="small-box-footer">Thống kê <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-bolt"></i> Thao tác nhanh</h3>
+                </div>
+                <div class="box-body">
+                    <a asp-controller="Movies" asp-action="Create" class="btn btn-danger btn-sm">
+                        <i class="fa fa-plus-circle"></i> Thêm phim mới
+                    </a>
+                    &nbsp;
+                    <a asp-action="Movies" class="btn btn-primary btn-sm">
+                        <i class="fa fa-film"></i> Quản lý phim
+                    </a>
+                    &nbsp;
+                    <a asp-action="Users" class="btn btn-success btn-sm">
+                        <i class="fa fa-users"></i> Quản lý người dùng
+                    </a>
+                    &nbsp;
+                    <a asp-action="Showtimes" class="btn btn-warning btn-sm">
+                        <i class="fa fa-calendar"></i> Quản lý suất chiếu
+                    </a>
+                    &nbsp;
+                    <a href="/swagger" target="_blank" class="btn btn-info btn-sm">
+                        <i class="fa fa-code"></i> Swagger API
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Tickets -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-ticket"></i> Vé đặt gần đây</h3>
+                    <div class="box-tools pull-right">
+                        <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <table id="tickets-table" class="table table-bordered table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Phim</th>
+                                <th>Phòng</th>
+                                <th>Suất chiếu</th>
+                                <th>Ghế</th>
+                                <th>Giá</th>
+                                <th>Trạng thái</th>
+                                <th>Thanh toán</th>
+                                <th>Thời gian đặt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in recentTickets)
+                            {
+                                <tr>
+                                    <td>@t.TicketId</td>
+                                    <td>@t.MovieTitle</td>
+                                    <td>@t.RoomName</td>
+                                    <td>@t.StartTime.ToString("HH:mm dd/MM/yyyy")</td>
+                                    <td><strong>@t.SeatNumber</strong></td>
+                                    <td>@t.Price.ToString("N0") ₫</td>
+                                    <td>
+                                        @if (t.Status == "Booked")
+                                        {
+                                            <span class="label label-success">Đã đặt</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="label label-default">Đã huỷ</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (t.PaymentStatus == "Completed")
+                                        {
+                                            <span class="label label-success">Đã thanh toán</span>
+                                        }
+                                        else if (t.PaymentStatus == "Pending")
+                                        {
+                                            <span class="label label-warning">Chờ TT</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="label label-default">@t.PaymentStatus</span>
+                                        }
+                                    </td>
+                                    <td>@t.BookingTime.ToString("HH:mm dd/MM/yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('#tickets-table').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Vietnamese.json"
+                },
+                "order": [[0, "desc"]],
+                "pageLength": 10,
+                "responsive": true
+            });
+        });
+    </script>
+}
