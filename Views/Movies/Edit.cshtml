@@ -1,80 +1,156 @@
 @model CinemaManagement.Models.Movie
 @{
-    ViewData["Title"] = "Sửa phim";
-    Layout = "_Layout";
+    ViewData["Title"] = "Sửa phim – " + Model.Title;
+    Layout = "_AdminLayout";
     var genres = ViewBag.Genres as List<CinemaManagement.Models.Genre> ?? new();
     var selectedGenres = ViewBag.SelectedGenres as List<int> ?? new();
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card" style="background:#1e1e1e; border:1px solid #333">
-            <div class="card-body p-4">
-                <h3 class="mb-4" style="color:#e50914"><i class="bi bi-pencil"></i> Sửa phim</h3>
+<!-- Content Header -->
+<section class="content-header">
+    <h1>
+        Sửa phim
+        <small>@Model.Title</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a asp-action="Index" asp-controller="Admin"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a asp-action="Movies" asp-controller="Admin"><i class="fa fa-film"></i> Phim</a></li>
+        <li class="active">Sửa</li>
+    </ol>
+</section>
 
+<section class="content">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="box box-warning">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-edit"></i> Chỉnh sửa thông tin phim #@Model.MovieId</h3>
+                </div>
                 <form asp-action="Edit" method="post">
                     @Html.AntiForgeryToken()
                     <input asp-for="MovieId" type="hidden" />
-
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label asp-for="Title" class="form-label">Tên phim *</label>
-                            <input asp-for="Title" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-title" />
-                            <span asp-validation-for="Title" class="text-danger small"></span>
+                    <div class="box-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label asp-for="Title">Tên phim <span class="text-danger">*</span></label>
+                                    <input asp-for="Title" class="form-control" id="edit-title" />
+                                    <span asp-validation-for="Title" class="text-danger small"></span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="Duration" class="form-label">Thời lượng (phút)</label>
-                            <input asp-for="Duration" type="number" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-duration" />
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Duration">Thời lượng (phút) <span class="text-danger">*</span></label>
+                                    <input asp-for="Duration" type="number" class="form-control" min="1" id="edit-duration" />
+                                    <span asp-validation-for="Duration" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="ReleaseDate">Ngày phát hành</label>
+                                    <input asp-for="ReleaseDate" type="date" class="form-control" id="edit-release" />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Status">Trạng thái</label>
+                                    <select asp-for="Status" class="form-control" id="edit-status">
+                                        <option value="Now Showing">Đang chiếu</option>
+                                        <option value="Coming Soon">Sắp chiếu</option>
+                                        <option value="Ended">Đã kết thúc</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="ReleaseDate" class="form-label">Ngày phát hành</label>
-                            <input asp-for="ReleaseDate" type="date" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-release" />
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="PosterUrl">URL Poster</label>
+                                    <input asp-for="PosterUrl" class="form-control" placeholder="https://..." id="edit-poster" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="BannerUrl">URL Banner</label>
+                                    <input asp-for="BannerUrl" class="form-control" placeholder="https://..." id="edit-banner" />
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="Status" class="form-label">Trạng thái</label>
-                            <select asp-for="Status" class="form-select" style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-status">
-                                <option value="Now Showing">Đang chiếu</option>
-                                <option value="Coming Soon">Sắp chiếu</option>
-                                <option value="Ended">Đã kết thúc</option>
-                            </select>
+                        <div class="form-group">
+                            <label asp-for="Description">Mô tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="4" id="edit-desc"></textarea>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="PosterUrl" class="form-label">URL Poster</label>
-                            <input asp-for="PosterUrl" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-poster" />
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="Description" class="form-label">Mô tả</label>
-                            <textarea asp-for="Description" class="form-control" rows="3"
-                                      style="background:#2a2a2a;border-color:#444;color:#fff" id="edit-desc"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Thể loại</label>
-                            <div class="d-flex flex-wrap gap-3">
+                        <div class="form-group">
+                            <label>Thể loại</label>
+                            <div class="row">
                                 @foreach (var g in genres)
                                 {
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="selectedGenres"
-                                               value="@g.GenreId" id="edit-genre-@g.GenreId"
-                                               @(selectedGenres.Contains(g.GenreId) ? "checked" : "") />
-                                        <label class="form-check-label" for="edit-genre-@g.GenreId">@g.GenreName</label>
+                                    <div class="col-md-3 col-xs-6">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" name="selectedGenres"
+                                                       value="@g.GenreId" id="edit-genre-@g.GenreId"
+                                                       @(selectedGenres.Contains(g.GenreId) ? "checked" : "") />
+                                                @g.GenreName
+                                            </label>
+                                        </div>
                                     </div>
                                 }
                             </div>
                         </div>
-                    </div>
 
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-danger" id="update-movie-btn">
-                            <i class="bi bi-check-circle"></i> Cập nhật
+                        <!-- Xem trước poster -->
+                        @if (!string.IsNullOrEmpty(Model.PosterUrl))
+                        {
+                            <div id="poster-preview-wrap">
+                                <label>Poster hiện tại:</label><br />
+                                <img id="poster-preview" src="@Model.PosterUrl"
+                                     style="max-height:180px; border-radius:4px; border:1px solid #ddd"
+                                     onerror="this.style.display='none'" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div id="poster-preview-wrap" style="display:none">
+                                <label>Xem trước poster:</label><br />
+                                <img id="poster-preview" src="" style="max-height:180px; border-radius:4px; border:1px solid #ddd" />
+                            </div>
+                        }
+                    </div>
+                    <div class="box-footer">
+                        <button type="submit" class="btn btn-warning" id="update-movie-btn">
+                            <i class="fa fa-save"></i> Cập nhật
                         </button>
-                        <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+                        <a asp-action="Details" asp-controller="Movies" asp-route-id="@Model.MovieId"
+                           class="btn btn-default">
+                            <i class="fa fa-eye"></i> Xem chi tiết
+                        </a>
+                        <a asp-action="Movies" asp-controller="Admin" class="btn btn-default pull-right">
+                            <i class="fa fa-arrow-left"></i> Quay lại
+                        </a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-</div>
+</section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Cập nhật preview khi đổi URL poster
+        $('#edit-poster').on('input', function () {
+            var url = $(this).val().trim();
+            var wrap = $('#poster-preview-wrap');
+            var img = $('#poster-preview');
+            if (url) {
+                img.attr('src', url).show();
+                wrap.show();
+            } else {
+                wrap.hide();
+            }
+        });
+    </script>
 }

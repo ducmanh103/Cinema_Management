@@ -102,9 +102,18 @@
                     </a>
                 </li>
 
-                <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Movies" ? "active" : "")">
-                    <a asp-controller="Admin" asp-action="Movies">
-                        <i class="fa fa-film"></i> <span>Quản lý phim</span>
+                @if (User.IsInRole("Admin"))
+                {
+                    <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Movies" || ViewContext.RouteData.Values["action"]?.ToString() == "Details" ? "active" : "")">
+                        <a asp-controller="Admin" asp-action="Movies">
+                            <i class="fa fa-film"></i> <span>Quản lý phim</span>
+                        </a>
+                    </li>
+                }
+
+                <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Showtimes" ? "active" : "")">
+                    <a asp-controller="Admin" asp-action="Showtimes">
+                        <i class="fa fa-calendar"></i> <span>Suất chiếu</span>
                     </a>
                 </li>
 
@@ -114,20 +123,27 @@
                     </a>
                 </li>
 
-                <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Showtimes" ? "active" : "")">
-                    <a asp-controller="Admin" asp-action="Showtimes">
-                        <i class="fa fa-calendar"></i> <span>Suất chiếu</span>
-                    </a>
-                </li>
+                @if (User.IsInRole("Admin"))
+                {
+                    <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Revenue" ? "active" : "")">
+                        <a asp-controller="Admin" asp-action="Revenue">
+                            <i class="fa fa-bar-chart"></i> <span>Thống kê doanh thu</span>
+                            <small class="label pull-right bg-green">Admin</small>
+                        </a>
+                    </li>
+                }
 
                 <li class="header">CÔNG CỤ</li>
 
-                <li>
-                    <a href="/swagger" target="_blank">
-                        <i class="fa fa-code"></i> <span>Swagger API</span>
-                        <small class="label pull-right bg-green">API</small>
-                    </a>
-                </li>
+                @if (User.IsInRole("Admin"))
+                {
+                    <li>
+                        <a href="/swagger" target="_blank">
+                            <i class="fa fa-code"></i> <span>Swagger API</span>
+                            <small class="label pull-right bg-green">API</small>
+                        </a>
+                    </li>
+                }
 
                 <li>
                     <a asp-controller="Home" asp-action="Index">

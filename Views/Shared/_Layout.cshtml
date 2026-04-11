@@ -76,8 +76,24 @@
                                asp-controller="Home" asp-action="Index"><i class="bi bi-house-door me-1"></i> Trang chủ</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Showtimes" ? "active" : "")" 
+                               asp-controller="Showtimes" asp-action="Index"><i class="bi bi-calendar3 me-1"></i> Lịch chiếu</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Movies" ? "active" : "")" 
-                               asp-controller="Movies" asp-action="Index"><i class="bi bi-film me-1"></i> Phim đang chiếu</a>
+                               asp-controller="Movies" asp-action="Index"><i class="bi bi-film me-1"></i> Phim</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Theaters" ? "active" : "")" 
+                               asp-controller="Home" asp-action="Theaters"><i class="bi bi-geo-alt me-1"></i> Rạp</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "News" ? "active" : "")" 
+                               asp-controller="Home" asp-action="News"><i class="bi bi-newspaper me-1"></i> Tin tức</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "About" ? "active" : "")" 
+                               asp-controller="Home" asp-action="About"><i class="bi bi-info-circle me-1"></i> Giới thiệu</a>
                         </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
@@ -213,7 +229,7 @@
                     <h5 class="footer-heading">Liên Hệ</h5>
                     <p class="text-muted mb-2"><i class="bi bi-geo-alt me-2 text-primary-custom"></i> 123 Nguyễn Huệ, Quận 1, TP.HCM</p>
                     <p class="text-muted mb-2"><i class="bi bi-telephone me-2 text-primary-custom"></i> Hotline: 1900 1234</p>
-                    <p class="text-muted mb-2"><i class="bi bi-envelope me-2 text-primary-custom"></i> support@cinemahub.vn</p>
+                    <p class="text-muted mb-2"><i class="bi bi-envelope me-2 text-primary-custom"></i> ducmanh2005vt@gmail.com</p>
                 </div>
             </div>
             <hr class="border-secondary mb-3 mt-4" />

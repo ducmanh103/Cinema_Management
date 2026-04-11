@@ -5,6 +5,7 @@
     ViewData["Title"] = "Quản lý người dùng";
     Layout = "_AdminLayout";
     var roles = ViewBag.Roles as List<Role> ?? new();
+    bool isAdmin = User.IsInRole("Admin");
 }
 
 <!-- Content Header -->
@@ -26,6 +27,12 @@
             <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title"><i class="fa fa-users"></i> Danh sách người dùng (@Model.Count)</h3>
+                    @if (!isAdmin)
+                    {
+                        <span class="label label-warning pull-right" style="margin-top:5px; font-size:12px">
+                            <i class="fa fa-info-circle"></i> Staff: chỉ xem và khoá Customer/Staff
+                        </span>
+                    }
                     <div class="box-tools pull-right">
                         <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                     </div>
@@ -47,6 +54,8 @@
                         <tbody>
                             @foreach (var user in Model)
                             {
+                                bool isTargetAdmin = user.RoleName == "Admin";
+                                bool canToggle = isAdmin || !isTargetAdmin; // Staff chỉ khoá được non-Admin
                                 <tr>
                                     <td>@user.UserId</td>
                                     <td><strong>@user.Username</strong></td>
@@ -77,7 +86,7 @@
                                         }
                                     </td>
                                     <td>
-                                        @if (User.IsInRole("Admin"))
+                                        @if (isAdmin)
                                         {
                                             <form asp-action="ChangeRole" method="post" class="form-inline change-role-form">
                                                 @Html.AntiForgeryToken()
@@ -106,15 +115,24 @@
                                         }
                                     </td>
                                     <td>
-                                        <form asp-action="ToggleUserStatus" asp-route-id="@user.UserId" method="post" class="inline-form">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit"
-                                                    class="btn btn-xs @(user.Status == "Active" ? "btn-warning" : "btn-success")"
-                                                    onclick="return confirm('@(user.Status == "Active" ? "Khoá" : "Mở khoá") người dùng @user.Username?')">
-                                                <i class="fa fa-@(user.Status == "Active" ? "lock" : "unlock")"></i>
-                                                @(user.Status == "Active" ? "Khoá" : "Mở khoá")
-                                            </button>
-                                        </form>
+                                        @if (canToggle)
+                                        {
+                                            <form asp-action="ToggleUserStatus" asp-route-id="@user.UserId" method="post" class="inline-form">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit"
+                                                        class="btn btn-xs @(user.Status == "Active" ? "btn-warning" : "btn-success")"
+                                                        onclick="return confirm('@(user.Status == "Active" ? "Khoá" : "Mở khoá") người dùng @user.Username?')">
+                                                    <i class="fa fa-@(user.Status == "Active" ? "lock" : "unlock")"></i>
+                                                    @(user.Status == "Active" ? "Khoá" : "Mở khoá")
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" title="Không có quyền khoá tài khoản Admin">
+                                                <i class="fa fa-ban"></i> Không có quyền
+                                            </span>
+                                        }
                                     </td>
                                 </tr>
                             }

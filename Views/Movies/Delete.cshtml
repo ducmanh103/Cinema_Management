@@ -1,11 +1,72 @@
-﻿@model CinemaManagement.Models.Movie
+@model CinemaManagement.Models.Movie
+@{
+    ViewData["Title"] = "Xoá phim – " + Model.Title;
+    Layout = "_AdminLayout";
+}
 
-<h2>Delete Movie</h2>
+<!-- Content Header -->
+<section class="content-header">
+    <h1>
+        Xoá phim
+        <small class="text-danger">Thao tác không thể hoàn tác</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a asp-action="Index" asp-controller="Admin"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a asp-action="Movies" asp-controller="Admin"><i class="fa fa-film"></i> Phim</a></li>
+        <li class="active text-danger">Xoá</li>
+    </ol>
+</section>
 
-<p>Are you sure you want to delete <strong>@Model.Title</strong>?</p>
+<section class="content">
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <div class="box box-danger">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-exclamation-triangle"></i> Xác nhận xoá phim</h3>
+                </div>
+                <div class="box-body">
+                    <div class="callout callout-danger">
+                        <h4><i class="fa fa-warning"></i> Cảnh báo!</h4>
+                        <p>Bạn sắp xoá phim <strong>@Model.Title</strong>. Thao tác này sẽ xoá tất cả dữ liệu liên quan không thể khôi phục.</p>
+                    </div>
 
-<form asp-action="Delete">
-    <input type="hidden" asp-for="MovieId" />
-    <button type="submit" class="btn btn-danger">Delete</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-</form>
+                    <div class="media" style="margin-top:20px">
+                        @if (!string.IsNullOrEmpty(Model.PosterUrl))
+                        {
+                            <div class="media-left">
+                                <img src="@Model.PosterUrl" style="width:80px; border-radius:4px"
+                                     onerror="this.style.display='none'" />
+                            </div>
+                        }
+                        <div class="media-body" style="padding-left:15px">
+                            <h4 class="media-heading">@Model.Title</h4>
+                            <p>
+                                <i class="fa fa-clock-o"></i> @Model.Duration phút<br />
+                                @if (Model.ReleaseDate.HasValue)
+                                {
+                                    <i class="fa fa-calendar"></i>
+                                    @Model.ReleaseDate.Value.ToString("dd/MM/yyyy")
+                                    <br />
+                                }
+                                <i class="fa fa-circle text-@(Model.Status == "Now Showing" ? "green" : Model.Status == "Coming Soon" ? "yellow" : "gray")"></i>
+                                @(Model.Status == "Now Showing" ? "Đang chiếu" : Model.Status == "Coming Soon" ? "Sắp chiếu" : "Ngừng chiếu")
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="box-footer">
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="MovieId" />
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa fa-trash"></i> Xác nhận xoá
+                        </button>
+                        <a asp-action="Movies" asp-controller="Admin" class="btn btn-default pull-right">
+                            <i class="fa fa-arrow-left"></i> Huỷ bỏ
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -79,6 +79,7 @@ namespace CinemaManagement.Models.ViewModels
         public string Status { get; set; } = string.Empty;
         public DateTime BookingTime { get; set; }
         public string PaymentStatus { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = string.Empty;
     }
 
     // ─────────── User DTOs (Admin) ───────────
@@ -91,5 +92,23 @@ namespace CinemaManagement.Models.ViewModels
         public string Status { get; set; } = string.Empty;
         public string RoleName { get; set; } = string.Empty;
         public int RoleId { get; set; }
+    }
+
+    // ─────────── Revenue DTOs (Admin) ───────────
+    public class MovieRevenueDto
+    {
+        public int MovieId { get; set; }
+        public string MovieTitle { get; set; } = string.Empty;
+        public string? PosterUrl { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public int TicketCount { get; set; }
+    }
+
+    public class MonthlyRevenueDto
+    {
+        public int Month { get; set; }
+        public int Year { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public int TicketCount { get; set; }
     }
 }

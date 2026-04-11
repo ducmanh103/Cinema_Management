@@ -7,126 +7,167 @@
 }
 
 <style>
-/* Seat Map Container */
-.cinema-hall {
-    background: #0f1115;
-    border-radius: 16px;
-    padding: 2rem 1rem 100px 1rem; /* Pad bottom for sticky panel */
-    position: relative;
-    border: 1px solid #222;
-    overflow-x: auto;
+@@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+body {
+    background-color: #0b0c10;
+    color: #e2e8f0;
+    font-family: 'Outfit', sans-serif;
 }
 
-/* Screen Curve */
+/* Ambient Cinema Background */
+.cinema-wrapper {
+    position: relative;
+    padding: 2rem 0 120px 0;
+    background: radial-gradient(circle at top center, rgba(32, 38, 57, 0.4) 0%, rgba(11, 12, 16, 1) 70%);
+}
+
+/* Screen Curve with Volumetric Light */
 .screen-container {
-    perspective: 1000px;
-    margin-bottom: 3rem;
-    padding-top: 1rem;
+    perspective: 800px;
+    margin-bottom: 5rem;
+    padding-top: 2rem;
+    position: relative;
 }
 .screen {
-    background: linear-gradient(to bottom, #d6d6d6 0%, #ffffff 50%, #444444 100%);
-    height: 12px;
-    width: 65%;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%);
+    height: 14px;
+    width: 70%;
     margin: 0 auto;
     border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-    transform: rotateX(-30deg);
-    box-shadow: 0 10px 40px rgba(255, 255, 255, 0.4), 0 0 15px rgba(229, 9, 20, 0.3);
+    transform: rotateX(-20deg);
+    box-shadow: 0 15px 50px rgba(255, 255, 255, 0.6), 
+                0 0 20px rgba(129, 140, 248, 0.4);
     position: relative;
+    z-index: 2;
 }
 .screen-glow {
     position: absolute;
-    top: 5px;
-    left: 5%;
-    right: 5%;
-    height: 50px;
-    background: radial-gradient(ellipse at top, rgba(229, 9, 20, 0.15), transparent 70%);
+    top: 14px;
+    left: 10%;
+    right: 10%;
+    height: 120px;
+    background: linear-gradient(to bottom, rgba(129, 140, 248, 0.15) 0%, transparent 100%);
+    transform: perspective(600px) rotateX(45deg);
     pointer-events: none;
+    z-index: 1;
+    filter: blur(8px);
 }
 .screen-text {
     text-align: center;
-    color: #888;
-    font-size: 0.8rem;
-    letter-spacing: 5px;
-    margin-top: 15px;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.85rem;
+    letter-spacing: 8px;
+    margin-top: 20px;
     text-transform: uppercase;
-    font-weight: 700;
+    font-weight: 800;
 }
 
-/* Seats Design */
+/* Detailed 3D Seats */
 .seat-row {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin-bottom: 12px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
 }
 .row-label {
-    width: 24px;
-    color: #666;
-    font-weight: 600;
+    width: 30px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 700;
+    font-size: 1.1rem;
     text-align: center;
-    line-height: 38px;
     margin-right: 15px;
-    margin-left: -39px;
+    position: relative;
+    left: -20px;
 }
 .seat-item {
-    width: 38px;
-    height: 34px;
-    border-radius: 8px 8px 4px 4px;
+    width: 42px;
+    height: 38px;
+    border-radius: 12px 12px 6px 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 700;
-    color: transparent; /* Text only shows on hover/selected visually maybe */
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: transparent; 
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.1),
+                0 4px 6px rgba(0,0,0,0.4);
 }
-.seat-item::after {
+/* Armrests illusion */
+.seat-item::before, .seat-item::after {
     content: '';
     position: absolute;
-    bottom: 2px;
-    left: 4px;
-    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 60%;
+    background: rgba(0,0,0,0.3);
+    border-radius: 2px;
+}
+.seat-item::before { left: 2px; }
+.seat-item::after { right: 2px; }
+
+/* Bottom cushion line */
+.seat-item .seat-cushion {
+    position: absolute;
+    bottom: 3px;
+    left: 6px;
+    right: 6px;
     height: 4px;
     border-radius: 2px;
     background: rgba(0,0,0,0.2);
 }
 
 .seat-item:hover:not(.booked) {
-    transform: scale(1.15) translateY(-2px);
+    transform: scale(1.15) translateY(-5px);
     color: white;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    z-index: 2;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3);
+    z-index: 10;
 }
 
-/* Status variants */
+/* Variants */
 .seat-std.available {
-    background: #4a5c60; /* Dark cyan-ish grey */
-    border: 1px solid #5d747a;
+    background: linear-gradient(145deg, #334155 0%, #1e293b 100%);
+    border: 1px solid #475569;
 }
 .seat-vip.available {
-    background: #b58500; /* Rich gold */
-    border: 1px solid #d49c00;
-}
-.seat-couple.available {
-    background: #9c27b0;
-    border: 1px solid #ba68c8;
+    background: linear-gradient(145deg, #f59e0b 0%, #b45309 100%);
+    border: 1px solid #fbbf24;
 }
 
 .seat-item.booked {
-    background: #2a2a2a !important;
-    border: 1px solid #333 !important;
+    background: linear-gradient(145deg, #18181b 0%, #09090b 100%) !important;
+    border: 1px solid #27272a !important;
     cursor: not-allowed;
-    color: #444 !important;
+    color: #3f3f46 !important;
+    box-shadow: none;
 }
+.seat-item.booked::before, .seat-item.booked::after { background: transparent; }
 
 .seat-item.selected {
-    background: var(--primary) !important;
-    border: 1px solid #ff4d4d !important;
+    background: linear-gradient(145deg, #ef4444 0%, #991b1b 100%) !important;
+    border: 1px solid #f87171 !important;
     color: white !important;
-    transform: scale(1.1);
-    box-shadow: 0 0 15px rgba(229, 9, 20, 0.6);
+    transform: scale(1.15) translateY(-3px);
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.5), inset 0 2px 5px rgba(255,255,255,0.4);
+    z-index: 10;
+}
+
+/* Glassmorphism Legend */
+.legend-glass {
+    background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 100px;
+    padding: 12px 24px;
+    display: inline-flex;
+    gap: 2rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 }
 
 /* Fixed Bottom Panel */
@@ -135,62 +176,80 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(15, 15, 15, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding: 15px 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 20px 0;
     z-index: 1000;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 -15px 40px rgba(0,0,0,0.6);
     transform: translateY(110%);
-    transition: transform 0.3s cubic-bezier(0.2, 0, 0.2, 1);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .booking-summary-panel.active {
     transform: translateY(0);
 }
 
-/* Aisle spacer */
-.seat-spacer {
-    width: 20px;
+.btn-premium {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border: none;
+    color: white;
+    box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
+    transition: all 0.3s ease;
 }
+.btn-premium:hover {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(220, 38, 38, 0.5);
+    color: white;
+}
+
+.seat-spacer { width: 30px; }
 </style>
 
-<div class="mb-4 d-flex justify-content-between align-items-center">
-    <div>
-        <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@showtime?.MovieId" class="text-light text-decoration-none border rounded-pill px-3 py-1 bg-dark">
-            <i class="bi bi-arrow-left"></i> Quay lại
-        </a>
+<div class="cinema-wrapper">
+    <div class="container mb-5">
+        <div class="d-flex justify-content-between align-items-center p-4 rounded-4" style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div>
+                <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@showtime?.MovieId" class="text-light text-decoration-none border border-secondary rounded-pill px-4 py-2" style="background: rgba(0,0,0,0.3); transition: all 0.3s;">
+                    <i class="bi bi-arrow-left me-2"></i> Quay lại
+                </a>
+            </div>
+            @if (showtime != null)
+            {
+                <div class="text-end">
+                    <h3 class="mb-1 text-light fw-bold" style="letter-spacing: 1px;">@showtime.MovieTitle</h3>
+                    <div class="text-info small fw-semibold">
+                        <i class="bi bi-clock me-1"></i> @showtime.StartTime.ToString("HH:mm") <span class="mx-2">|</span> 
+                        <i class="bi bi-calendar3 me-1"></i> @showtime.StartTime.ToString("dd/MM/yyyy") <span class="mx-2">|</span> 
+                        <i class="bi bi-camera-reels me-1"></i> @showtime.RoomName
+                    </div>
+                </div>
+            }
+        </div>
     </div>
-    @if (showtime != null)
-        {
-        <div class="text-end">
-            <h4 class="mb-1 text-light">@showtime.MovieTitle</h4>
-            <div class="text-muted small">
-                @showtime.StartTime.ToString("HH:mm") • @showtime.StartTime.ToString("dd/MM/yyyy") • @showtime.RoomName
+
+    <!-- Legend -->
+    <div class="d-flex justify-content-center mb-5">
+        <div class="legend-glass">
+            <div class="d-flex align-items-center gap-2">
+                <div class="seat-item seat-std available" style="width:28px;height:24px;"><div class="seat-cushion"></div></div>
+                <span class="small fw-semibold text-light">Ghế Thường</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <div class="seat-item seat-vip available" style="width:28px;height:24px;"><div class="seat-cushion"></div></div>
+                <span class="small fw-semibold" style="color: #fbbf24;">Ghế VIP</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <div class="seat-item selected" style="width:28px;height:24px;"><div class="seat-cushion"></div></div>
+                <span class="small fw-semibold text-danger">Đang chọn</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <div class="seat-item booked" style="width:28px;height:24px;"><div class="seat-cushion"></div></div>
+                <span class="small text-muted">Đã đặt</span>
             </div>
         </div>
-    }
-</div>
-
-<!-- Legend -->
-<div class="d-flex justify-content-center gap-4 mb-4 flex-wrap bg-dark p-3 rounded-pill" style="border: 1px solid #333;">
-    <div class="d-flex align-items-center gap-2">
-        <div class="seat-item seat-std available" style="width:24px;height:24px;"></div>
-        <span class="small fw-bold">Ghế Thường</span>
     </div>
-    <div class="d-flex align-items-center gap-2">
-        <div class="seat-item seat-vip available" style="width:24px;height:24px;"></div>
-        <span class="small fw-bold text-warning">Ghế VIP</span>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <div class="seat-item selected" style="width:24px;height:24px;"></div>
-        <span class="small fw-bold text-danger">Đang chọn</span>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <div class="seat-item booked" style="width:24px;height:24px;"></div>
-        <span class="small text-muted">Đã đặt</span>
-    </div>
-</div>
 
 <div class="cinema-hall">
     <!-- Screen -->
@@ -211,13 +270,19 @@
                 <div class="row-label">@row.Key</div>
                 @{
                     int colIndex = 0;
-                    var sortedSeats = row.OrderBy(s => s.SeatNumber).ToList();
+                    // FIX: Sort numerically by seat number (A10 goes after A9, not A1)
+                    var sortedSeats = row.OrderBy(s => int.Parse(s.SeatNumber.Substring(1))).ToList();
+                    int totalSeats = sortedSeats.Count;
                 }
                 @foreach (var seat in sortedSeats)
                 {
                     colIndex++;
-                    // Aisle breaks (e.g. after seat 2 and seat 4 in a 6-seat row)
-                    if (colIndex == 3 || colIndex == 5) { <div class="seat-spacer"></div> }
+                    // Chia 1 lối đi duy nhất ở chính giữa để 2 bên cân bằng tuyệt đối
+                    bool isSpacer = false;
+                    if (totalSeats % 2 == 0 && colIndex == (totalSeats / 2) + 1) isSpacer = true;
+                    else if (totalSeats % 2 != 0 && colIndex == (totalSeats / 2) + 2) isSpacer = true;
+
+                    if (isSpacer) { <div class="seat-spacer" style="width: 40px;"></div> }
 
                     string typeClass = seat.SeatType == "VIP" ? "seat-vip" : "seat-std";
                     string statusClass = seat.IsBooked ? "booked" : "available";
@@ -228,68 +293,85 @@
                          data-seat-type="@seat.SeatType"
                          data-price="@showtime?.Price"
                          title="@seat.SeatNumber — @(seat.IsBooked ? "Đã đặt" : seat.SeatType)">
+                        <div class="seat-cushion"></div>
                         @seat.SeatNumber.Substring(1)
                     </div>
                 }
             </div>
         }
     </div>
-</div>
+</div> <!-- End cinema-wrapper -->
 
 <!-- Sticky Bottom Booking Summary -->
 <div class="booking-summary-panel" id="booking-panel">
     <div class="container">
         @if (User.Identity?.IsAuthenticated == true)
         {
-            <form asp-controller="Booking" asp-action="Confirm" method="post" id="booking-form">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="ShowtimeId" value="@showtime?.ShowtimeId" />
-                <input type="hidden" name="SeatId" id="selected-seat-id" />
-                
+            <div id="booking-form">
                 <div class="row align-items-center">
                     <div class="col-md-5 d-flex gap-3 align-items-center">
-                        <div style="background: rgba(229,9,20,0.1); padding: 10px; border-radius: 12px; border: 1px solid rgba(229,9,20,0.3);">
-                            <i class="bi bi-person-seat text-danger fs-3"></i>
+                        <div style="background: linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(153,27,27,0.2) 100%); padding: 12px 15px; border-radius: 14px; border: 1px solid rgba(239,68,68,0.3); box-shadow: inset 0 2px 10px rgba(239,68,68,0.1);">
+                            <i class="bi bi-person-seat text-danger fs-2"></i>
                         </div>
                         <div>
-                            <div class="text-muted small">Ghế đang chọn</div>
-                            <h4 class="mb-0 text-light fw-bold" id="panel-seat-num">--</h4>
-                            <div class="text-warning small fw-bold" id="panel-seat-type"></div>
+                            <div class="text-muted small text-uppercase tracking-wider">Ghế đang chọn</div>
+                            <h3 class="mb-0 text-light fw-bolder" id="panel-seat-num" style="letter-spacing: 2px;">--</h3>
+                            <div class="text-warning small fw-bold mt-1" id="panel-seat-type"></div>
                         </div>
                     </div>
                     
-                    <div class="col-md-4 mt-3 mt-md-0 border-start border-secondary ps-md-4">
-                        <div class="text-muted small">Tạm tính</div>
-                        <h3 class="mb-0 fw-bold" style="color: var(--primary);" id="panel-total">0 đ</h3>
+                    <div class="col-md-4 mt-3 mt-md-0 border-start border-secondary ps-md-4" style="border-color: rgba(255,255,255,0.1) !important;">
+                        <div class="text-muted small text-uppercase tracking-wider">Tạm tính</div>
+                        <h2 class="mb-0 fw-bolder" style="color: #f87171;" id="panel-total">0 đ</h2>
                         
                         <div class="mt-2 d-flex align-items-center gap-2">
                             <i class="bi bi-credit-card text-muted"></i>
-                            <select name="PaymentMethod" class="form-select form-select-sm border-0 shadow-none bg-transparent text-light p-0" style="cursor: pointer;">
-                                <option value="Cash" class="text-dark">Tiền mặt tại quầy</option>
-                                <option value="Card" class="text-dark">Ví điện tử Momo</option>
-                                <option value="Momo" class="text-dark">Thẻ tín dụng / ATM</option>
+                            <select id="payment-method" class="form-select form-select-sm border-0 shadow-none bg-transparent text-light p-0 fw-semibold" style="cursor: pointer;">
+                                @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                                {
+                                    <option value="Cash" class="text-dark">Thanh toán tại quầy (Tiền mặt)</option>
+                                }
+                                <option value="Card" class="text-dark">Ứng dụng Ngân hàng (Chuyển khoản)</option>
+                                <option value="Momo" class="text-dark">Ví điện tử MoMo</option>
                             </select>
                         </div>
                     </div>
                     
-                    <div class="col-md-3 mt-3 mt-md-0 text-md-end">
-                        <button type="submit" class="btn btn-primary-custom btn-lg w-100 fw-bold rounded-pill shadow-lg" id="btn-pay">
-                            Thanh Toán
+                    <div class="col-md-3 mt-4 mt-md-0 text-md-end">
+                        <button type="button" class="btn btn-premium btn-lg w-100 fw-bold rounded-pill text-uppercase" style="letter-spacing: 1px;" id="btn-pay">
+                            <span id="btn-pay-text">Thanh Toán <i class="bi bi-arrow-right ms-2"></i></span>
+                            <span id="btn-pay-loading" class="d-none">
+                                <span class="spinner-border spinner-border-sm me-2"></span>Xử lý...
+                            </span>
                         </button>
                     </div>
                 </div>
-            </form>
+            </div>
         }
         else
         {
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="text-light mb-1">Bạn chưa đăng nhập</h5>
-                    <p class="text-muted mb-0">Vui lòng đăng nhập để tiến hành đặt ghế và thanh toán.</p>
+            <div class="d-flex justify-content-between align-items-center p-3 rounded-4" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-person-lock fs-1 text-secondary"></i>
+                    <div>
+                        <h5 class="text-light mb-1 fw-bold">Bạn chưa đăng nhập</h5>
+                        <p class="text-muted mb-0 small">Vui lòng đăng nhập để tiến hành đặt ghế và thanh toán trực tuyến.</p>
+                    </div>
                 </div>
-                <a asp-controller="Account" asp-action="Login" class="btn btn-danger rounded-pill px-4 fw-bold">Đăng nhập</a>
+                <a asp-controller="Account" asp-action="Login" class="btn btn-premium rounded-pill px-5 py-2 fw-bold shadow-lg">Đăng nhập</a>
             </div>
         }
+    </div>
+</div>
+
+<!-- Toast thông báo -->
+<div id="booking-toast" class="position-fixed top-0 start-50 translate-middle-x mt-4" style="z-index: 9999; display: none;">
+    <div class="d-flex align-items-center gap-3 px-4 py-3 rounded-4 shadow-lg" id="toast-inner" style="backdrop-filter: blur(20px); min-width: 350px;">
+        <i id="toast-icon" class="fs-3"></i>
+        <div>
+            <div id="toast-title" class="fw-bold"></div>
+            <div id="toast-msg" class="small text-light"></div>
+        </div>
     </div>
 </div>
 
@@ -297,53 +379,163 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         let selectedSeat = null;
+        let selectedSeatId = null;
+        const showtimeId = @(showtime?.ShowtimeId ?? 0);
+
         const panel = document.getElementById('booking-panel');
         const numDisplay = document.getElementById('panel-seat-num');
         const typeDisplay = document.getElementById('panel-seat-type');
         const totalDisplay = document.getElementById('panel-total');
-        const hiddenId = document.getElementById('selected-seat-id');
+        const btnPay = document.getElementById('btn-pay');
+        const btnPayText = document.getElementById('btn-pay-text');
+        const btnPayLoading = document.getElementById('btn-pay-loading');
+        const paymentMethod = document.getElementById('payment-method');
 
+        // ========== CHỌN GHẾ ==========
         document.querySelectorAll('.seat-item.available').forEach(seat => {
             seat.addEventListener('click', function () {
-                // Deselect previous
-                if (selectedSeat) {
-                    selectedSeat.classList.remove('selected');
-                }
+                if (selectedSeat) selectedSeat.classList.remove('selected');
 
-                // Toggle logic
                 if (selectedSeat === this) {
                     selectedSeat = null;
+                    selectedSeatId = null;
                     panel.classList.remove('active');
                     return;
                 }
 
-                // Select new
                 selectedSeat = this;
                 selectedSeat.classList.add('selected');
                 
-                const seatId = this.dataset.seatId;
+                selectedSeatId = parseInt(this.dataset.seatId);
                 const seatNum = this.dataset.seatNum;
                 const seatType = this.dataset.seatType;
                 
-                // VIP / Couple seats usually cost more. 
-                // Currently system has base price, let's just format it.
-                // If you want price logic: let price = basePrice * (seatType=="VIP"? 1.2 : 1);
                 let price = parseFloat(this.dataset.price) || 0;
-                // Add 15k surcharge for VIP visually just for fun (in real sys this comes from backend calculation)
                 if (seatType === "VIP") price += 15000;
                 
-                let formattedPrice = new Intl.NumberFormat('vi-VN').format(price) + ' đ';
-
-                // Update panel details
-                if (hiddenId) hiddenId.value = seatId;
                 if (numDisplay) numDisplay.innerText = seatNum;
                 if (typeDisplay) typeDisplay.innerText = "Loại ghế: " + seatType;
-                if (totalDisplay) totalDisplay.innerText = formattedPrice;
+                if (totalDisplay) totalDisplay.innerText = new Intl.NumberFormat('vi-VN').format(price) + ' đ';
 
-                // Show panel
                 panel.classList.add('active');
             });
         });
+
+        // ========== ĐẶT VÉ QUA API ==========
+        if (btnPay) {
+            btnPay.addEventListener('click', async () => {
+                if (!selectedSeatId) {
+                    showToast('error', 'Lỗi', 'Vui lòng chọn ghế trước khi thanh toán.');
+                    return;
+                }
+
+                // Disable button + show loading
+                btnPay.disabled = true;
+                btnPayText.classList.add('d-none');
+                btnPayLoading.classList.remove('d-none');
+
+                try {
+                    const response = await fetch('/api/TicketsApi/book', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            showtimeId: showtimeId,
+                            seatId: selectedSeatId,
+                            paymentMethod: paymentMethod?.value || 'Card'
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // ✅ Thành công
+                        showToast('success', 'Đặt vé thành công!', 
+                            `Ghế ${data.seatNumber} — ${data.movieTitle} — ${new Intl.NumberFormat('vi-VN').format(data.price)} đ`);
+                        
+                        // Đánh dấu ghế vừa đặt thành "booked"
+                        if (selectedSeat) {
+                            selectedSeat.classList.remove('available', 'selected');
+                            selectedSeat.classList.add('booked');
+                            selectedSeat.style.pointerEvents = 'none';
+                        }
+
+                        // Ẩn panel
+                        selectedSeat = null;
+                        selectedSeatId = null;
+                        panel.classList.remove('active');
+
+                        // Sau 3 giây, chuyển sang trang Vé của tôi
+                        setTimeout(() => {
+                            window.location.href = '/Booking/MyTickets';
+                        }, 3000);
+
+                    } else if (response.status === 401) {
+                        // Chưa đăng nhập
+                        showToast('error', 'Chưa đăng nhập', 'Vui lòng đăng nhập để đặt vé.');
+                        setTimeout(() => { window.location.href = '/Account/Login'; }, 2000);
+
+                    } else if (response.status === 409) {
+                        // Ghế đã bị đặt (conflict)
+                        showToast('error', 'Ghế đã được đặt!', data.message || 'Ghế này đã có người đặt. Vui lòng chọn ghế khác.');
+                        if (selectedSeat) {
+                            selectedSeat.classList.remove('available', 'selected');
+                            selectedSeat.classList.add('booked');
+                        }
+                        selectedSeat = null;
+                        selectedSeatId = null;
+                        panel.classList.remove('active');
+
+                    } else {
+                        showToast('error', 'Lỗi', data.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
+                    }
+
+                } catch (err) {
+                    console.error('Booking error:', err);
+                    showToast('error', 'Lỗi kết nối', 'Không thể kết nối đến server.');
+                } finally {
+                    btnPay.disabled = false;
+                    btnPayText.classList.remove('d-none');
+                    btnPayLoading.classList.add('d-none');
+                }
+            });
+        }
+
+        // ========== TOAST THÔNG BÁO ==========
+        function showToast(type, title, msg) {
+            const toast = document.getElementById('booking-toast');
+            const inner = document.getElementById('toast-inner');
+            const icon = document.getElementById('toast-icon');
+            const titleEl = document.getElementById('toast-title');
+            const msgEl = document.getElementById('toast-msg');
+
+            if (type === 'success') {
+                inner.style.background = 'rgba(16, 185, 129, 0.95)';
+                icon.className = 'bi bi-check-circle-fill fs-3 text-white';
+            } else {
+                inner.style.background = 'rgba(229, 9, 20, 0.95)';
+                icon.className = 'bi bi-exclamation-triangle-fill fs-3 text-white';
+            }
+
+            titleEl.innerText = title;
+            msgEl.innerText = msg;
+            toast.style.display = 'block';
+            toast.style.animation = 'fadeInDown 0.4s ease';
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOutUp 0.4s ease';
+                setTimeout(() => { toast.style.display = 'none'; }, 400);
+            }, 4000);
+        }
     });
 </script>
+<style>
+    @@keyframes fadeInDown {
+        from { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+        to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    @@keyframes fadeOutUp {
+        from { opacity: 1; transform: translateX(-50%) translateY(0); }
+        to   { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+    }
+</style>
 }

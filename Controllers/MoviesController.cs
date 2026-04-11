@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CinemaManagement.Data;
 using CinemaManagement.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CinemaManagement.Controllers
 {
@@ -25,7 +26,40 @@ namespace CinemaManagement.Controllers
             return View(movies);
         }
 
+        // GET: Movies/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var movie = await _context.Movies
+                .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
+                .Include(m => m.Showtimes)
+                    .ThenInclude(st => st.Room).ThenInclude(r => r.Theater)
+                .Include(m => m.Showtimes)
+                    .ThenInclude(st => st.Tickets).ThenInclude(t => t.Payment)
+                .FirstOrDefaultAsync(m => m.MovieId == id);
+
+            if (movie == null) return NotFound();
+
+            // Thể loại dạng string list
+            ViewBag.Genres = movie.MovieGenres.Select(mg => mg.Genre.GenreName).ToList();
+
+            // Tổng vé đã bán (Booked, Completed)
+            var bookedTickets = movie.Showtimes
+                .SelectMany(st => st.Tickets)
+                .Where(t => t.Status == "Booked")
+                .ToList();
+
+            ViewBag.TotalTickets = bookedTickets.Count;
+
+            // Tổng doanh thu (thanh toán Completed)
+            ViewBag.TotalRevenue = bookedTickets
+                .Where(t => t.Payment?.Status == "Completed")
+                .Sum(t => t.Payment?.Amount ?? 0m);
+
+            return View(movie);
+        }
+
         // GET: Movies/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             ViewBag.Genres = _context.Genres.ToList();
@@ -35,6 +69,7 @@ namespace CinemaManagement.Controllers
         // POST: Movies/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(Movie movie, int[] selectedGenres)
         {
             if (ModelState.IsValid)
@@ -55,7 +90,8 @@ namespace CinemaManagement.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                return RedirectToAction(nameof(Index));
+                TempData["Success"] = $"Đã thêm phim '{movie.Title}' thành công.";
+                return RedirectToAction("Movies", "Admin");
             }
 
             ViewBag.Genres = _context.Genres.ToList();
@@ -63,6 +99,7 @@ namespace CinemaManagement.Controllers
         }
 
         // GET: Movies/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id)
         {
             var movie = await _context.Movies
@@ -80,6 +117,7 @@ namespace CinemaManagement.Controllers
         // POST: Movies/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, Movie movie, int[] selectedGenres)
         {
             if (id != movie.MovieId) return NotFound();
@@ -104,7 +142,8 @@ namespace CinemaManagement.Controllers
                 }
 
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                TempData["Success"] = $"Đã cập nhật phim '{movie.Title}'.";
+                return RedirectToAction("Movies", "Admin");
             }
 
             ViewBag.Genres = _context.Genres.ToList();
@@ -112,6 +151,7 @@ namespace CinemaManagement.Controllers
         }
 
         // GET: Movies/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var movie = await _context.Movies.FindAsync(id);
@@ -123,6 +163,7 @@ namespace CinemaManagement.Controllers
         // POST: Movies/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var movie = await _context.Movies.FindAsync(id);
@@ -130,8 +171,9 @@ namespace CinemaManagement.Controllers
             {
                 _context.Movies.Remove(movie);
                 await _context.SaveChangesAsync();
+                TempData["Success"] = $"Đã xoá phim thành công.";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Movies", "Admin");
         }
     }
 }

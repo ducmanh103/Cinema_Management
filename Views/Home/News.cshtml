@@ -1,0 +1,114 @@
+@{
+    ViewData["Title"] = "Tin tức điện ảnh";
+}
+
+<style>
+    .news-card {
+        background: rgba(20, 20, 20, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.2s, background 0.3s;
+    }
+    .news-card:hover {
+        transform: translateY(-5px);
+        background: rgba(30, 30, 30, 0.9);
+        border-color: rgba(229, 9, 20, 0.4);
+    }
+    .news-img {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+    }
+    .news-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        z-index: 2;
+    }
+    .news-date {
+        color: #888;
+        font-size: 0.85rem;
+    }
+    .news-title {
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .news-title:hover {
+        color: var(--primary);
+    }
+</style>
+
+<div class="mb-5 text-center">
+    <h1 class="fw-bolder" style="text-transform: uppercase; font-size: 3rem; letter-spacing: 2px;">
+        <span style="color:var(--primary)">Tin tức</span> Điển Ảnh
+    </h1>
+    <p class="text-muted fs-5 mt-3">Cập nhật những thông tin nóng hổi nhất từ Hollywood và phòng vé Việt Nam.</p>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- Hot News Item 1 -->
+    <div class="col-12">
+        <div class="news-card d-flex flex-column flex-md-row">
+            <div class="position-relative" style="flex: 0 0 50%;">
+                <span class="badge bg-danger news-badge px-3 py-2 fs-6">🔥 TIÊU ĐIỂM</span>
+                <img src="/img/movies/DUNE-banner.jpg" style="width: 100%; height: 100%; min-height: 350px; object-fit: cover;" alt="Hot News" />
+            </div>
+            <div class="p-4 p-md-5 d-flex flex-column justify-content-center">
+                <span class="news-date mb-2"><i class="bi bi-clock"></i> 12/04/2026 - Bởi Admin</span>
+                <a href="#" class="news-title mb-3" style="font-size: 2.2rem; line-height: 1.2;">DUNE: PART TWO Phá Vỡ Mọi Kỷ Lục Phòng Vé Toàn Cầu, Đạt Mốc Tỷ Đô</a>
+                <p class="text-muted fs-5">Siêu tác phẩm khoa học viễn tưởng của đạo diễn Denis Villeneuve đã chính thức xác lập kỷ lục mới, trở thành bộ phim có thành tích mở màn xuất sắc nhất năm 2026...</p>
+                <div class="mt-4">
+                    <a href="#" class="btn btn-outline-light rounded-pill px-4">Đọc tiếp <i class="bi bi-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- News Grid Item 2 -->
+    <div class="col-md-6 col-lg-4">
+        <div class="news-card h-100">
+            <div class="position-relative">
+                <span class="badge bg-warning text-dark news-badge">REVIEW PHIM</span>
+                <img src="/img/movies/mai-banner.jpg" class="news-img" alt="News 2" />
+            </div>
+            <div class="p-3">
+                <span class="news-date mt-2 mb-2 d-block"><i class="bi bi-clock"></i> 10/04/2026</span>
+                <a href="#" class="news-title h5 d-block mb-3">Review "MAI": Bản giao hưởng giàu cảm xúc của Trấn Thành</a>
+                <p class="text-muted small">Cùng phân tích những góc máy đắt giá và diễn xuất đỉnh cao trong tác phẩm trăm tỷ mới nhất từ điện ảnh Việt Nam...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- News Grid Item 3 -->
+    <div class="col-md-6 col-lg-4">
+        <div class="news-card h-100">
+            <div class="position-relative">
+                <span class="badge bg-success news-badge">KHUYẾN MÃI</span>
+                <img src="https://images.unsplash.com/photo-1604014237800-1c9102c219da?q=80&w=800&auto=format&fit=crop" class="news-img" alt="News 3" />
+            </div>
+            <div class="p-3">
+                <span class="news-date mt-2 mb-2 d-block"><i class="bi bi-clock"></i> 05/04/2026</span>
+                <a href="#" class="news-title h5 d-block mb-3">CinemaHub x MoMo: Giảm 50% Vé Chạm Đỉnh Mùa Hè</a>
+                <p class="text-muted small">Chỉ cần thanh toán qua Ví MoMo, bạn sẽ được giảm ngay 50% (Tối đa 100K) cho mọi suất chiếu nội địa và bom tấn 3D...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- News Grid Item 4 -->
+    <div class="col-md-6 col-lg-4">
+        <div class="news-card h-100">
+            <div class="position-relative">
+                <span class="badge bg-info text-dark news-badge">TIN VẮN</span>
+                <img src="https://images.unsplash.com/photo-1585647347384-2593bc35786b?q=80&w=800&auto=format&fit=crop" class="news-img" alt="News 4" />
+            </div>
+            <div class="p-3">
+                <span class="news-date mt-2 mb-2 d-block"><i class="bi bi-clock"></i> 02/04/2026</span>
+                <a href="#" class="news-title h5 d-block mb-3">Kịch tính Phase 6 của Vũ trụ Điện Ảnh Marvel (MCU)</a>
+                <p class="text-muted small">Kevin Feige chính thức tiết lộ lịch trình 3 bộ phim mới chuẩn bị bước vào giai đoạn bấm máy năm 2026...</p>
+            </div>
+        </div>
+    </div>
+</div>

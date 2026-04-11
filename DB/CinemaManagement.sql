@@ -168,38 +168,62 @@ VALUES
 INSERT INTO MovieGenres (MovieId, GenreId) VALUES (1, 6), (2, 5), (3, 3), (4, 4);
 
 -- Theater
-INSERT INTO Theaters (Name, Address) VALUES (N'Cinema Plaza', N'123 Nguyễn Huệ, Q1, TP.HCM');
+INSERT INTO Theaters (Name, Address) VALUES 
+(N'Cinema Plaza', N'123 Nguyễn Huệ, Q1, TP.HCM'),
+(N'Lotte Cinema Hà Đông', N'110 Trần Phú, Hà Đông, Hà Nội'),
+(N'CGV Vincom Đà Nẵng', N'910A Ngô Quyền, Sơn Trà, Đà Nẵng'),
+(N'Galaxy Cinema Cần Thơ', N'Đại lộ Hoà Bình, Ninh Kiều, Cần Thơ'),
+(N'BHD Star Huế', N'Vincom Plaza, Phú Nhuận, Huế');
 
 -- Rooms
-INSERT INTO Rooms (TheaterId, RoomName, SeatCount) VALUES (1, N'Phòng 1', 30), (1, N'Phòng 2', 20);
+INSERT INTO Rooms (TheaterId, RoomName, SeatCount) VALUES 
+-- Cinema Plaza (2 phòng cũ)
+(1, N'Phòng 1', 30), (1, N'Phòng 2', 20),
+-- Lotte Hà Đông (5 phòng)
+(2, N'Phòng 1', 40), (2, N'Phòng 2', 40), (2, N'Phòng 3', 30), (2, N'Phòng 4', 30), (2, N'Phòng 5', 50),
+-- CGV Đà Nẵng (6 phòng)
+(3, N'Phòng 1', 50), (3, N'Phòng 2', 40), (3, N'Phòng 3', 40), (3, N'Phòng 4', 30), (3, N'Phòng 5', 30), (3, N'Phòng 6', 30),
+-- Galaxy Cần Thơ (5 phòng)
+(4, N'Phòng 1', 40), (4, N'Phòng 2', 40), (4, N'Phòng 3', 30), (4, N'Phòng 4', 30), (4, N'Phòng 5', 20),
+-- BHD Star Huế (7 phòng)
+(5, N'Phòng 1', 50), (5, N'Phòng 2', 40), (5, N'Phòng 3', 40), (5, N'Phòng 4', 30), (5, N'Phòng 5', 30), (5, N'Phòng 6', 30), (5, N'Phòng 7', 20);
 
--- Seats Phòng 1 (30 ghế)
-DECLARE @row CHAR(1) = 'A'
-DECLARE @col INT = 1
-WHILE ASCII(@row) <= ASCII('E')
-BEGIN
-    SET @col = 1
-    WHILE @col <= 6
-    BEGIN
-        INSERT INTO Seats (SeatNumber, SeatType, RoomId) 
-        VALUES (@row + CAST(@col AS VARCHAR), CASE WHEN @row >= 'D' THEN 'VIP' ELSE 'Standard' END, 1)
-        SET @col = @col + 1
-    END
-    SET @row = CHAR(ASCII(@row) + 1)
-END
+-- Tạo ghế tự động cho TẤT CẢ các phòng chiếu (từ RoomId = 1 đến 25)
+DECLARE @roomId INT = 1;
+DECLARE @seatCount INT;
+DECLARE @maxRow CHAR(1);
+DECLARE @maxCol INT;
+DECLARE @row CHAR(1);
+DECLARE @col INT;
 
--- Seats Phòng 2 (20 ghế)
-SET @row = 'A'
-WHILE ASCII(@row) <= ASCII('D')
+WHILE @roomId <= 25
 BEGIN
-    SET @col = 1
-    WHILE @col <= 5
+    SELECT @seatCount = SeatCount FROM Rooms WHERE RoomId = @roomId;
+    
+    -- Cấu trúc ghế theo SeatCount:
+    IF @seatCount = 50 BEGIN SET @maxRow = 'E'; SET @maxCol = 10; END
+    ELSE IF @seatCount = 40 BEGIN SET @maxRow = 'E'; SET @maxCol = 8; END
+    ELSE IF @seatCount = 30 BEGIN SET @maxRow = 'E'; SET @maxCol = 6; END
+    ELSE BEGIN SET @maxRow = 'D'; SET @maxCol = 5; END
+
+    SET @row = 'A';
+    WHILE ASCII(@row) <= ASCII(@maxRow)
     BEGIN
-        INSERT INTO Seats (SeatNumber, SeatType, RoomId) 
-        VALUES (@row + CAST(@col AS VARCHAR), CASE WHEN @row = 'D' THEN 'VIP' ELSE 'Standard' END, 2)
-        SET @col = @col + 1
+        SET @col = 1;
+        WHILE @col <= @maxCol
+        BEGIN
+            INSERT INTO Seats (SeatNumber, SeatType, RoomId) 
+            VALUES (
+                @row + CAST(@col AS VARCHAR), 
+                CASE WHEN ASCII(@row) >= ASCII(@maxRow) - 1 THEN 'VIP' ELSE 'Standard' END, 
+                @roomId
+            );
+            SET @col = @col + 1;
+        END
+        SET @row = CHAR(ASCII(@row) + 1);
     END
-    SET @row = CHAR(ASCII(@row) + 1)
+    
+    SET @roomId = @roomId + 1;
 END
 
 -- Showtimes mẫu

@@ -1,0 +1,125 @@
+@{
+    ViewData["Title"] = "Hệ thống Rạp CinemaHub";
+}
+
+<style>
+    .theater-card {
+        background: rgba(20, 20, 20, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .theater-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(229, 9, 20, 0.2);
+        border-color: rgba(229, 9, 20, 0.3);
+    }
+    .theater-img-wrapper {
+        position: relative;
+        height: 200px;
+        overflow: hidden;
+    }
+    .theater-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s;
+    }
+    .theater-card:hover .theater-img {
+        transform: scale(1.1);
+    }
+    .theater-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 2;
+    }
+</style>
+
+<div class="mb-5 text-center">
+    <h1 class="fw-bolder" style="text-transform: uppercase; font-size: 3rem; letter-spacing: 2px;">
+        <span style="color:var(--primary)">Hệ thống</span> Rạp
+    </h1>
+    <p class="text-muted fs-5 mt-3">Trải nghiệm điện ảnh đỉnh cao tại mạng lưới rạp chiếu phủ sóng toàn quốc.</p>
+</div>
+
+<div class="row g-4">
+    <!-- Theater 1 -->
+    <div class="col-md-6 col-lg-4">
+        <div class="theater-card h-100">
+            <div class="theater-img-wrapper">
+                <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800&auto=format&fit=crop" class="theater-img" alt="CinemaHub Hà Nội" />
+                <span class="badge bg-danger theater-badge px-3 py-2 fs-6 rounded-pill">Premium IMAX</span>
+            </div>
+            <div class="p-4">
+                <h4 class="fw-bold text-white mb-3">CinemaHub Hà Nội</h4>
+                <p class="text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Tầng 5, The Loop Shopping Center, 241 Xuân Thủy, Cầu Giấy</p>
+                <p class="text-muted mb-3"><i class="bi bi-camera-reels-fill text-warning me-2"></i>7 Phòng chiếu / 450 Ghế</p>
+                <a href="#" class="btn btn-outline-light w-100 rounded-pill"><i class="bi bi-calendar-check"></i> Xem Lịch Chiếu</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theater 2 -->
+    <div class="col-md-6 col-lg-4">
+        <div class="theater-card h-100">
+            <div class="theater-img-wrapper">
+                <img src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=800&auto=format&fit=crop" class="theater-img" alt="CinemaHub TP.HCM" />
+                <span class="badge bg-danger theater-badge px-3 py-2 fs-6 rounded-pill">4DX Available</span>
+            </div>
+            <div class="p-4">
+                <h4 class="fw-bold text-white mb-3">CinemaHub TP.HCM</h4>
+                <p class="text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Tầng B1, Vincom Center Landmark 81, Quận Bình Thạnh</p>
+                <p class="text-muted mb-3"><i class="bi bi-camera-reels-fill text-warning me-2"></i>10 Phòng chiếu / 600 Ghế</p>
+                <a href="#" class="btn btn-outline-light w-100 rounded-pill"><i class="bi bi-calendar-check"></i> Xem Lịch Chiếu</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theater 3 -->
+    <div class="col-md-6 col-lg-4">
+        <div class="theater-card h-100">
+            <div class="theater-img-wrapper">
+                <img src="https://images.unsplash.com/photo-1595769816263-9b910be24d5f?q=80&w=800&auto=format&fit=crop" class="theater-img" alt="CinemaHub Đà Nẵng" />
+            </div>
+            <div class="p-4">
+                <h4 class="fw-bold text-white mb-3">CinemaHub Đà Nẵng</h4>
+                <p class="text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Tầng 4, Vincom Plaza, 910A Ngô Quyền, Sơn Trà</p>
+                <p class="text-muted mb-3"><i class="bi bi-camera-reels-fill text-warning me-2"></i>5 Phòng chiếu / 300 Ghế</p>
+                <a href="#" class="btn btn-outline-light w-100 rounded-pill"><i class="bi bi-calendar-check"></i> Xem Lịch Chiếu</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theater 4 -->
+    <div class="col-md-6 col-lg-4">
+        <div class="theater-card h-100">
+            <div class="theater-img-wrapper">
+                <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800&auto=format&fit=crop" class="theater-img" alt="CinemaHub Cần Thơ" />
+            </div>
+            <div class="p-4">
+                <h4 class="fw-bold text-white mb-3">CinemaHub Cần Thơ</h4>
+                <p class="text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Tầng 3, Sense City, Số 1 Hòa Bình, Ninh Kiều</p>
+                <p class="text-muted mb-3"><i class="bi bi-camera-reels-fill text-warning me-2"></i>5 Phòng chiếu / 250 Ghế</p>
+                <a href="#" class="btn btn-outline-light w-100 rounded-pill"><i class="bi bi-calendar-check"></i> Xem Lịch Chiếu</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theater 5 -->
+    <div class="col-md-6 col-lg-4">
+        <div class="theater-card h-100">
+            <div class="theater-img-wrapper">
+                <img src="https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=800&auto=format&fit=crop" class="theater-img" alt="CinemaHub Huế" />
+            </div>
+            <div class="p-4">
+                <h4 class="fw-bold text-white mb-3">CinemaHub Huế</h4>
+                <p class="text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Tầng 4, Vincom Hùng Vương, 50A Hùng Vương, Phú Nhuận</p>
+                <p class="text-muted mb-3"><i class="bi bi-camera-reels-fill text-warning me-2"></i>6 Phòng chiếu / 320 Ghế</p>
+                <a href="#" class="btn btn-outline-light w-100 rounded-pill"><i class="bi bi-calendar-check"></i> Xem Lịch Chiếu</a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -33,6 +33,24 @@ namespace CinemaManagement.Controllers
             return View();
         }
 
+        public IActionResult Theaters()
+        {
+            ViewData["Title"] = "Hệ thống Rạp";
+            return View();
+        }
+
+        public IActionResult News()
+        {
+            ViewData["Title"] = "Tin tức Điện ảnh";
+            return View();
+        }
+
+        public IActionResult About()
+        {
+            ViewData["Title"] = "Giới thiệu CinemaHub";
+            return View();
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

@@ -41,6 +41,12 @@ namespace CinemaManagement.Controllers
             if (userIdClaim == null) return Unauthorized();
             int userId = int.Parse(userIdClaim);
 
+            if (dto.PaymentMethod == "Cash" && !User.IsInRole("Admin") && !User.IsInRole("Staff"))
+            {
+                TempData["Error"] = "Khách hàng mua vé online bắt buộc phải thanh toán bằng thẻ/ngân hàng.";
+                return RedirectToAction(nameof(SelectSeat), new { id = dto.ShowtimeId });
+            }
+
             try
             {
                 var ticket = await _ticketService.BookTicketAsync(userId, dto);

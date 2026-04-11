@@ -1,80 +1,136 @@
 @model CinemaManagement.Models.Movie
 @{
-    ViewData["Title"] = "Thêm phim";
-    Layout = "_Layout";
+    ViewData["Title"] = "Thêm phim mới";
+    Layout = "_AdminLayout";
     var genres = ViewBag.Genres as List<CinemaManagement.Models.Genre> ?? new();
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card" style="background:#1e1e1e; border:1px solid #333">
-            <div class="card-body p-4">
-                <h3 class="mb-4" style="color:#e50914"><i class="bi bi-plus-circle"></i> Thêm phim mới</h3>
+<!-- Content Header -->
+<section class="content-header">
+    <h1>
+        Thêm phim
+        <small>Nhập thông tin phim mới</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a asp-action="Index" asp-controller="Admin"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a asp-action="Movies" asp-controller="Admin"><i class="fa fa-film"></i> Phim</a></li>
+        <li class="active">Thêm mới</li>
+    </ol>
+</section>
 
+<section class="content">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title"><i class="fa fa-plus-circle"></i> Thông tin phim</h3>
+                </div>
                 <form asp-action="Create" method="post">
                     @Html.AntiForgeryToken()
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label asp-for="Title" class="form-label">Tên phim *</label>
-                            <input asp-for="Title" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff"
-                                   placeholder="Nhập tên phim" id="movie-title" />
-                            <span asp-validation-for="Title" class="text-danger small"></span>
+                    <div class="box-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label asp-for="Title">Tên phim <span class="text-danger">*</span></label>
+                                    <input asp-for="Title" class="form-control" placeholder="Nhập tên phim" id="movie-title" />
+                                    <span asp-validation-for="Title" class="text-danger small"></span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="Duration" class="form-label">Thời lượng (phút) *</label>
-                            <input asp-for="Duration" type="number" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff"
-                                   id="movie-duration" />
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Duration">Thời lượng (phút) <span class="text-danger">*</span></label>
+                                    <input asp-for="Duration" type="number" class="form-control" min="1" id="movie-duration" />
+                                    <span asp-validation-for="Duration" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="ReleaseDate">Ngày phát hành</label>
+                                    <input asp-for="ReleaseDate" type="date" class="form-control" id="movie-release" />
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="Status">Trạng thái</label>
+                                    <select asp-for="Status" class="form-control" id="movie-status">
+                                        <option value="Now Showing">Đang chiếu</option>
+                                        <option value="Coming Soon">Sắp chiếu</option>
+                                        <option value="Ended">Đã kết thúc</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="ReleaseDate" class="form-label">Ngày phát hành</label>
-                            <input asp-for="ReleaseDate" type="date" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff"
-                                   id="movie-release" />
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="PosterUrl">URL Poster</label>
+                                    <input asp-for="PosterUrl" class="form-control" placeholder="https://..." id="movie-poster" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="BannerUrl">URL Banner</label>
+                                    <input asp-for="BannerUrl" class="form-control" placeholder="https://..." id="movie-banner" />
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="Status" class="form-label">Trạng thái</label>
-                            <select asp-for="Status" class="form-select" style="background:#2a2a2a;border-color:#444;color:#fff" id="movie-status">
-                                <option value="Now Showing">Đang chiếu</option>
-                                <option value="Coming Soon">Sắp chiếu</option>
-                                <option value="Ended">Đã kết thúc</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="PosterUrl" class="form-label">URL Poster</label>
-                            <input asp-for="PosterUrl" class="form-control" style="background:#2a2a2a;border-color:#444;color:#fff"
-                                   placeholder="https://..." id="movie-poster" />
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="Description" class="form-label">Mô tả</label>
-                            <textarea asp-for="Description" class="form-control" rows="3"
-                                      style="background:#2a2a2a;border-color:#444;color:#fff"
+                        <div class="form-group">
+                            <label asp-for="Description">Mô tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="4"
                                       placeholder="Nội dung phim..." id="movie-desc"></textarea>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Thể loại</label>
-                            <div class="d-flex flex-wrap gap-3">
+                        <div class="form-group">
+                            <label>Thể loại</label>
+                            <div class="row">
                                 @foreach (var g in genres)
                                 {
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="selectedGenres"
-                                               value="@g.GenreId" id="genre-@g.GenreId" />
-                                        <label class="form-check-label" for="genre-@g.GenreId">@g.GenreName</label>
+                                    <div class="col-md-3 col-xs-6">
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" name="selectedGenres"
+                                                       value="@g.GenreId" id="genre-@g.GenreId" />
+                                                @g.GenreName
+                                            </label>
+                                        </div>
                                     </div>
                                 }
                             </div>
                         </div>
+
+                        <!-- Xem trước poster -->
+                        <div id="poster-preview-wrap" style="display:none; margin-top:8px">
+                            <label>Xem trước poster:</label><br />
+                            <img id="poster-preview" src="" style="max-height:180px; border-radius:4px; border:1px solid #ddd" />
+                        </div>
                     </div>
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-danger" id="save-movie-btn">
-                            <i class="bi bi-check-circle"></i> Lưu
+                    <div class="box-footer">
+                        <button type="submit" class="btn btn-primary" id="save-movie-btn">
+                            <i class="fa fa-save"></i> Lưu phim
                         </button>
-                        <a asp-action="Index" class="btn btn-outline-secondary">Huỷ</a>
+                        <a asp-action="Movies" asp-controller="Admin" class="btn btn-default pull-right">
+                            <i class="fa fa-arrow-left"></i> Huỷ
+                        </a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-</div>
+</section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Xem trước poster khi nhập URL
+        $('#movie-poster').on('input', function () {
+            var url = $(this).val().trim();
+            if (url) {
+                $('#poster-preview').attr('src', url);
+                $('#poster-preview-wrap').show();
+            } else {
+                $('#poster-preview-wrap').hide();
+            }
+        });
+    </script>
 }

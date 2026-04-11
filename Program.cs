@@ -22,9 +22,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ================================
+
 // 2. Database
-// ================================
+
 builder.Services.AddDbContext<CinemaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 

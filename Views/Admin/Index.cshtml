@@ -55,11 +55,22 @@
         <div class="col-lg-3 col-xs-6">
             <div class="small-box bg-red">
                 <div class="inner">
-                    <h3 style="font-size:26px">@(((decimal)ViewBag.TotalRevenue).ToString("N0")) ₫</h3>
+                    <h3 style="font-size:26px">
+                        @if (User.IsInRole("Admin"))
+                        {
+                            var revStr = ((decimal)ViewBag.TotalRevenue).ToString("N0") + " ₫";
+                            <span id="rev-hidden" onclick="$('#rev-hidden').hide(); $('#rev-visible').show();" style="cursor:pointer;" title="Bấm để xem">*** ₫</span>
+                            <span id="rev-visible" onclick="$('#rev-visible').hide(); $('#rev-hidden').show();" style="display:none; cursor:pointer;" title="Bấm để ẩn">@revStr</span>
+                        }
+                        else
+                        {
+                            <span>*** ₫</span>
+                        }
+                    </h3>
                     <p>Doanh thu</p>
                 </div>
                 <div class="icon"><i class="fa fa-money"></i></div>
-                <a href="#" class="small-box-footer">Thống kê <i class="fa fa-arrow-circle-right"></i></a>
+                <a asp-action="Revenue" class="small-box-footer">Thống kê <i class="fa fa-arrow-circle-right"></i></a>
             </div>
         </div>
     </div>
@@ -72,14 +83,17 @@
                     <h3 class="box-title"><i class="fa fa-bolt"></i> Thao tác nhanh</h3>
                 </div>
                 <div class="box-body">
-                    <a asp-controller="Movies" asp-action="Create" class="btn btn-danger btn-sm">
-                        <i class="fa fa-plus-circle"></i> Thêm phim mới
-                    </a>
-                    &nbsp;
-                    <a asp-action="Movies" class="btn btn-primary btn-sm">
-                        <i class="fa fa-film"></i> Quản lý phim
-                    </a>
-                    &nbsp;
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Movies" asp-action="Create" class="btn btn-danger btn-sm">
+                            <i class="fa fa-plus-circle"></i> Thêm phim mới
+                        </a>
+                        <span>&nbsp;</span>
+                        <a asp-action="Movies" class="btn btn-primary btn-sm">
+                            <i class="fa fa-film"></i> Quản lý phim
+                        </a>
+                        <span>&nbsp;</span>
+                    }
                     <a asp-action="Users" class="btn btn-success btn-sm">
                         <i class="fa fa-users"></i> Quản lý người dùng
                     </a>
@@ -87,10 +101,13 @@
                     <a asp-action="Showtimes" class="btn btn-warning btn-sm">
                         <i class="fa fa-calendar"></i> Quản lý suất chiếu
                     </a>
-                    &nbsp;
-                    <a href="/swagger" target="_blank" class="btn btn-info btn-sm">
-                        <i class="fa fa-code"></i> Swagger API
-                    </a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <span>&nbsp;</span>
+                        <a asp-action="Revenue" class="btn btn-info btn-sm">
+                            <i class="fa fa-bar-chart"></i> Thống kê doanh thu
+                        </a>
+                    }
                 </div>
             </div>
         </div>
@@ -101,65 +118,134 @@
         <div class="col-md-12">
             <div class="box box-primary">
                 <div class="box-header with-border">
-                    <h3 class="box-title"><i class="fa fa-ticket"></i> Vé đặt gần đây</h3>
+                    <h3 class="box-title">
+                        <i class="fa fa-ticket"></i> Vé đặt gần đây
+                        <span class="label label-primary" style="margin-left:8px">@recentTickets.Count</span>
+                    </h3>
                     <div class="box-tools pull-right">
                         <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                     </div>
                 </div>
-                <div class="box-body">
-                    <table id="tickets-table" class="table table-bordered table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Phim</th>
-                                <th>Phòng</th>
-                                <th>Suất chiếu</th>
-                                <th>Ghế</th>
-                                <th>Giá</th>
-                                <th>Trạng thái</th>
-                                <th>Thanh toán</th>
-                                <th>Thời gian đặt</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var t in recentTickets)
-                            {
+                <div class="box-body" style="padding:0">
+                    @if (recentTickets.Any())
+                    {
+                        <table id="tickets-table" class="table table-bordered table-striped table-hover" style="margin:0">
+                            <thead>
                                 <tr>
-                                    <td>@t.TicketId</td>
-                                    <td>@t.MovieTitle</td>
-                                    <td>@t.RoomName</td>
-                                    <td>@t.StartTime.ToString("HH:mm dd/MM/yyyy")</td>
-                                    <td><strong>@t.SeatNumber</strong></td>
-                                    <td>@t.Price.ToString("N0") ₫</td>
-                                    <td>
-                                        @if (t.Status == "Booked")
-                                        {
-                                            <span class="label label-success">Đã đặt</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="label label-default">Đã huỷ</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        @if (t.PaymentStatus == "Completed")
-                                        {
-                                            <span class="label label-success">Đã thanh toán</span>
-                                        }
-                                        else if (t.PaymentStatus == "Pending")
-                                        {
-                                            <span class="label label-warning">Chờ TT</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="label label-default">@t.PaymentStatus</span>
-                                        }
-                                    </td>
-                                    <td>@t.BookingTime.ToString("HH:mm dd/MM/yyyy")</td>
+                                    <th>#</th>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <th>Khách hàng</th>
+                                    }
+                                    <th>Phim</th>
+                                    <th>Phòng</th>
+                                    <th>Suất chiếu</th>
+                                    <th>Ghế</th>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <th>Giá</th>
+                                    }
+                                    <th>Trạng thái vé</th>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <th>Thanh toán</th>
+                                    }
+                                    <th>Thời gian đặt</th>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <th style="width:70px">Xoá</th>
+                                    }
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in recentTickets)
+                                {
+                                    <tr id="ticket-row-@t.TicketId">
+                                        <td>@t.TicketId</td>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <td>
+                                                <i class="fa fa-user-circle text-muted"></i>
+                                                @t.CustomerName
+                                            </td>
+                                        }
+                                        <td><strong>@t.MovieTitle</strong></td>
+                                        <td>@t.RoomName</td>
+                                        <td>@t.StartTime.ToString("HH:mm dd/MM/yyyy")</td>
+                                        <td>
+                                            @if (t.SeatNumber != "N/A")
+                                            {
+                                                <span class="badge bg-blue">@t.SeatNumber</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <td>@t.Price.ToString("N0") ₫</td>
+                                        }
+                                        <td>
+                                            @if (t.Status == "Booked")
+                                            {
+                                                <span class="label label-success">Đã đặt</span>
+                                            }
+                                            else if (t.Status == "Cancelled")
+                                            {
+                                                <span class="label label-danger">Đã huỷ</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="label label-default">@t.Status</span>
+                                            }
+                                        </td>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <td>
+                                                @if (t.PaymentStatus == "Completed")
+                                                {
+                                                    <span class="label label-success">Đã thanh toán</span>
+                                                }
+                                                else if (t.PaymentStatus == "Pending")
+                                                {
+                                                    <span class="label label-warning">Chờ TT</span>
+                                                }
+                                                else if (t.PaymentStatus == "Failed")
+                                                {
+                                                    <span class="label label-danger">Thất bại</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="label label-default">@t.PaymentStatus</span>
+                                                }
+                                            </td>
+                                        }
+                                        <td>@t.BookingTime.ToString("HH:mm dd/MM/yyyy")</td>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <td>
+                                                <button type="button"
+                                                        class="btn btn-xs btn-danger btn-delete-ticket"
+                                                        data-id="@t.TicketId"
+                                                        data-info="Vé #@t.TicketId – @t.MovieTitle (@t.SeatNumber)"
+                                                        title="Xoá vé này khỏi DB">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted" style="padding:40px">
+                            <i class="fa fa-ticket fa-3x"></i>
+                            <p style="margin-top:12px">Chưa có vé nào được đặt.</p>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -168,16 +254,67 @@
 </section>
 
 @section Scripts {
+    @* Hidden form dùng để POST xoá vé (submit bằng JS) *@
+    @if (User.IsInRole("Admin"))
+    {
+        <form id="delete-ticket-form" asp-action="DeleteTicket" method="post" style="display:none">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="delete-ticket-id" name="id" />
+        </form>
+    }
+
     <script>
         $(function () {
-            $('#tickets-table').DataTable({
+            var table = $('#tickets-table').DataTable({
                 "language": {
                     "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Vietnamese.json"
                 },
                 "order": [[0, "desc"]],
-                "pageLength": 10,
-                "responsive": true
+                "pageLength": 20,
+                "responsive": true,
+                "columnDefs": [
+                    { "orderable": false, "targets": @Html.Raw(User.IsInRole("Admin") ? "[7, 8, 10]" : "[5]") }
+                ]
+            });
+
+            // Xử lý click nút Xoá vé
+            $(document).on('click', '.btn-delete-ticket', function () {
+                var id   = $(this).data('id');
+                var info = $(this).data('info');
+
+                if (!confirm('Xoá ' + info + ' khỏi cơ sở dữ liệu?\n⚠ Thao tác này không thể hoàn tác!')) return;
+
+                var $row = $('#ticket-row-' + id);
+                var $btn = $(this);
+                $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+
+                // Submit form POST
+                $('#delete-ticket-id').val(id);
+                var formData = $('#delete-ticket-form').serialize();
+
+                $.ajax({
+                    url: '@Url.Action("DeleteTicket", "Admin")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (res) {
+                        if (res.success) {
+                            // Xoá row khỏi DataTable
+                            table.row($row).remove().draw(false);
+                            // Cập nhật badge đếm
+                            var currentCount = parseInt($('.label-primary').text()) || 0;
+                            $('.label-primary').text(currentCount - 1);
+                        } else {
+                            alert('Lỗi: ' + (res.message || 'Không thể xoá vé này.'));
+                            $btn.prop('disabled', false).html('<i class="fa fa-trash"></i>');
+                        }
+                    },
+                    error: function () {
+                        alert('Lỗi kết nối. Vui lòng thử lại.');
+                        $btn.prop('disabled', false).html('<i class="fa fa-trash"></i>');
+                    }
+                });
             });
         });
     </script>
 }
+

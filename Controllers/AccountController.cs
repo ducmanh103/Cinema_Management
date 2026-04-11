@@ -63,7 +63,7 @@ namespace CinemaManagement.Controllers
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
 
-            return user.Role.RoleName == "Admin"
+            return (user.Role.RoleName == "Admin" || user.Role.RoleName == "Staff")
                 ? RedirectToAction("Index", "Admin")
                 : RedirectToAction("Index", "Home");
         }

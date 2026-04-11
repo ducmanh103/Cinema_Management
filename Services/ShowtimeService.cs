@@ -26,7 +26,7 @@ namespace CinemaManagement.Services
         public async Task<List<ShowtimeDto>> GetShowtimesByDateAsync(DateTime date)
         {
             return await _context.Showtimes
-                .Where(s => s.StartTime.Date == date.Date)
+                .Where(s => s.StartTime.Date >= date.Date)
                 .Include(s => s.Movie)
                 .Include(s => s.Room).ThenInclude(r => r.Theater)
                 .Include(s => s.Room).ThenInclude(r => r.Seats)

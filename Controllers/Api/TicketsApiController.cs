@@ -26,6 +26,11 @@ namespace CinemaManagement.Controllers.Api
 
             int userId = int.Parse(userIdClaim);
 
+            if (dto.PaymentMethod == "Cash" && !User.IsInRole("Admin") && !User.IsInRole("Staff"))
+            {
+                return BadRequest(new { message = "Bạn phải thanh toán vé trực tuyến bằng Ứng dụng ngân hàng hoặc Momo." });
+            }
+
             try
             {
                 var ticket = await _ticketService.BookTicketAsync(userId, dto);
