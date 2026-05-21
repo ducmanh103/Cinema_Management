@@ -329,10 +329,9 @@ body {
                             <select id="payment-method" class="form-select form-select-sm border-0 shadow-none bg-transparent text-light p-0 fw-semibold" style="cursor: pointer;">
                                 @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
                                 {
-                                    <option value="Cash" class="text-dark">Thanh toán tại quầy (Tiền mặt)</option>
+                                    <option value="Cash" class="text-dark">Thanh toán tiền mặt tại quầy</option>
                                 }
-                                <option value="Card" class="text-dark">Ứng dụng Ngân hàng (Chuyển khoản)</option>
-                                <option value="Momo" class="text-dark">Ví điện tử MoMo</option>
+                                <option value="VnPay" class="text-dark" selected>VNPay (Quét QR)</option>
                             </select>
                         </div>
                     </div>
@@ -347,6 +346,14 @@ body {
                     </div>
                 </div>
             </div>
+
+            @* Form ẩn dùng để POST sang PaymentController khi chọn VNPay (cần antiforgery) *@
+            <form id="vnpay-form" method="post" asp-controller="Payment" asp-action="CreateVnPayUrl" class="d-none">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ShowtimeId" id="vnpay-showtime" />
+                <input type="hidden" name="SeatId" id="vnpay-seat" />
+                <input type="hidden" name="PaymentMethod" value="VnPay" />
+            </form>
         }
         else
         {
@@ -433,6 +440,14 @@ body {
                 btnPay.disabled = true;
                 btnPayText.classList.add('d-none');
                 btnPayLoading.classList.remove('d-none');
+
+                // ===== Nhánh VNPay: submit form ẩn để redirect sang cổng VNPay =====
+                if ((paymentMethod?.value || '') === 'VnPay') {
+                    document.getElementById('vnpay-showtime').value = showtimeId;
+                    document.getElementById('vnpay-seat').value = selectedSeatId;
+                    document.getElementById('vnpay-form').submit();
+                    return;
+                }
 
                 try {
                     const response = await fetch('/api/TicketsApi/book', {

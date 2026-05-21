@@ -1,151 +1,774 @@
 @using CinemaManagement.Models.ViewModels
 @model List<ShowtimeDto>
+@inject CinemaManagement.Data.CinemaDbContext DbContext
+@using Microsoft.EntityFrameworkCore
 @{
     ViewData["Title"] = "Lịch Chiếu";
     Layout = "_Layout";
-    var movieTitle = ViewBag.MovieTitle as string;
-    
-    // Group showtimes by Theater, then by Date
+    ViewBag.FullWidth = true; // Renders full-width layout, container defined internally
+
+    var movieTitle        = ViewBag.MovieTitle as string;
+    var movieId           = ViewBag.MovieId as int?;
+    var selectedDate      = ViewBag.SelectedDate as DateTime?;
+    var selectedTheaterId = ViewBag.SelectedTheaterId as int?;
+
+    // Chế độ xem phim: nhóm theo rạp → ngày
+    bool isMovieMode = movieTitle != null;
+
     var groupedShowtimes = Model
         .GroupBy(s => s.TheaterName)
         .OrderBy(g => g.Key)
         .ToDictionary(
-            g => g.Key, 
+            g => g.Key,
             g => g.GroupBy(s => s.StartTime.Date).OrderBy(d => d.Key).ToList()
         );
+
+    // 14 ngày kể từ hôm nay
+    var today    = DateTime.Today;
+    var dateRange = Enumerable.Range(0, 14).Select(i => today.AddDays(i)).ToList();
+
+    var theaters = ViewBag.Theaters as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+
+    // Fetch active movie if isMovieMode is true
+    CinemaManagement.Models.Movie? activeMovie = null;
+    if (isMovieMode && movieId.HasValue)
+    {
+        activeMovie = DbContext.Movies
+            .AsNoTracking()
+            .Include(m => m.MovieGenres)
+            .ThenInclude(mg => mg.Genre)
+            .FirstOrDefault(m => m.MovieId == movieId.Value);
+    }
+
+    // Fetch movie information dictionary for general mode metadata display
+    var distinctMovieTitles = Model.Select(s => s.MovieTitle).Distinct().ToList();
+    var movieInfoDict = DbContext.Movies
+        .AsNoTracking()
+        .Include(m => m.MovieGenres)
+        .ThenInclude(mg => mg.Genre)
+        .Where(m => distinctMovieTitles.Contains(m.Title))
+        .ToDictionary(m => m.Title, m => m);
 }
 
 <style>
-.theater-block {
-    background: rgba(30, 30, 30, 0.6);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 24px;
-}
-.theater-name {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--text-main);
-    border-left: 4px solid var(--primary);
-    padding-left: 12px;
-    margin-bottom: 16px;
-}
-.date-header {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #bbb;
-    margin-bottom: 12px;
-    margin-top: 20px;
-    border-bottom: 1px solid #333;
-    padding-bottom: 8px;
-}
-.showtime-pill {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: #2a2a2a;
-    border: 1px solid #444;
-    border-radius: 8px;
-    min-width: 90px;
-    padding: 10px 15px;
-    color: #fff;
-    text-decoration: none;
-    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-.showtime-pill:hover {
-    background: var(--primary);
-    border-color: var(--primary-hover);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
-}
-.showtime-pill.disabled {
-    background: #1a1a1a;
-    border-color: #333;
-    color: #666;
-    pointer-events: none;
-    text-decoration: line-through;
-}
-.time-text {
-    font-size: 1.25rem;
-    font-weight: 700;
-}
-.room-text {
-    font-size: 0.75rem;
-    color: #aaa;
-    margin-top: 4px;
-}
-.showtime-pill:hover .room-text {
-    color: #ddd;
-}
+    /* Styling variables and custom animations */
+    :root {
+        --primary: #e50914;
+        --primary-glow: rgba(229, 9, 20, 0.35);
+        --transition-base: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        --glass-bg: rgba(20, 20, 20, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    }
+
+    /* Container alignment */
+    .showtimes-container {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    /* ───── Hero Header (Movie Mode) ───── */
+    .showtimes-hero-wrapper {
+        position: relative;
+        height: 380px;
+        border-radius: 24px;
+        overflow: hidden;
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        margin-top: 1rem;
+        margin-bottom: 2.5rem;
+    }
+    .showtimes-hero-bg {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center 30%;
+        filter: blur(20px) brightness(0.35);
+        transform: scale(1.1);
+        z-index: 1;
+    }
+    .showtimes-hero-gradient {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to right, rgba(15, 15, 15, 0.95) 0%, rgba(15, 15, 15, 0.6) 50%, rgba(15, 15, 15, 0.15) 100%),
+                    linear-gradient(to top, rgba(15, 15, 15, 1) 0%, rgba(15, 15, 15, 0) 50%);
+        z-index: 2;
+    }
+    .showtimes-hero-content {
+        position: relative;
+        z-index: 3;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        padding: 2.5rem;
+        gap: 2rem;
+    }
+    .showtimes-hero-poster {
+        height: 300px;
+        aspect-ratio: 2/3;
+        object-fit: cover;
+        border-radius: 16px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(229, 9, 20, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        transition: transform 0.4s ease;
+    }
+    .showtimes-hero-poster:hover {
+        transform: scale(1.03) rotate(0.5deg);
+    }
+    .showtimes-hero-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .showtimes-hero-title {
+        font-size: 2.3rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.2;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        margin: 0;
+    }
+    .showtimes-hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin-top: 0.25rem;
+    }
+    .showtimes-hero-desc {
+        color: #c0c0c0;
+        font-size: 0.92rem;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-top: 0.5rem;
+        max-width: 750px;
+    }
+
+    /* ───── Simple Page Header (General Mode) ───── */
+    .page-title-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: var(--glass-shadow);
+        margin-top: 1rem;
+        margin-bottom: 2.5rem;
+    }
+    .page-title-card h2 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        margin: 0;
+        background: linear-gradient(to right, #fff, #f5a623);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 15px rgba(245, 166, 35, 0.1);
+    }
+    .page-title-card p {
+        color: #888;
+        margin: 0.5rem 0 0 0;
+        font-size: 0.95rem;
+    }
+
+    /* ───── Filter Bar Glassmorphism ───── */
+    .filter-bar-glass {
+        background: rgba(20, 20, 20, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 1.5rem;
+        box-shadow: var(--glass-shadow);
+        margin-bottom: 2.5rem;
+    }
+    .filter-label {
+        font-size: 0.75rem;
+        color: #888;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-label i {
+        color: var(--primary);
+    }
+
+    /* ───── Date Strip Styling ───── */
+    .date-strip-wrap {
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+    }
+    .date-strip-wrap::-webkit-scrollbar { display: none; }
+    .date-strip {
+        display: flex;
+        gap: 12px;
+        min-width: max-content;
+    }
+    .date-btn-capsule {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 76px;
+        height: 88px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.02);
+        color: #b5b5b5;
+        text-decoration: none;
+        transition: var(--transition-base);
+        cursor: pointer;
+        user-select: none;
+    }
+    .date-btn-capsule .day-name {
+        font-size: 0.72rem;
+        color: #777;
+        font-weight: 600;
+        margin-bottom: 3px;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+    .date-btn-capsule .day-num {
+        font-size: 1.45rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    .date-btn-capsule .month-lbl {
+        font-size: 0.7rem;
+        color: #777;
+        margin-top: 3px;
+        font-weight: 500;
+    }
+    .date-btn-capsule:hover {
+        border-color: rgba(229, 9, 20, 0.5);
+        background: rgba(229, 9, 20, 0.08);
+        color: #fff;
+        transform: translateY(-4px);
+        box-shadow: 0 6px 15px rgba(229, 9, 20, 0.15);
+    }
+    .date-btn-capsule.active {
+        background: linear-gradient(135deg, #e50914, #b20710);
+        border-color: #e50914;
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(229, 9, 20, 0.45);
+        transform: scale(1.02);
+    }
+    .date-btn-capsule.active .day-name,
+    .date-btn-capsule.active .month-lbl {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* ───── Theater Strip Styling ───── */
+    .theater-strip-wrap {
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+    }
+    .theater-strip-wrap::-webkit-scrollbar { display: none; }
+    .theater-strip {
+        display: flex;
+        gap: 12px;
+        min-width: max-content;
+    }
+    .theater-btn-capsule {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-width: 180px;
+        height: 52px;
+        padding: 0 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.02);
+        color: #b5b5b5;
+        text-decoration: none;
+        transition: var(--transition-base);
+        cursor: pointer;
+        user-select: none;
+    }
+    .theater-btn-capsule .tb-icon {
+        font-size: 1.25rem;
+    }
+    .theater-btn-capsule .tb-name {
+        font-weight: 600;
+        font-size: 0.85rem;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    .theater-btn-capsule:hover {
+        border-color: rgba(229, 9, 20, 0.5);
+        background: rgba(229, 9, 20, 0.08);
+        color: #fff;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(229, 9, 20, 0.15);
+    }
+    .theater-btn-capsule.active {
+        background: linear-gradient(135deg, #e50914, #b20710);
+        border-color: #e50914;
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(229, 9, 20, 0.45);
+        transform: scale(1.02);
+    }
+
+    /* ───── Theater Cards ───── */
+    .theater-card-glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 1.8rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--glass-shadow);
+        border-left: 5px solid var(--primary);
+    }
+    .theater-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .theater-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .theater-title i {
+        color: var(--primary);
+        font-size: 1.5rem;
+    }
+
+    /* ───── Movie Row Styling (General Mode) ───── */
+    .showtime-movie-row {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.015);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 18px;
+        margin-bottom: 1.5rem;
+        transition: var(--transition-base);
+    }
+    .showtime-movie-row:hover {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.07);
+    }
+    .showtime-movie-info-wrap {
+        display: flex;
+        gap: 1.25rem;
+        align-items: flex-start;
+    }
+    .movie-poster-thumb {
+        width: 70px;
+        aspect-ratio: 2/3;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    }
+    .movie-details-wrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .movie-title-link {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #fff;
+        text-decoration: none;
+        transition: var(--transition-base);
+        margin: 0;
+    }
+    .movie-title-link:hover {
+        color: var(--primary);
+    }
+
+    /* Badges system */
+    .badge-capsule {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+    .badge-age-t18 { background: #dc3545; color: #fff; }
+    .badge-age-t16 { background: #fd7e14; color: #fff; }
+    .badge-age-t13 { background: #ffc107; color: #212529; }
+    .badge-age-p   { background: #198754; color: #fff; }
+
+    .badge-format {
+        background: rgba(245, 166, 35, 0.15);
+        color: #f5a623;
+        border: 1px solid rgba(245, 166, 35, 0.3);
+    }
+    .badge-genre {
+        background: rgba(255, 255, 255, 0.05);
+        color: #aaa;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .meta-item {
+        font-size: 0.8rem;
+        color: #888;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* ───── Showtime Tickets Grid ───── */
+    .showtimes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+        gap: 12px;
+        width: 100%;
+    }
+    .showtime-ticket {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 14px;
+        padding: 10px 14px;
+        color: #fff;
+        text-decoration: none;
+        transition: var(--transition-base);
+        cursor: pointer;
+        user-select: none;
+        text-align: center;
+    }
+    .showtime-ticket .time-lbl {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.1;
+    }
+    .showtime-ticket .room-lbl {
+        font-size: 0.72rem;
+        color: #888;
+        margin-top: 4px;
+        font-weight: 500;
+    }
+    .showtime-ticket .price-lbl {
+        font-size: 0.72rem;
+        color: #f5a623;
+        margin-top: 2px;
+        font-weight: 600;
+    }
+    .showtime-ticket .seat-lbl {
+        font-size: 0.65rem;
+        color: #2ec4b6;
+        margin-top: 4px;
+        font-weight: 600;
+        background: rgba(46, 196, 182, 0.1);
+        padding: 1px 6px;
+        border-radius: 4px;
+    }
+    .showtime-ticket:hover {
+        background: linear-gradient(135deg, var(--primary), #b20710);
+        border-color: var(--primary);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(229, 9, 20, 0.45);
+        color: #fff;
+    }
+    .showtime-ticket:hover .time-lbl,
+    .showtime-ticket:hover .room-lbl,
+    .showtime-ticket:hover .price-lbl {
+        color: #fff;
+    }
+    .showtime-ticket:hover .seat-lbl {
+        background: rgba(255, 255, 255, 0.25);
+        color: #fff;
+    }
+
+    /* Disabled / Passed states */
+    .showtime-ticket.disabled {
+        background: rgba(255, 255, 255, 0.01) !important;
+        border-color: rgba(255, 255, 255, 0.03) !important;
+        cursor: not-allowed;
+        pointer-events: none;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+    .showtime-ticket.disabled .time-lbl {
+        color: #444 !important;
+        text-decoration: line-through;
+    }
+    .showtime-ticket.disabled .room-lbl,
+    .showtime-ticket.disabled .price-lbl {
+        color: #333 !important;
+    }
+    .showtime-ticket.disabled .status-lbl-disabled {
+        font-size: 0.65rem;
+        color: #777;
+        margin-top: 4px;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.04);
+        padding: 1px 6px;
+        border-radius: 4px;
+    }
+
+    /* ───── Empty State ───── */
+    .empty-state-glass {
+        background: var(--glass-bg);
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+        border-radius: 24px;
+        text-align: center;
+        padding: 4rem 2rem;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: var(--glass-shadow);
+    }
+    .empty-state-glass i {
+        font-size: 4rem;
+        color: rgba(255, 255, 255, 0.15);
+        display: block;
+        margin-bottom: 1.5rem;
+    }
+    .empty-state-glass h5 {
+        color: #fff;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .empty-state-glass p {
+        color: #888;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Movie Mode - Date header under theater */
+    .theater-date-header {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #aaa;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 1.25rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .theater-date-header i {
+        color: var(--primary);
+    }
 </style>
 
-<div class="mb-5 text-center mt-3">
-    <h2 class="display-6 fw-bold text-uppercase" style="text-shadow: 0 2px 10px rgba(229,9,20,0.5);">
-        @if (movieTitle != null)
-        {
-            <span class="text-light">Lịch Chiếu Phim</span><br/>
-            <span style="color: var(--primary);">@movieTitle</span>
-        }
-        else
-        {
-            <span style="color: var(--primary);">Tất cả Lịch Chiếu</span>
-        }
-    </h2>
-    <p class="text-muted">Chọn thời gian và rạp chiếu phù hợp với bạn</p>
-</div>
-
-@if (!Model.Any())
-{
-    <div class="text-center mt-5 p-5 glass rounded-4">
-        <i class="bi bi-calendar-x" style="font-size:4rem; color: #555;"></i>
-        <h4 class="mt-3">Chưa có lịch chiếu</h4>
-        <p class="text-muted">Hiện tại phim chưa có lịch chiếu cụ thể. Vui lòng quay lại sau.</p>
-        <a asp-controller="Movies" asp-action="Index" class="btn btn-outline-light mt-3 rounded-pill px-4">
-            <i class="bi bi-arrow-left"></i> Khám phá phim khác
-        </a>
-    </div>
-}
-else
-{
-    foreach (var theater in groupedShowtimes)
+<div class="showtimes-container mt-4">
+    @* ── Movie Detail Hero Header (Movie Mode) ── *@
+    @if (isMovieMode)
     {
-        <div class="theater-block">
-            <h3 class="theater-name">@theater.Key</h3>
-            
-            @foreach (var dateGroup in theater.Value)
-            {
-                <div class="date-header">
-                    <i class="bi bi-calendar-check me-2 text-primary-custom"></i> 
-                    @dateGroup.Key.ToString("dd/MM/yyyy") - @(dateGroup.Key.Date == DateTime.Today ? "Hôm nay" : dateGroup.Key.ToString("dddd"))
-                </div>
-                
-                <!-- Group by Movie if viewing all showtimes -->
-                @if (movieTitle == null)
-                {
-                    var showtimesByMovie = dateGroup.GroupBy(s => s.MovieTitle).OrderBy(g => g.Key);
-                    foreach (var movieGroup in showtimesByMovie)
+        var poster = activeMovie?.PosterUrl ?? "/img/movies/default.jpg";
+        var banner = activeMovie?.BannerUrl ?? poster;
+        var durationText = activeMovie != null ? $"{activeMovie.Duration} phút" : "N/A";
+        var rating = activeMovie != null ? GetMovieRating(activeMovie.MovieId).ToString("0.0") : "7.5";
+
+        <div class="showtimes-hero-wrapper">
+            <div class="showtimes-hero-bg" style="background-image: url('@banner');"></div>
+            <div class="showtimes-hero-gradient"></div>
+            <div class="showtimes-hero-content">
+                <img src="@poster" class="showtimes-hero-poster" alt="@movieTitle" />
+                <div class="showtimes-hero-details">
+                    <div>
+                        <span class="badge bg-danger mb-2">🔥 ĐANG CHIẾU</span>
+                        <h2 class="showtimes-hero-title">@movieTitle</h2>
+                    </div>
+
+                    <div class="showtimes-hero-meta">
+                        <span class="badge-capsule @GetAgeBadgeClass(movieTitle ?? "")" title="@GetAgeBadgeDesc(movieTitle ?? "")">
+                            @GetAgeBadgeText(movieTitle ?? "")
+                        </span>
+                        <span class="badge-capsule badge-format">
+                            @GetMovieFormat(movieTitle ?? "")
+                        </span>
+                        <span class="meta-item">
+                            <i class="bi bi-clock"></i> @durationText
+                        </span>
+                        <span class="meta-item text-warning">
+                            <i class="bi bi-star-fill text-warning"></i> @rating/10
+                        </span>
+                    </div>
+
+                    @if (activeMovie != null && !string.IsNullOrEmpty(activeMovie.Description))
                     {
-                        <h6 class="mt-3 text-light fw-bold ms-2">@movieGroup.Key</h6>
-                        <div class="d-flex flex-wrap gap-3 mb-3 ms-3">
-                            @foreach (var st in movieGroup)
+                        <p class="showtimes-hero-desc">@activeMovie.Description</p>
+                    }
+
+                    <div class="mt-2">
+                        <a asp-controller="Movies" asp-action="Index" class="btn btn-outline-light rounded-pill btn-sm px-4">
+                            <i class="bi bi-arrow-left me-1"></i> Quay lại Danh sách Phim
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* ── Page Title (General Mode) ── *@
+        <div class="page-title-card">
+            <h2>LỊCH CHIẾU HỆ THỐNG</h2>
+            <p>Khám phá lịch chiếu và đặt vé xem phim ngay lập tức tại các rạp CinemaHub</p>
+        </div>
+    }
+
+    @* ── Filter Bar ── *@
+    <div class="filter-bar-glass">
+        @* ── 14 Days Strip ── *@
+        <div class="filter-label">
+            <i class="bi bi-calendar3"></i> Chọn ngày chiếu
+        </div>
+        <div class="date-strip-wrap mb-4" id="dateStripWrap">
+            <div class="date-strip">
+                @foreach (var d in dateRange)
+                {
+                    bool isActive = selectedDate.HasValue && selectedDate.Value.Date == d.Date;
+                    string dayName = d.Date == today ? "Hôm nay"
+                                   : d.Date == today.AddDays(1) ? "Ngày mai"
+                                   : d.ToString("ddd", new System.Globalization.CultureInfo("vi-VN"));
+
+                    var dateUrl = isMovieMode
+                        ? Url.Action("Index", "Showtimes", new { movieId = movieId, date = d.ToString("yyyy-MM-dd"), theaterId = selectedTheaterId })
+                        : Url.Action("Index", "Showtimes", new { date = d.ToString("yyyy-MM-dd"), theaterId = selectedTheaterId });
+
+                    <a href="@dateUrl" class="date-btn-capsule @(isActive ? "active" : "")">
+                        <span class="day-name">@dayName</span>
+                        <span class="day-num">@d.Day</span>
+                        <span class="month-lbl">Thg @(d.Month)</span>
+                    </a>
+                }
+            </div>
+        </div>
+
+        @* ── Theater Selection Strip ── *@
+        <div class="filter-label">
+            <i class="bi bi-building"></i> Chọn rạp chiếu
+        </div>
+        <div class="theater-strip-wrap" id="theaterStripWrap">
+            <div class="theater-strip">
+                @{
+                    var allRapUrl = isMovieMode
+                        ? Url.Action("Index", "Showtimes", new { movieId = movieId, date = selectedDate?.ToString("yyyy-MM-dd") })
+                        : Url.Action("Index", "Showtimes", new { date = selectedDate?.ToString("yyyy-MM-dd") });
+                }
+                <a href="@allRapUrl" class="theater-btn-capsule @(selectedTheaterId == null ? "active" : "")">
+                    <span class="tb-icon">🎬</span>
+                    <span class="tb-name">Tất cả các rạp</span>
+                </a>
+                @foreach (var t in theaters)
+                {
+                    var rapUrl = isMovieMode
+                        ? Url.Action("Index", "Showtimes", new { movieId = movieId, date = selectedDate?.ToString("yyyy-MM-dd"), theaterId = t.TheaterId })
+                        : Url.Action("Index", "Showtimes", new { date = selectedDate?.ToString("yyyy-MM-dd"), theaterId = t.TheaterId });
+                    var rapActive = (selectedTheaterId == t.TheaterId);
+                    <a href="@rapUrl" class="theater-btn-capsule @(rapActive ? "active" : "")">
+                        <span class="tb-icon">🏛️</span>
+                        <span class="tb-name">@t.TheaterName</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ── Showtimes Results ── *@
+    @if (!Model.Any())
+    {
+        <div class="empty-state-glass">
+            <i class="bi bi-calendar-x"></i>
+            <h5>Không có suất chiếu nào</h5>
+            <p>
+                @if (isMovieMode)
+                {
+                    <text>Rất tiếc, bộ phim chưa có lịch chiếu tại các rạp được chọn cho ngày @selectedDate?.ToString("dd/MM/yyyy").</text>
+                }
+                else
+                {
+                    <text>Hiện tại chưa có suất chiếu nào được lên lịch cho ngày @selectedDate?.ToString("dd/MM/yyyy").</text>
+                }
+            </p>
+            <a asp-controller="Movies" asp-action="Index" class="btn btn-outline-light rounded-pill px-4 btn-sm">
+                <i class="bi bi-film me-1"></i> Khám phá phim khác
+            </a>
+        </div>
+    }
+    else
+    {
+        @foreach (var theater in groupedShowtimes)
+        {
+            <div class="theater-card-glass">
+                <div class="theater-header">
+                    <h3 class="theater-title">
+                        <i class="bi bi-building"></i> @theater.Key
+                    </h3>
+                </div>
+
+                @if (isMovieMode)
+                {
+                    @foreach (var dateGroup in theater.Value)
+                    {
+                        <div class="theater-date-header">
+                            <i class="bi bi-calendar-check"></i>
+                            @dateGroup.Key.ToString("dd/MM/yyyy")
+                            @if (dateGroup.Key.Date == today)
                             {
-                                if (st.AvailableSeats > 0)
+                                <span class="badge bg-danger ms-2" style="font-size:0.65rem;">Hôm nay</span>
+                            }
+                        </div>
+
+                        <div class="showtimes-grid mb-4">
+                            @foreach (var st in dateGroup)
+                            {
+                                bool isPassed = st.StartTime < DateTime.Now;
+                                bool isBookable = st.AvailableSeats > 0 && !isPassed;
+
+                                if (isBookable)
                                 {
-                                    <a asp-controller="Booking" asp-action="SelectSeat" asp-route-id="@st.ShowtimeId" 
-                                       class="showtime-pill" title="Còn @st.AvailableSeats ghế trống | Giá: @st.Price.ToString("N0") VNĐ">
-                                        <span class="time-text">@st.StartTime.ToString("HH:mm")</span>
-                                        <span class="room-text">@st.RoomName</span>
+                                    <a asp-controller="Booking" asp-action="SelectSeat" asp-route-id="@st.ShowtimeId"
+                                       class="showtime-ticket"
+                                       title="@st.MovieTitle | Phòng: @st.RoomName | Giá: @st.Price.ToString("N0") VNĐ">
+                                        <span class="time-lbl">@st.StartTime.ToString("HH:mm")</span>
+                                        <span class="room-lbl">@st.RoomName</span>
+                                        <span class="price-lbl">@st.Price.ToString("N0")₫</span>
+                                        <span class="seat-lbl">@st.AvailableSeats ghế trống</span>
                                     </a>
                                 }
                                 else
                                 {
-                                    <div class="showtime-pill disabled" title="Đã hết vé">
-                                        <span class="time-text">@st.StartTime.ToString("HH:mm")</span>
-                                        <span class="room-text">Hết ghế</span>
+                                    <div class="showtime-ticket disabled">
+                                        <span class="time-lbl">@st.StartTime.ToString("HH:mm")</span>
+                                        <span class="room-lbl">@st.RoomName</span>
+                                        <span class="price-lbl">@st.Price.ToString("N0")₫</span>
+                                        <span class="status-lbl-disabled">@(isPassed ? "Đã chiếu" : "Hết ghế")</span>
                                     </div>
                                 }
                             }
@@ -154,28 +777,202 @@ else
                 }
                 else
                 {
-                    <div class="d-flex flex-wrap gap-3">
-                        @foreach (var st in dateGroup)
+                    @* General Mode: Group by Movie *@
+                    @foreach (var dateGroup in theater.Value)
+                    {
+                        var byMovie = dateGroup.GroupBy(s => s.MovieTitle).OrderBy(g => g.Key).ToList();
+                        @foreach (var movieGroup in byMovie)
                         {
-                            if (st.AvailableSeats > 0)
-                            {
-                                <a asp-controller="Booking" asp-action="SelectSeat" asp-route-id="@st.ShowtimeId" 
-                                   class="showtime-pill" title="Còn @st.AvailableSeats ghế trống | Giá: @st.Price.ToString("N0") VNĐ">
-                                    <span class="time-text">@st.StartTime.ToString("HH:mm")</span>
-                                    <span class="room-text">@st.RoomName</span>
-                                </a>
-                            }
-                            else
-                            {
-                                <div class="showtime-pill disabled" title="Đã hết vé">
-                                    <span class="time-text">@st.StartTime.ToString("HH:mm")</span>
-                                    <span class="room-text">Hết ghế</span>
+                            var title = movieGroup.Key;
+                            var movieDetails = movieInfoDict.GetValueOrDefault(title);
+
+                            <div class="showtime-movie-row">
+                                <div class="showtime-movie-info-wrap">
+                                    @{
+                                        var moviePoster = movieDetails?.PosterUrl ?? "/img/movies/default.jpg";
+                                        var movieDuration = movieDetails != null ? $"{movieDetails.Duration} phút" : "N/A";
+                                        var rating = movieDetails != null ? GetMovieRating(movieDetails.MovieId).ToString("0.0") : "7.5";
+                                        var idLink = movieDetails != null ? Url.Action("Details", "Movies", new { id = movieDetails.MovieId }) : "#";
+                                    }
+                                    <a href="@idLink">
+                                        <img src="@moviePoster" class="movie-poster-thumb" alt="@title" />
+                                    </a>
+                                    <div class="movie-details-wrap">
+                                        <a href="@idLink" class="movie-title-link">@title</a>
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                                            <span class="badge-capsule @GetAgeBadgeClass(title)" title="@GetAgeBadgeDesc(title)">
+                                                @GetAgeBadgeText(title)
+                                            </span>
+                                            <span class="badge-capsule badge-format">
+                                                @GetMovieFormat(title)
+                                            </span>
+                                            <span class="meta-item">
+                                                <i class="bi bi-clock"></i> @movieDuration
+                                            </span>
+                                            <span class="meta-item text-warning">
+                                                <i class="bi bi-star-fill text-warning"></i> @rating/10
+                                            </span>
+                                            @if (movieDetails != null && movieDetails.MovieGenres != null)
+                                            {
+                                                @foreach (var mg in movieDetails.MovieGenres.Take(3))
+                                                {
+                                                    <span class="badge-capsule badge-genre">@mg.Genre.GenreName</span>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
-                            }
+
+                                <div class="showtimes-grid">
+                                    @foreach (var st in movieGroup)
+                                    {
+                                        bool isPassed = st.StartTime < DateTime.Now;
+                                        bool isBookable = st.AvailableSeats > 0 && !isPassed;
+
+                                        if (isBookable)
+                                        {
+                                            <a asp-controller="Booking" asp-action="SelectSeat" asp-route-id="@st.ShowtimeId"
+                                               class="showtime-ticket"
+                                               title="@st.MovieTitle | Phòng: @st.RoomName | Giá: @st.Price.ToString("N0") VNĐ">
+                                                <span class="time-lbl">@st.StartTime.ToString("HH:mm")</span>
+                                                <span class="room-lbl">@st.RoomName</span>
+                                                <span class="price-lbl">@st.Price.ToString("N0")₫</span>
+                                                <span class="seat-lbl">@st.AvailableSeats ghế trống</span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <div class="showtime-ticket disabled">
+                                                <span class="time-lbl">@st.StartTime.ToString("HH:mm")</span>
+                                                <span class="room-lbl">@st.RoomName</span>
+                                                <span class="price-lbl">@st.Price.ToString("N0")₫</span>
+                                                <span class="status-lbl-disabled">@(isPassed ? "Đã chiếu" : "Hết ghế")</span>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
                         }
-                    </div>
+                    }
                 }
+            </div>
+        }
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            function enableDragScroll(sliderId) {
+                const slider = document.getElementById(sliderId);
+                if (!slider) return;
+
+                let isDown = false;
+                let startX;
+                let scrollLeft;
+                let isDragging = false;
+
+                slider.style.cursor = "grab";
+                slider.style.userSelect = "none";
+                slider.style.touchAction = "pan-y";
+
+                slider.addEventListener("mousedown", (e) => {
+                    if (e.button !== 0) return; // Only left click
+                    isDown = true;
+                    isDragging = false;
+                    slider.style.cursor = "grabbing";
+                    startX = e.pageX - slider.offsetLeft;
+                    scrollLeft = slider.scrollLeft;
+                });
+
+                document.addEventListener("mouseup", () => {
+                    if (isDown) {
+                        isDown = false;
+                        slider.style.cursor = "grab";
+                    }
+                });
+
+                slider.addEventListener("mousemove", (e) => {
+                    if (!isDown) return;
+                    e.preventDefault();
+                    const x = e.pageX - slider.offsetLeft;
+                    const walk = (x - startX) * 1.5;
+                    if (Math.abs(walk) > 5) {
+                        isDragging = true;
+                    }
+                    slider.scrollLeft = scrollLeft - walk;
+                });
+
+                // Prevent browser's native drag-and-drop ghost image
+                slider.addEventListener("dragstart", (e) => {
+                    e.preventDefault();
+                });
+
+                // Prevent click actions if dragging occurred
+                slider.addEventListener("click", (e) => {
+                    if (isDragging) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                    }
+                }, true);
             }
-        </div>
+
+            enableDragScroll("dateStripWrap");
+            enableDragScroll("theaterStripWrap");
+        });
+    </script>
+}
+
+@functions {
+    public string GetAgeBadgeClass(string title)
+    {
+        string t = title.ToLower();
+        if (t.Contains("dune") || t.Contains("mai") || t.Contains("quật mộ") || t.Contains("sát thủ john wick"))
+            return "badge-age-t18";
+        if (t.Contains("biệt đội săn ma") || t.Contains("võ sĩ giác đấu") || t.Contains("deadpool"))
+            return "badge-age-t16";
+        if (t.Contains("vùng đất câm lặng") || t.Contains("fast"))
+            return "badge-age-t13";
+        return "badge-age-p";
+    }
+
+    public string GetAgeBadgeText(string title)
+    {
+        string t = title.ToLower();
+        if (t.Contains("dune") || t.Contains("mai") || t.Contains("quật mộ") || t.Contains("sát thủ john wick"))
+            return "T18";
+        if (t.Contains("biệt đội săn ma") || t.Contains("võ sĩ giác đấu") || t.Contains("deadpool"))
+            return "T16";
+        if (t.Contains("vùng đất câm lặng") || t.Contains("fast"))
+            return "T13";
+        return "P";
+    }
+
+    public string GetAgeBadgeDesc(string title)
+    {
+        string t = title.ToLower();
+        if (t.Contains("dune") || t.Contains("mai") || t.Contains("quật mộ") || t.Contains("sát thủ john wick"))
+            return "Phim dành cho khán giả từ 18 tuổi trở lên";
+        if (t.Contains("biệt đội săn ma") || t.Contains("võ sĩ giác đấu") || t.Contains("deadpool"))
+            return "Phim dành cho khán giả từ 16 tuổi trở lên";
+        if (t.Contains("vùng đất câm lặng") || t.Contains("fast"))
+            return "Phim dành cho khán giả từ 13 tuổi trở lên";
+        return "Phim dành cho mọi lứa tuổi (Phổ biến)";
+    }
+
+    public string GetMovieFormat(string title)
+    {
+        string t = title.ToLower();
+        if (t.Contains("avatar") || t.Contains("godzilla") || t.Contains("dune") || t.Contains("người nhện"))
+            return "IMAX 3D";
+        if (t.Contains("fast") || t.Contains("john wick") || t.Contains("sonic") || t.Contains("mufasa") || t.Contains("giác đấu"))
+            return "3D ATMOS";
+        return "2D DIGITAL";
+    }
+
+    public double GetMovieRating(int id)
+    {
+        // Stable mock rating based on ID
+        return 7.5 + (id % 13) * 0.16;
     }
 }

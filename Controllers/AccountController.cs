@@ -34,6 +34,7 @@ namespace CinemaManagement.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var user = await _context.Users
+                .AsNoTracking()
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Username == model.Username && u.Status == "Active");
 
@@ -85,7 +86,9 @@ namespace CinemaManagement.Controllers
                 return View(model);
             }
 
-            var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Customer");
+            var customerRole = await _context.Roles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.RoleName == "Customer");
             if (customerRole == null) return BadRequest("Lỗi hệ thống: vai trò Customer chưa được khởi tạo.");
 
             var user = new User

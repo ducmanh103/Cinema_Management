@@ -96,11 +96,8 @@ namespace CinemaManagement.Services
         public async Task<List<TicketDto>> GetUserTicketsAsync(int userId)
         {
             return await _context.Tickets
+                .AsNoTracking()
                 .Where(t => t.UserId == userId)
-                .Include(t => t.Showtime).ThenInclude(s => s.Movie)
-                .Include(t => t.Showtime).ThenInclude(s => s.Room)
-                .Include(t => t.Seat)
-                .Include(t => t.Payment)
                 .OrderByDescending(t => t.BookingTime)
                 .Select(t => new TicketDto
                 {
@@ -132,6 +129,111 @@ namespace CinemaManagement.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        /// <summary>
+        /// Tạo Ticket (Booked) + Payment (Pending) trong cùng 1 transaction để khoá ghế ngay.
+        /// Trả về TicketDto + PaymentId để controller dùng làm OrderId gửi sang VNPay.
+        /// </summary>
+        public async Task<(TicketDto Ticket, int PaymentId)> CreatePendingBookingAsync(int userId, BookTicketDto dto)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var showtime = await _context.Showtimes
+                    .Include(s => s.Movie)
+                    .Include(s => s.Room)
+                    .FirstOrDefaultAsync(s => s.ShowtimeId == dto.ShowtimeId)
+                    ?? throw new InvalidOperationException("Su\u1ea5t chi\u1ebfu kh\u00f4ng t\u1ed3n t\u1ea1i.");
+
+                var seat = await _context.Seats.FindAsync(dto.SeatId)
+                    ?? throw new InvalidOperationException("Gh\u1ebf kh\u00f4ng t\u1ed3n t\u1ea1i.");
+
+                if (seat.RoomId != showtime.RoomId)
+                    throw new InvalidOperationException("Gh\u1ebf kh\u00f4ng thu\u1ed9c ph\u00f2ng chi\u1ebfu n\u00e0y.");
+
+                bool alreadyBooked = await _context.Tickets
+                    .AnyAsync(t => t.ShowtimeId == dto.ShowtimeId
+                                && t.SeatId == dto.SeatId
+                                && t.Status == "Booked");
+
+                if (alreadyBooked)
+                    throw new InvalidOperationException("Gh\u1ebf n\u00e0y \u0111\u00e3 \u0111\u01b0\u1ee3c \u0111\u1eb7t. Vui l\u00f2ng ch\u1ecdn gh\u1ebf kh\u00e1c.");
+
+                var ticket = new Ticket
+                {
+                    ShowtimeId = dto.ShowtimeId,
+                    SeatId = dto.SeatId,
+                    UserId = userId,
+                    BookingTime = DateTime.Now,
+                    Status = "Booked" // khoá ghế nhờ unique index
+                };
+                _context.Tickets.Add(ticket);
+                await _context.SaveChangesAsync();
+
+                decimal actualPrice = showtime.Price + (seat.SeatType == "VIP" ? 15000m : 0m);
+
+                var payment = new Payment
+                {
+                    TicketId = ticket.TicketId,
+                    Amount = actualPrice,
+                    Method = dto.PaymentMethod, // "VnPay"
+                    Status = "Pending",
+                    PaidAt = DateTime.Now
+                };
+                _context.Payments.Add(payment);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                var ticketDto = new TicketDto
+                {
+                    TicketId = ticket.TicketId,
+                    MovieTitle = showtime.Movie?.Title ?? "",
+                    RoomName = showtime.Room?.RoomName ?? "",
+                    StartTime = showtime.StartTime,
+                    SeatNumber = seat.SeatNumber,
+                    Price = actualPrice,
+                    Status = ticket.Status,
+                    BookingTime = ticket.BookingTime,
+                    PaymentStatus = payment.Status
+                };
+                return (ticketDto, payment.PaymentId);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Sau khi VNPay redirect về:
+        ///   - success = true  → Payment.Status = Completed
+        ///   - success = false → Payment.Status = Failed, Ticket.Status = Cancelled (giải phóng ghế)
+        /// </summary>
+        public async Task<bool> ConfirmPaymentAsync(int paymentId, string transactionId, bool success)
+        {
+            var payment = await _context.Payments
+                .Include(p => p.Ticket)
+                .FirstOrDefaultAsync(p => p.PaymentId == paymentId);
+
+            if (payment == null) return false;
+            if (payment.Status == "Completed") return true; // idempotent: tránh xử lý 2 lần
+
+            if (success)
+            {
+                payment.Status = "Completed";
+                payment.PaidAt = DateTime.Now;
+            }
+            else
+            {
+                payment.Status = "Failed";
+                if (payment.Ticket != null) payment.Ticket.Status = "Cancelled";
+            }
+
+            await _context.SaveChangesAsync();
+            return success;
         }
     }
 }

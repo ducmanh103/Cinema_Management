@@ -20,7 +20,7 @@ namespace CinemaManagement.Controllers.Api
         public async Task<IActionResult> GetAll()
         {
             var users = await _context.Users
-                .Include(u => u.Role)
+                .AsNoTracking()
                 .Select(u => new UserDto
                 {
                     UserId = u.UserId,
@@ -39,30 +39,33 @@ namespace CinemaManagement.Controllers.Api
         public async Task<IActionResult> GetById(int id)
         {
             var user = await _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.UserId == id);
+                .AsNoTracking()
+                .Where(u => u.UserId == id)
+                .Select(u => new UserDto
+                {
+                    UserId = u.UserId,
+                    Username = u.Username,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    Status = u.Status,
+                    RoleName = u.Role.RoleName
+                })
+                .FirstOrDefaultAsync();
 
             if (user == null) return NotFound();
 
-            return Ok(new UserDto
-            {
-                UserId = user.UserId,
-                Username = user.Username,
-                FullName = user.FullName,
-                Email = user.Email,
-                Status = user.Status,
-                RoleName = user.Role.RoleName
-            });
+            return Ok(user);
         }
 
         // PUT api/UsersApi/5/status
         [HttpPut("{id}/status")]
         public async Task<IActionResult> ChangeStatus(int id, [FromBody] string status)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
-            user.Status = status;
-            await _context.SaveChangesAsync();
+            var affected = await _context.Users
+                .Where(u => u.UserId == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(u => u.Status, status));
+
+            if (affected == 0) return NotFound();
             return NoContent();
         }
 
@@ -70,10 +73,11 @@ namespace CinemaManagement.Controllers.Api
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null) return NotFound();
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            var affected = await _context.Users
+                .Where(u => u.UserId == id)
+                .ExecuteDeleteAsync();
+
+            if (affected == 0) return NotFound();
             return NoContent();
         }
     }

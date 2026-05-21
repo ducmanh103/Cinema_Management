@@ -1,0 +1,73 @@
+@using CinemaManagement.Models.ViewModels
+@model VnPaymentResponseModel
+@{
+    ViewData["Title"] = "Thanh toán thành công";
+    Layout = "_Layout";
+}
+
+<style>
+    .pay-result-wrap {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 16px;
+        background: radial-gradient(circle at top, rgba(16,185,129,0.12) 0%, rgba(11,12,16,1) 70%);
+    }
+    .pay-card {
+        max-width: 540px;
+        width: 100%;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 24px;
+        padding: 40px 36px;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        text-align: center;
+        color: #e2e8f0;
+    }
+    .pay-card .check {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        margin: 0 auto 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 30px rgba(16,185,129,0.45);
+        animation: pop 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .pay-card .check i { font-size: 3rem; color: white; }
+    .pay-card h2 { font-weight: 800; letter-spacing: 0.5px; }
+    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.08); font-size: 0.95rem; }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .lbl { color: #94a3b8; }
+    .info-row .val { color: #f1f5f9; font-weight: 600; }
+    @@keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+</style>
+
+<div class="pay-result-wrap">
+    <div class="pay-card">
+        <div class="check"><i class="bi bi-check-lg"></i></div>
+        <h2 class="text-light mb-2">Thanh toán thành công</h2>
+        <p class="text-muted mb-4">Cảm ơn bạn đã đặt vé. Vé của bạn đã được xác nhận.</p>
+
+        <div class="text-start">
+            <div class="info-row"><span class="lbl">Mã đơn hàng</span><span class="val">@Model.OrderId</span></div>
+            <div class="info-row"><span class="lbl">Mã giao dịch VNPay</span><span class="val">@Model.TransactionId</span></div>
+            <div class="info-row"><span class="lbl">Số tiền</span><span class="val">@Model.Amount.ToString("N0") VND</span></div>
+            <div class="info-row"><span class="lbl">Phương thức</span><span class="val">@Model.PaymentMethod</span></div>
+            <div class="info-row"><span class="lbl">Mô tả</span><span class="val">@Model.OrderDescription</span></div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <a asp-controller="Booking" asp-action="MyTickets" class="btn btn-success flex-fill rounded-pill fw-bold py-2">
+                <i class="bi bi-ticket-fill me-2"></i> Xem vé của tôi
+            </a>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light flex-fill rounded-pill fw-bold py-2">
+                <i class="bi bi-house me-2"></i> Trang chủ
+            </a>
+        </div>
+    </div>
+</div>

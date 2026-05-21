@@ -1,125 +1,1273 @@
+@model IEnumerable<dynamic>
 @{
     ViewData["Title"] = "Hệ thống Rạp CinemaHub";
+    Layout = "_Layout";
+
+    int totalTheaters       = ViewBag.TotalTheaters  ?? 0;
+    int totalSeats          = ViewBag.TotalSeats      ?? 0;
+    int totalMovies         = ViewBag.TotalMovies     ?? 0;
+    int totalShowtimesToday = ViewBag.TotalShowtimesToday ?? 0;
+
+    // Ảnh nền đẹp cho từng rạp
+    var theaterImages = new[]
+    {
+        "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=900&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=900&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1595769816263-9b910be24d5f?q=80&w=900&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=900&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=900&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1574267432553-4b4628081c31?q=80&w=900&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?q=80&w=900&auto=format&fit=crop"
+    };
+
+    // Công nghệ hiển thị xoay vòng
+    var techBadges = new[] { "IMAX®", "4DX®", "Dolby Atmos®", "ScreenX", "STARIUM", "4DX Screen", "PRIME" };
+    var techColors = new[] { "#0070ff", "#ff5c00", "#7b2fff", "#00b86b", "#e50914", "#ff5c00", "#ffd700" };
+
+    // Tiện ích có tại rạp (xoay vòng)
+    var amenitySets = new[]
+    {
+        new[] { "bi-wifi",        "bi-p-circle",       "bi-cup-hot",      "bi-accessibility" },
+        new[] { "bi-wifi",        "bi-camera-reels",   "bi-cup-straw",    "bi-p-circle"      },
+        new[] { "bi-wifi",        "bi-music-note-beamed","bi-bag",        "bi-star"          },
+        new[] { "bi-wifi",        "bi-p-circle",       "bi-shop",         "bi-ev-station"    },
+        new[] { "bi-wifi",        "bi-cup-hot",        "bi-camera-reels", "bi-star"          },
+    };
+    var amenityLabels = new[]
+    {
+        new[] { "Wi-Fi miễn phí", "Bãi đỗ xe", "Café & Snack", "Hỗ trợ người khuyết tật" },
+        new[] { "Wi-Fi miễn phí", "Phòng chiếu hiện đại", "Nước ngọt & Bắp", "Bãi đỗ xe" },
+        new[] { "Wi-Fi miễn phí", "Âm thanh vòm", "Khu mua sắm", "Điểm tích thưởng" },
+        new[] { "Wi-Fi miễn phí", "Bãi đỗ xe", "Khu ẩm thực", "Sạc xe điện" },
+        new[] { "Wi-Fi miễn phí", "Bar & Lounge", "Phòng chiếu hiện đại", "Ưu đãi thành viên" },
+    };
 }
 
 <style>
-    .theater-card {
-        background: rgba(20, 20, 20, 0.7);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 16px;
-        overflow: hidden;
-        transition: transform 0.3s, box-shadow 0.3s;
+/* ==========================================================================
+   HERO & STATS SECTION
+   ========================================================================== */
+.theaters-hero {
+    position: relative;
+    padding: 60px 0 40px;
+    overflow: hidden;
+    text-align: center;
+}
+.theaters-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(229,9,20,.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(229,9,20,.1);
+    border: 1px solid rgba(229,9,20,.25);
+    color: #ff6b7a;
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 50px;
+    margin-bottom: 20px;
+}
+.hero-title {
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    color: #fff;
+    margin-bottom: 15px;
+}
+.hero-title .accent { color: var(--primary, #e50914); }
+.hero-sub {
+    font-size: 1.1rem;
+    color: #888;
+    max-width: 600px;
+    margin: 0 auto 35px;
+}
+
+.stats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 45px;
+}
+.stat-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 15px 25px;
+    min-width: 160px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+.stat-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(229, 9, 20, 0.2);
+    box-shadow: 0 8px 20px rgba(229, 9, 20, 0.1);
+}
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 2px;
+}
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   REGION FILTER TABS
+   ========================================================================== */
+.region-filter-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+.region-tabs {
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 50px;
+    padding: 6px;
+    gap: 4px;
+    max-width: 100%;
+    overflow-x: auto;
+}
+.region-tabs::-webkit-scrollbar {
+    display: none;
+}
+.region-tab {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-muted);
+    padding: 10px 22px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.region-tab:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+.region-tab.active {
+    color: #fff;
+    background: var(--primary);
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.35);
+}
+
+/* ==========================================================================
+   THEATER CARD DESIGN
+   ========================================================================== */
+.theater-card-item {
+    transition: all 0.4s ease;
+}
+.tc {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.tc:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(229, 9, 20, 0.22);
+    border-color: rgba(229, 9, 20, 0.35);
+}
+.tc-img-wrap {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    background: #111;
+}
+.tc-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+.tc:hover .tc-img {
+    transform: scale(1.08);
+}
+.tc-img-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 50%, rgba(15, 15, 15, 0.95));
+}
+.tc-tech {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 2;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    backdrop-filter: blur(6px);
+}
+.tc-open {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 2;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #2ed573;
+    background: rgba(46, 213, 115, 0.15);
+    border: 1px solid rgba(46, 213, 115, 0.3);
+    padding: 5px 12px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    backdrop-filter: blur(6px);
+}
+.tc-open .dot {
+    width: 6px;
+    height: 6px;
+    background: #2ed573;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 8px #2ed573;
+    animation: pulse-dot 1.5s infinite;
+}
+@@keyframes pulse-dot {
+    0% { transform: scale(0.9); opacity: 0.5; }
+    50% { transform: scale(1.25); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.5; }
+}
+.tc-today-chip {
+    position: absolute;
+    bottom: 12px;
+    left: 15px;
+    z-index: 2;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(229, 9, 20, 0.85);
+    padding: 4px 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(229, 9, 20, 0.35);
+}
+
+.tc-body {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+.tc-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.75rem;
+}
+.tc-address {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+}
+.tc-address i {
+    color: var(--primary);
+    margin-top: 2px;
+    font-size: 1rem;
+}
+.tc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 1.25rem;
+}
+.chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.chip.red {
+    background: rgba(229, 9, 20, 0.1);
+    color: #ff4d4d;
+    border: 1px solid rgba(229, 9, 20, 0.2);
+}
+.chip.blue {
+    background: rgba(0, 112, 255, 0.1);
+    color: #4dabff;
+    border: 1px solid rgba(0, 112, 255, 0.2);
+}
+.chip.gold {
+    background: rgba(245, 197, 24, 0.1);
+    color: #ffd018;
+    border: 1px solid rgba(245, 197, 24, 0.2);
+}
+.chip.green {
+    background: rgba(46, 213, 115, 0.1);
+    color: #2ed573;
+    border: 1px solid rgba(46, 213, 115, 0.2);
+}
+.tc-div {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 1.25rem 0;
+}
+.tc-amenities {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: auto;
+}
+.tc-amenity {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.tc-amenity i {
+    color: #666;
+    font-size: 0.9rem;
+}
+.tc-footer {
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    display: flex;
+    gap: 10px;
+}
+.btn-theater-primary {
+    flex: 2;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+.btn-theater-primary:hover {
+    background: var(--primary-hover);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.35);
+}
+.btn-theater-secondary {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 11px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+.btn-theater-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ==========================================================================
+   GLASS MODAL & QUICK VIEW
+   ========================================================================== */
+.glass-modal {
+    background: rgba(15, 15, 15, 0.88) !important;
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 20px !important;
+    color: #fff;
+}
+.glass-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 1.5rem 1.75rem;
+}
+.glass-modal .btn-close-custom {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.glass-modal .btn-close-custom:hover {
+    background: rgba(229, 9, 20, 0.12);
+    border-color: rgba(229, 9, 20, 0.35);
+    color: var(--primary);
+}
+
+/* Modal Date selector horizontal strip */
+.modal-date-wrap {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding: 4px 0;
+}
+.modal-date-wrap::-webkit-scrollbar {
+    height: 4px;
+}
+.modal-date-wrap::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.02);
+}
+.modal-date-wrap::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+.modal-date-btn {
+    flex: 0 0 auto;
+    width: 72px;
+    height: 72px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.modal-date-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+.modal-date-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+}
+.mdb-w {
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+.mdb-d {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+/* Search Box */
+.modal-search-wrap {
+    position: relative;
+    margin-bottom: 1.75rem;
+}
+.modal-search-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 30px;
+    padding: 11px 20px 11px 45px;
+    color: #fff;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+.modal-search-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.3) !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+}
+.modal-search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    font-size: 1.05rem;
+    pointer-events: none;
+    transition: color 0.3s ease;
+}
+.modal-search-input:focus + .modal-search-icon {
+    color: var(--primary);
+}
+
+/* Movie Showtimes Row in Modal */
+.modal-movie-card {
+    display: flex;
+    gap: 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    transition: all 0.25s ease;
+}
+.modal-movie-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+.mmc-poster-wrap {
+    width: 90px;
+    height: 135px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.mmc-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.mmc-info {
+    flex-grow: 1;
+}
+.mmc-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+.mmc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+.mmc-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.mmc-meta i {
+    color: #777;
+}
+
+.mmc-showtimes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.m-st-pill {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: #fff;
+    text-decoration: none;
+    transition: all 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 82px;
+}
+.m-st-pill:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(229, 9, 20, 0.35);
+}
+.m-st-time {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+.m-st-room {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+.m-st-pill:hover .m-st-room {
+    color: rgba(255, 255, 255, 0.8);
+}
+.m-st-price {
+    font-size: 0.65rem;
+    color: var(--gold);
+    margin-top: 2px;
+    font-weight: 600;
+}
+.m-st-pill:hover .m-st-price {
+    color: #fff;
+}
+.m-st-pill.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+.m-st-pill.disabled:hover {
+    transform: none;
+    box-shadow: none;
+    color: var(--text-muted);
+}
+
+.modal-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+}
+.modal-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+.modal-empty i {
+    font-size: 3rem;
+    color: #444;
+    margin-bottom: 1rem;
+}
+
+/* ==========================================================================
+   WHY CHOOSE US & MAP
+   ========================================================================== */
+.section-head {
+    text-align: center;
+    margin-top: 60px;
+    margin-bottom: 35px;
+}
+.section-head h2 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.section-head h2 span {
+    color: var(--primary);
+}
+
+.why-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 60px;
+}
+.why-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    padding: 1.75rem 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+.why-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+    transform: translateY(-4px);
+}
+.why-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(229, 9, 20, 0.08);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.8rem;
+    margin-bottom: 1.25rem;
+    transition: transform 0.3s ease;
+}
+.why-card:hover .why-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+.why-card h5 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.6rem;
+}
+.why-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0;
+    line-height: 1.55;
+}
+
+.map-cta {
+    background: linear-gradient(135deg, rgba(229, 9, 20, 0.12) 0%, rgba(0, 0, 0, 0.25) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(229, 9, 20, 0.18);
+    border-radius: 20px;
+    padding: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 20px;
+}
+.map-cta-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+.map-cta-sub {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    max-width: 600px;
+}
+
+@@media (max-width: 768px) {
+    .map-cta {
+        flex-direction: column;
+        text-align: center;
+        padding: 2rem 1.5rem;
     }
-    .theater-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(229, 9, 20, 0.2);
-        border-color: rgba(229, 9, 20, 0.3);
-    }
-    .theater-img-wrapper {
-        position: relative;
-        height: 200px;
-        overflow: hidden;
-    }
-    .theater-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s;
-    }
-    .theater-card:hover .theater-img {
-        transform: scale(1.1);
-    }
-    .theater-badge {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        z-index: 2;
-    }
+}
 </style>
 
-<div class="mb-5 text-center">
-    <h1 class="fw-bolder" style="text-transform: uppercase; font-size: 3rem; letter-spacing: 2px;">
-        <span style="color:var(--primary)">Hệ thống</span> Rạp
+<!-- Hero area -->
+<div class="theaters-hero">
+    <div class="hero-eyebrow">
+        <i class="bi bi-stars"></i> Chuẩn mực điện ảnh hiện đại
+    </div>
+    <h1 class="hero-title">
+        <span class="accent">Hệ Thống</span> Rạp Chiếu
     </h1>
-    <p class="text-muted fs-5 mt-3">Trải nghiệm điện ảnh đỉnh cao tại mạng lưới rạp chiếu phủ sóng toàn quốc.</p>
-</div>
+    <p class="hero-sub">
+        Mạng lưới @totalTheaters rạp chiếu hiện đại — từ màn ảnh rộng IMAX® đến trải nghiệm chân thực 4DX® — sẵn sàng phục vụ bạn mọi lúc.
+    </p>
 
-<div class="row g-4">
-    <!-- Theater 1 -->
-    <div class="col-md-6 col-lg-4">
-        <div class="theater-card h-100">
-            <div class="theater-img-wrapper">
-                <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800&auto=format&fit=crop" class="theater-img" alt="CinemaHub Hà Nội" />
-                <span class="badge bg-danger theater-badge px-3 py-2 fs-6 rounded-pill">Premium IMAX</span>
-            </div>
-            <div class="p-4">
-                <h4 class="fw-bold text-white mb-3">CinemaHub Hà Nội</h4>
-                <p class="text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Tầng 5, The Loop Shopping Center, 241 Xuân Thủy, Cầu Giấy</p>
-                <p class="text-muted mb-3"><i class="bi bi-camera-reels-fill text-warning me-2"></i>7 Phòng chiếu / 450 Ghế</p>
-                <a href="#" class="btn btn-outline-light w-100 rounded-pill"><i class="bi bi-calendar-check"></i> Xem Lịch Chiếu</a>
-            </div>
+    <!-- Glowing stats bar -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-value">@totalTheaters</div>
+            <div class="stat-label">Rạp Chiếu</div>
         </div>
-    </div>
-
-    <!-- Theater 2 -->
-    <div class="col-md-6 col-lg-4">
-        <div class="theater-card h-100">
-            <div class="theater-img-wrapper">
-                <img src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=800&auto=format&fit=crop" class="theater-img" alt="CinemaHub TP.HCM" />
-                <span class="badge bg-danger theater-badge px-3 py-2 fs-6 rounded-pill">4DX Available</span>
-            </div>
-            <div class="p-4">
-                <h4 class="fw-bold text-white mb-3">CinemaHub TP.HCM</h4>
-                <p class="text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Tầng B1, Vincom Center Landmark 81, Quận Bình Thạnh</p>
-                <p class="text-muted mb-3"><i class="bi bi-camera-reels-fill text-warning me-2"></i>10 Phòng chiếu / 600 Ghế</p>
-                <a href="#" class="btn btn-outline-light w-100 rounded-pill"><i class="bi bi-calendar-check"></i> Xem Lịch Chiếu</a>
-            </div>
+        <div class="stat-card">
+            <div class="stat-value">@totalSeats.ToString("N0")</div>
+            <div class="stat-label">Tổng Số Ghế</div>
         </div>
-    </div>
-
-    <!-- Theater 3 -->
-    <div class="col-md-6 col-lg-4">
-        <div class="theater-card h-100">
-            <div class="theater-img-wrapper">
-                <img src="https://images.unsplash.com/photo-1595769816263-9b910be24d5f?q=80&w=800&auto=format&fit=crop" class="theater-img" alt="CinemaHub Đà Nẵng" />
-            </div>
-            <div class="p-4">
-                <h4 class="fw-bold text-white mb-3">CinemaHub Đà Nẵng</h4>
-                <p class="text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Tầng 4, Vincom Plaza, 910A Ngô Quyền, Sơn Trà</p>
-                <p class="text-muted mb-3"><i class="bi bi-camera-reels-fill text-warning me-2"></i>5 Phòng chiếu / 300 Ghế</p>
-                <a href="#" class="btn btn-outline-light w-100 rounded-pill"><i class="bi bi-calendar-check"></i> Xem Lịch Chiếu</a>
-            </div>
+        <div class="stat-card">
+            <div class="stat-value">@totalMovies</div>
+            <div class="stat-label">Phim Đang Chiếu</div>
         </div>
-    </div>
-
-    <!-- Theater 4 -->
-    <div class="col-md-6 col-lg-4">
-        <div class="theater-card h-100">
-            <div class="theater-img-wrapper">
-                <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800&auto=format&fit=crop" class="theater-img" alt="CinemaHub Cần Thơ" />
-            </div>
-            <div class="p-4">
-                <h4 class="fw-bold text-white mb-3">CinemaHub Cần Thơ</h4>
-                <p class="text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Tầng 3, Sense City, Số 1 Hòa Bình, Ninh Kiều</p>
-                <p class="text-muted mb-3"><i class="bi bi-camera-reels-fill text-warning me-2"></i>5 Phòng chiếu / 250 Ghế</p>
-                <a href="#" class="btn btn-outline-light w-100 rounded-pill"><i class="bi bi-calendar-check"></i> Xem Lịch Chiếu</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Theater 5 -->
-    <div class="col-md-6 col-lg-4">
-        <div class="theater-card h-100">
-            <div class="theater-img-wrapper">
-                <img src="https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=800&auto=format&fit=crop" class="theater-img" alt="CinemaHub Huế" />
-            </div>
-            <div class="p-4">
-                <h4 class="fw-bold text-white mb-3">CinemaHub Huế</h4>
-                <p class="text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Tầng 4, Vincom Hùng Vương, 50A Hùng Vương, Phú Nhuận</p>
-                <p class="text-muted mb-3"><i class="bi bi-camera-reels-fill text-warning me-2"></i>6 Phòng chiếu / 320 Ghế</p>
-                <a href="#" class="btn btn-outline-light w-100 rounded-pill"><i class="bi bi-calendar-check"></i> Xem Lịch Chiếu</a>
-            </div>
+        <div class="stat-card">
+            <div class="stat-value">@totalShowtimesToday</div>
+            <div class="stat-label">Suất Chiếu Hôm Nay</div>
         </div>
     </div>
 </div>
+
+<!-- Region tab filtering -->
+<div class="region-filter-wrap">
+    <div class="region-tabs">
+        <button type="button" class="region-tab active" data-target="all">
+            🌐 Tất cả hệ thống
+        </button>
+        <button type="button" class="region-tab" data-target="hanoi">
+            🏛️ Hà Nội
+        </button>
+        <button type="button" class="region-tab" data-target="tphcm">
+            🏢 TP. Hồ Chí Minh
+        </button>
+        <button type="button" class="region-tab" data-target="mientrung">
+            🌊 Miền Trung
+        </button>
+        <button type="button" class="region-tab" data-target="miennam">
+            🌴 Miền Nam
+        </button>
+    </div>
+</div>
+
+<!-- Theaters list -->
+<div class="row g-4 mb-5" id="theaters-grid-container">
+    @{ int i = 0; }
+    @foreach (var t in Model)
+    {
+        var img        = theaterImages[i % theaterImages.Length];
+        var tech       = techBadges[i % techBadges.Length];
+        var techColor  = techColors[i % techColors.Length];
+        var icons      = amenitySets[i % amenitySets.Length];
+        var labels     = amenityLabels[i % amenityLabels.Length];
+        bool hasNext   = t.NextShowtime != null;
+        i++;
+
+        string addr = t.Address ?? "";
+        string region = "all";
+        if (addr.Contains("Hà Nội") || addr.Contains("Hà Đông")) {
+            region = "hanoi";
+        } else if (addr.Contains("TP.HCM") || addr.Contains("Hồ Chí Minh") || addr.Contains("Nguyễn Huệ")) {
+            region = "tphcm";
+        } else if (addr.Contains("Đà Nẵng") || addr.Contains("Huế")) {
+            region = "mientrung";
+        } else if (addr.Contains("Cần Thơ")) {
+            region = "miennam";
+        }
+
+        <div class="col-md-6 col-xl-4 theater-card-item" data-region="@region">
+            <div class="tc">
+                <!-- Top image wrapper -->
+                <div class="tc-img-wrap">
+                    <img src="@img" class="tc-img" alt="@t.TheaterName" loading="lazy" />
+                    <div class="tc-img-overlay"></div>
+
+                    <!-- Floating tech tag -->
+                    <div class="tc-tech" style="background: rgba(0,0,0,.55); border-color:@(techColor)40; color:@techColor;">
+                        @tech
+                    </div>
+
+                    @if (hasNext)
+                    {
+                        <div class="tc-open">
+                            <span class="dot"></span> Đang mở cửa
+                        </div>
+                    }
+
+                    @if (t.ShowtimesToday > 0)
+                    {
+                        <div class="tc-today-chip">
+                            <i class="bi bi-play-circle me-1"></i>@t.ShowtimesToday suất hôm nay
+                        </div>
+                    }
+                </div>
+
+                <!-- Card Body -->
+                <div class="tc-body">
+                    <div class="tc-name">@t.TheaterName</div>
+
+                    <div class="tc-address">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <span>@(t.Address ?? "Địa chỉ đang cập nhật")</span>
+                    </div>
+
+                    <!-- Specs Chips -->
+                    <div class="tc-chips">
+                        <span class="chip red">
+                            <i class="bi bi-camera-reels-fill"></i>
+                            @t.RoomCount phòng chiếu
+                        </span>
+                        <span class="chip blue">
+                            <i class="bi bi-person-fill"></i>
+                            @t.SeatCount.ToString("N0") ghế
+                        </span>
+                        @if (t.MoviesNow > 0)
+                        {
+                            <span class="chip gold">
+                                <i class="bi bi-film"></i>
+                                @t.MoviesNow phim
+                            </span>
+                        }
+                        @if (hasNext)
+                        {
+                            <span class="chip green" title="Suất chiếu tiếp theo">
+                                <i class="bi bi-clock-fill"></i>
+                                @(((DateTime)t.NextShowtime).ToString("HH:mm"))
+                            </span>
+                        }
+                    </div>
+
+                    <div class="tc-div"></div>
+
+                    <!-- Amenities list -->
+                    <div class="tc-amenities">
+                        @for (int k = 0; k < icons.Length; k++)
+                        {
+                            <div class="tc-amenity">
+                                <i class="bi @icons[k]"></i>
+                                @labels[k]
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Footer buttons -->
+                <div class="tc-footer">
+                    <button type="button" class="btn-view-showtimes btn-theater-primary w-100" 
+                            data-theater-id="@t.TheaterId" 
+                            data-theater-name="@t.TheaterName" 
+                            data-theater-address="@t.Address">
+                        <i class="bi bi-ticket-perforated-fill"></i> Xem Lịch Chiếu
+                    </button>
+                    <a href="https://maps.google.com/?q=@Uri.EscapeDataString(t.Address ?? t.TheaterName)"
+                       target="_blank" class="btn-theater-secondary">
+                        <i class="bi bi-map-fill"></i> Bản đồ
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Why Choose Us -->
+<div class="section-head">
+    <h2>Tại Sao Chọn <span>CinemaHub?</span></h2>
+</div>
+<div class="why-grid">
+    <div class="why-card">
+        <div class="why-icon"><i class="bi bi-stars"></i></div>
+        <h5>Trình chiếu đỉnh cao</h5>
+        <p>Màn chiếu IMAX cực đại, âm thanh Dolby Atmos 360 độ và công nghệ 4DX sống động.</p>
+    </div>
+    <div class="why-card">
+        <div class="why-icon"><i class="bi bi-phone-fill"></i></div>
+        <h5>Đặt vé siêu tốc</h5>
+        <p>Chọn ghế trực quan, thanh toán nhanh chóng và nhận mã vé điện tử ngay tức thì.</p>
+    </div>
+    <div class="why-card">
+        <div class="why-icon"><i class="bi bi-shield-check-fill"></i></div>
+        <h5>Dịch vụ cao cấp</h5>
+        <p>Hệ thống phòng chờ sang trọng, thực đơn bắp nước đa dạng và nhân viên chu đáo.</p>
+    </div>
+    <div class="why-card">
+        <div class="why-icon"><i class="bi bi-gift-fill"></i></div>
+        <h5>Ưu đãi ngập tràn</h5>
+        <p>Chương trình tích điểm CinemaHub Club nhận bắp nước miễn phí và vé xem phim tri ân.</p>
+    </div>
+</div>
+
+<!-- Map CTA -->
+<div class="map-cta">
+    <div>
+        <div class="map-cta-title">📍 Tìm rạp CinemaHub gần nhất</div>
+        <div class="map-cta-sub">
+            Khám phá khoảng cách địa lý và mở bản đồ Google Maps để chọn rạp CinemaHub thuận tiện nhất cho buổi xem phim của bạn.
+        </div>
+    </div>
+    <a href="https://maps.google.com/?q=CinemaHub+Vietnam" target="_blank"
+       class="btn btn-danger rounded-pill px-5 py-3 fw-bold" style="white-space:nowrap; font-size:.95rem;">
+        <i class="bi bi-map-fill me-2"></i>Mở Google Maps
+    </a>
+</div>
+
+<!-- Quick View Showtimes Modal -->
+<div class="modal fade" id="quickShowtimesModal" tabindex="-1" aria-labelledby="quickShowtimesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content glass-modal shadow-lg">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold text-white fs-4" id="modal-theater-name">Lịch chiếu rạp</h5>
+                    <p class="text-muted small mb-0 mt-1" id="modal-theater-address">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                        <span></span>
+                    </p>
+                </div>
+                <button type="button" class="btn-close-custom" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+                <!-- 7 days strip selection -->
+                <div class="modal-date-wrap" id="modal-days-strip">
+                    <!-- Loaded dynamically via JavaScript -->
+                </div>
+
+                <!-- Search Input inside modal -->
+                <div class="modal-search-wrap">
+                    <input type="text" id="modal-search-movie" class="modal-search-input" placeholder="Tìm kiếm phim đang chiếu..." />
+                    <i class="bi bi-search modal-search-icon"></i>
+                </div>
+
+                <!-- Content container -->
+                <div id="modal-showtimes-content">
+                    <!-- Dynamic showtimes grouped by movie -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Global states
+            var modalDays = [];
+            var activeDateString = '';
+            var theaterShowtimes = [];
+            var searchQuery = '';
+
+            // Initialize 7 days range
+            function generate7Days() {
+                var dates = [];
+                var today = new Date();
+                
+                for (var i = 0; i < 7; i++) {
+                    var d = new Date();
+                    d.setDate(today.getDate() + i);
+                    d.setHours(0, 0, 0, 0);
+                    
+                    var year = d.getFullYear();
+                    var month = String(d.getMonth() + 1).padStart(2, '0');
+                    var day = String(d.getDate()).padStart(2, '0');
+                    var dateString = year + '-' + month + '-' + day;
+                    
+                    dates.push({
+                        dateString: dateString,
+                        dayOfMonth: d.getDate(),
+                        dayOfWeekName: getDayOfWeekName(d, i)
+                    });
+                }
+                return dates;
+            }
+
+            function getDayOfWeekName(d, offset) {
+                if (offset === 0) return "H.Nay";
+                var shortDays = ["CN", "Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7"];
+                return shortDays[d.getDay()];
+            }
+
+            function initModalDays() {
+                modalDays = generate7Days();
+                activeDateString = modalDays[0].dateString;
+                
+                var html = '';
+                modalDays.forEach(function(day, index) {
+                    var activeClass = index === 0 ? 'active' : '';
+                    html += `
+                        <button type="button" class="modal-date-btn ${activeClass}" data-date="${day.dateString}">
+                            <span class="mdb-w">${day.dayOfWeekName}</span>
+                            <span class="mdb-d">${day.dayOfMonth}</span>
+                        </button>
+                    `;
+                });
+                $('#modal-days-strip').html(html);
+            }
+
+            initModalDays();
+
+            // 1. Region Tab Filter Click Event
+            $(document).on('click', '.region-tab', function() {
+                $('.region-tab').removeClass('active');
+                $(this).addClass('active');
+                
+                var target = $(this).data('target');
+                if (target === 'all') {
+                    $('.theater-card-item').fadeIn(250);
+                } else {
+                    $('.theater-card-item').each(function() {
+                        if ($(this).data('region') === target) {
+                            $(this).fadeIn(250);
+                        } else {
+                            $(this).fadeOut(150);
+                        }
+                    });
+                }
+            });
+
+            // 2. Modal Date Button Click Event
+            $(document).on('click', '.modal-date-btn', function() {
+                $('.modal-date-btn').removeClass('active');
+                $(this).addClass('active');
+                activeDateString = $(this).data('date');
+                renderShowtimes();
+            });
+
+            // 3. Movie Search Input Handler
+            $(document).on('input', '#modal-search-movie', function() {
+                searchQuery = $(this).val().trim().toLowerCase();
+                renderShowtimes();
+            });
+
+            // 4. View Showtimes Button Click Event
+            $(document).on('click', '.btn-view-showtimes', function() {
+                var theaterId = $(this).data('theater-id');
+                var theaterName = $(this).data('theater-name');
+                var theaterAddress = $(this).data('theater-address');
+                
+                // Update headers in modal
+                $('#modal-theater-name').text(theaterName);
+                $('#modal-theater-address span').text(theaterAddress);
+                
+                // Clear search input
+                $('#modal-search-movie').val('');
+                searchQuery = '';
+                
+                // Reset active date tab to Today (index 0)
+                $('.modal-date-btn').removeClass('active');
+                $(`.modal-date-btn[data-date="${modalDays[0].dateString}"]`).addClass('active');
+                activeDateString = modalDays[0].dateString;
+                
+                // Render loading spinner
+                $('#modal-showtimes-content').html(`
+                    <div class="modal-loader">
+                        <div class="spinner-border text-danger mb-3" role="status"></div>
+                        <p class="text-muted small">Đang tải lịch chiếu sắp tới...</p>
+                    </div>
+                `);
+                
+                // Show Bootstrap Modal
+                var myModal = new bootstrap.Modal(document.getElementById('quickShowtimesModal'));
+                myModal.show();
+                
+                // Fetch future showtimes from API
+                $.ajax({
+                    url: `/api/ShowtimesApi/bytheater/${theaterId}`,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        theaterShowtimes = data;
+                        renderShowtimes();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Lỗi khi tải suất chiếu:", error);
+                        $('#modal-showtimes-content').html(`
+                            <div class="modal-empty">
+                                <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                                <h5 class="text-secondary mt-2">Không thể tải dữ liệu lịch chiếu</h5>
+                                <p class="text-muted small">Vui lòng thử lại sau.</p>
+                            </div>
+                        `);
+                    }
+                });
+            });
+
+            // Render and filter showtimes inside modal
+            function renderShowtimes() {
+                if (!theaterShowtimes || theaterShowtimes.length === 0) {
+                    renderEmptyState("Rạp hiện chưa cập nhật lịch chiếu sắp tới.");
+                    return;
+                }
+                
+                // Filter showtimes matching active date and search query
+                var filtered = theaterShowtimes.filter(function(st) {
+                    var dObj = new Date(st.startTime);
+                    var year = dObj.getFullYear();
+                    var month = String(dObj.getMonth() + 1).padStart(2, '0');
+                    var day = String(dObj.getDate()).padStart(2, '0');
+                    var stDate = year + '-' + month + '-' + day;
+                    var dateMatch = (stDate === activeDateString);
+                    
+                    var titleMatch = true;
+                    if (searchQuery) {
+                        titleMatch = st.movieTitle.toLowerCase().indexOf(searchQuery) !== -1;
+                    }
+                    
+                    return dateMatch && titleMatch;
+                });
+                
+                if (filtered.length === 0) {
+                    renderEmptyState("Không có suất chiếu nào phù hợp.");
+                    return;
+                }
+                
+                // Group showtimes by movieId
+                var groups = {};
+                filtered.forEach(function(st) {
+                    if (!groups[st.movieId]) {
+                        groups[st.movieId] = {
+                            movieId: st.movieId,
+                            title: st.movieTitle,
+                            posterUrl: st.moviePosterUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=200&auto=format&fit=crop',
+                            showtimes: []
+                        };
+                    }
+                    groups[st.movieId].showtimes.push(st);
+                });
+                
+                // Generate HTML output
+                var html = '';
+                Object.keys(groups).forEach(function(key) {
+                    var movie = groups[key];
+                    
+                    // Sort showtimes by starting time
+                    movie.showtimes.sort(function(a, b) {
+                        return new Date(a.startTime) - new Date(b.startTime);
+                    });
+                    
+                    var showtimesHtml = '';
+                    movie.showtimes.forEach(function(st) {
+                        var dObj = new Date(st.startTime);
+                        var hours = String(dObj.getHours()).padStart(2, '0');
+                        var minutes = String(dObj.getMinutes()).padStart(2, '0');
+                        var timeString = hours + ':' + minutes;
+                        if (st.availableSeats > 0) {
+                            showtimesHtml += `
+                                <a href="/Booking/SelectSeat/${st.showtimeId}" class="m-st-pill" title="Còn ${st.availableSeats} ghế trống">
+                                    <span class="m-st-time">${timeString}</span>
+                                    <span class="m-st-room">${st.roomName}</span>
+                                    <span class="m-st-price">${st.price.toLocaleString('vi-VN')}₫</span>
+                                </a>
+                            `;
+                        } else {
+                            showtimesHtml += `
+                                <div class="m-st-pill disabled" title="Đã hết vé">
+                                    <span class="m-st-time">${timeString}</span>
+                                    <span class="m-st-room">Hết ghế</span>
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    html += `
+                        <div class="modal-movie-card">
+                            <div class="mmc-poster-wrap">
+                                <img src="${movie.posterUrl}" class="mmc-poster" alt="${movie.title}" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=200&auto=format&fit=crop'" />
+                            </div>
+                            <div class="mmc-info">
+                                <h6 class="mmc-title fw-bold text-white mb-2">${movie.title}</h6>
+                                <div class="mmc-meta">
+                                    <span><i class="bi bi-clock"></i> 120 phút</span>
+                                    <span><i class="bi bi-tags"></i> 2D Phụ Đề</span>
+                                </div>
+                                <div class="mmc-showtimes">
+                                    ${showtimesHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                $('#modal-showtimes-content').html(html);
+            }
+
+            function renderEmptyState(message) {
+                $('#modal-showtimes-content').html(`
+                    <div class="modal-empty">
+                        <i class="bi bi-calendar-x text-muted" style="font-size:3rem;"></i>
+                        <h5 class="text-secondary mt-3">Không có suất chiếu nào</h5>
+                        <p class="text-muted small">${message}</p>
+                    </div>
+                `);
+            }
+        });
+    </script>
+}

@@ -23,6 +23,11 @@ namespace CinemaManagement.Controllers.Api
         public async Task<IActionResult> GetByDate(DateTime date) =>
             Ok(await _showtimeService.GetShowtimesByDateAsync(date));
 
+        // GET api/ShowtimesApi/bytheater/{theaterId}
+        [HttpGet("bytheater/{theaterId}")]
+        public async Task<IActionResult> GetByTheater(int theaterId) =>
+            Ok(await _showtimeService.GetShowtimesByTheaterAsync(theaterId));
+
         // GET api/ShowtimesApi/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)

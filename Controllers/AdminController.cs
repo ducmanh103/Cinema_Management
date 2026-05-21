@@ -59,7 +59,7 @@ namespace CinemaManagement.Controllers
         public async Task<IActionResult> Users()
         {
             var users = await _context.Users
-                .Include(u => u.Role)
+                .AsNoTracking()
                 .Select(u => new UserDto
                 {
                     UserId = u.UserId,
@@ -72,7 +72,7 @@ namespace CinemaManagement.Controllers
                 })
                 .ToListAsync();
 
-            ViewBag.Roles = await _context.Roles.ToListAsync();
+            ViewBag.Roles = await _context.Roles.AsNoTracking().ToListAsync();
             return View(users);
         }
 
@@ -104,16 +104,12 @@ namespace CinemaManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteTicket(int id)
         {
-            var ticket = await _context.Tickets
-                .Include(t => t.Payment)
-                .FirstOrDefaultAsync(t => t.TicketId == id);
+            var affected = await _context.Tickets
+                .Where(t => t.TicketId == id)
+                .ExecuteDeleteAsync();
 
-            if (ticket == null)
+            if (affected == 0)
                 return Json(new { success = false, message = "Không tìm thấy vé." });
-
-            // Payment sẽ bị xoá cascade (ON DELETE CASCADE trong DB)
-            _context.Tickets.Remove(ticket);
-            await _context.SaveChangesAsync();
 
             return Json(new { success = true });
         }
@@ -124,8 +120,8 @@ namespace CinemaManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangeRole(int userId, int roleId)
         {
-            var user = await _context.Users.FindAsync(userId);
-            var role = await _context.Roles.FindAsync(roleId);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            var role = await _context.Roles.AsNoTracking().FirstOrDefaultAsync(r => r.RoleId == roleId);
             if (user != null && role != null)
             {
                 user.RoleId = roleId;
@@ -144,7 +140,7 @@ namespace CinemaManagement.Controllers
         public async Task<IActionResult> Movies()
         {
             var movies = await _context.Movies
-                .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
+                .AsNoTracking()
                 .OrderByDescending(m => m.MovieId)
                 .Select(m => new MovieDto
                 {
@@ -168,6 +164,7 @@ namespace CinemaManagement.Controllers
         public async Task<IActionResult> Showtimes()
         {
             var showtimes = await _context.Showtimes
+                .AsNoTracking()
                 .Include(s => s.Movie)
                 .Include(s => s.Room).ThenInclude(r => r.Theater)
                 .OrderBy(s => s.StartTime)
@@ -175,11 +172,13 @@ namespace CinemaManagement.Controllers
 
             // Dữ liệu cho modal Create/Edit
             ViewBag.Movies = await _context.Movies
+                .AsNoTracking()
                 .Where(m => m.Status != "Ended")
                 .OrderBy(m => m.Title)
                 .ToListAsync();
 
             ViewBag.Rooms = await _context.Rooms
+                .AsNoTracking()
                 .Include(r => r.Theater)
                 .OrderBy(r => r.Theater.TheaterName).ThenBy(r => r.RoomName)
                 .ToListAsync();
@@ -217,7 +216,9 @@ namespace CinemaManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> GetShowtime(int id)
         {
-            var st = await _context.Showtimes.FindAsync(id);
+            var st = await _context.Showtimes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.ShowtimeId == id);
             if (st == null) return NotFound();
             return Json(new
             {
@@ -258,9 +259,7 @@ namespace CinemaManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteShowtime(int id)
         {
-            var showtime = await _context.Showtimes
-                .Include(s => s.Tickets)
-                .FirstOrDefaultAsync(s => s.ShowtimeId == id);
+            var showtime = await _context.Showtimes.FirstOrDefaultAsync(s => s.ShowtimeId == id);
 
             if (showtime == null)
             {
@@ -268,7 +267,8 @@ namespace CinemaManagement.Controllers
                 return RedirectToAction(nameof(Showtimes));
             }
 
-            if (showtime.Tickets.Any(t => t.Status == "Booked"))
+            var hasBookedTickets = await _context.Tickets.AnyAsync(t => t.ShowtimeId == id && t.Status == "Booked");
+            if (hasBookedTickets)
             {
                 TempData["Error"] = "Không thể xoá suất chiếu có vé đã đặt.";
                 return RedirectToAction(nameof(Showtimes));
@@ -292,6 +292,7 @@ namespace CinemaManagement.Controllers
 
             // Doanh thu theo tháng trong năm được chọn
             var monthlyRevenue = await _context.Payments
+                .AsNoTracking()
                 .Where(p => p.Status == "Completed" && p.PaidAt.Year == selectedYear)
                 .GroupBy(p => p.PaidAt.Month)
                 .Select(g => new { Month = g.Key, Total = g.Sum(p => p.Amount), Count = g.Count() })
@@ -299,6 +300,7 @@ namespace CinemaManagement.Controllers
 
             // Tổng doanh thu tất cả thời gian
             ViewBag.TotalRevenue = await _context.Payments
+                .AsNoTracking()
                 .Where(p => p.Status == "Completed")
                 .SumAsync(p => (decimal?)p.Amount) ?? 0m;
 
@@ -307,11 +309,13 @@ namespace CinemaManagement.Controllers
 
             // Số vé trong năm
             ViewBag.YearTickets = await _context.Tickets
+                .AsNoTracking()
                 .Where(t => t.Status == "Booked" && t.BookingTime.Year == selectedYear)
                 .CountAsync();
 
             // Tổng số vé tất cả thời gian (Completed payment)
             ViewBag.TotalPaidTickets = await _context.Payments
+                .AsNoTracking()
                 .Where(p => p.Status == "Completed")
                 .CountAsync();
 
@@ -330,17 +334,20 @@ namespace CinemaManagement.Controllers
 
             // Top phim doanh thu cao nhất
             var topMovies = await _context.Payments
+                .AsNoTracking()
                 .Where(p => p.Status == "Completed")
-                .Join(_context.Tickets, p => p.TicketId, t => t.TicketId, (p, t) => new { p, t })
-                .Join(_context.Showtimes, x => x.t.ShowtimeId, s => s.ShowtimeId, (x, s) => new { x.p, x.t, s })
-                .Join(_context.Movies, x => x.s.MovieId, m => m.MovieId, (x, m) => new { x.p, x.t, x.s, m })
-                .GroupBy(x => new { x.m.MovieId, x.m.Title, x.m.PosterUrl })
+                .GroupBy(p => new
+                {
+                    MovieId = p.Ticket.Showtime.Movie.MovieId,
+                    Title = p.Ticket.Showtime.Movie.Title,
+                    PosterUrl = p.Ticket.Showtime.Movie.PosterUrl
+                })
                 .Select(g => new MovieRevenueDto
                 {
                     MovieId = g.Key.MovieId,
                     MovieTitle = g.Key.Title,
                     PosterUrl = g.Key.PosterUrl,
-                    TotalRevenue = g.Sum(x => x.p.Amount),
+                    TotalRevenue = g.Sum(x => x.Amount),
                     TicketCount = g.Count()
                 })
                 .OrderByDescending(x => x.TotalRevenue)
@@ -351,6 +358,7 @@ namespace CinemaManagement.Controllers
 
             // Doanh thu theo phương thức thanh toán
             var byMethod = await _context.Payments
+                .AsNoTracking()
                 .Where(p => p.Status == "Completed")
                 .GroupBy(p => p.Method)
                 .Select(g => new { Method = g.Key, Total = g.Sum(p => p.Amount), Count = g.Count() })
@@ -359,6 +367,7 @@ namespace CinemaManagement.Controllers
 
             // Danh sách năm có dữ liệu
             var availableYears = await _context.Payments
+                .AsNoTracking()
                 .Select(p => p.PaidAt.Year)
                 .Distinct()
                 .OrderByDescending(y => y)

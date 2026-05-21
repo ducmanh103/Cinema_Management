@@ -49,6 +49,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<IVnPayService, VnPayService>();
 
 // ================================
 var app = builder.Build();

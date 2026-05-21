@@ -73,40 +73,33 @@
                     <ul class="navbar-nav me-auto align-items-lg-center">
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")" 
-                               asp-controller="Home" asp-action="Index"><i class="bi bi-house-door me-1"></i> Trang chủ</a>
+                               asp-controller="Home" asp-action="Index">Trang chủ</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Showtimes" ? "active" : "")" 
-                               asp-controller="Showtimes" asp-action="Index"><i class="bi bi-calendar3 me-1"></i> Lịch chiếu</a>
+                               asp-controller="Showtimes" asp-action="Index">Lịch chiếu</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Movies" ? "active" : "")" 
-                               asp-controller="Movies" asp-action="Index"><i class="bi bi-film me-1"></i> Phim</a>
+                               asp-controller="Movies" asp-action="Index">Phim</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Theaters" ? "active" : "")" 
-                               asp-controller="Home" asp-action="Theaters"><i class="bi bi-geo-alt me-1"></i> Rạp</a>
+                               asp-controller="Home" asp-action="Theaters">Rạp</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "News" ? "active" : "")" 
-                               asp-controller="Home" asp-action="News"><i class="bi bi-newspaper me-1"></i> Tin tức</a>
+                               asp-controller="Home" asp-action="News">Tin tức</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "About" ? "active" : "")" 
-                               asp-controller="Home" asp-action="About"><i class="bi bi-info-circle me-1"></i> Giới thiệu</a>
+                               asp-controller="Home" asp-action="About">Giới thiệu</a>
                         </li>
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Booking" ? "active" : "")" 
-                                   asp-controller="Booking" asp-action="MyTickets"><i class="bi bi-ticket-perforated me-1"></i> Vé của tôi</a>
-                            </li>
-                        }
                         @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
                         {
                             <li class="nav-item ms-lg-3">
                                 <a class="nav-link text-warning" asp-controller="Admin" asp-action="Index">
-                                    <i class="bi bi-shield-lock me-1"></i> Admin Dashboard
+                                    Admin Dashboard
                                 </a>
                             </li>
                         }
@@ -185,8 +178,8 @@
 
     <!-- Nội dung chính -->
     <main role="main" class="flex-grow-1">
-        <!-- RenderBody cho các trang có container tự định nghĩa (như trang chủ) -->
-        @if (ViewData["Title"]?.ToString() == "Trang Chủ")
+        <!-- RenderBody cho các trang có container tự định nghĩa (như trang chủ hay danh sách phim) -->
+        @if (ViewData["Title"]?.ToString() == "Trang Chủ" || ViewBag.FullWidth == true)
         {
             @RenderBody()
         }

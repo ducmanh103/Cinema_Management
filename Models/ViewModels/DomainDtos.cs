@@ -37,6 +37,7 @@ namespace CinemaManagement.Models.ViewModels
         public decimal Price { get; set; }
         public int MovieId { get; set; }
         public string MovieTitle { get; set; } = string.Empty;
+        public string? MoviePosterUrl { get; set; }
         public int RoomId { get; set; }
         public string RoomName { get; set; } = string.Empty;
         public string TheaterName { get; set; } = string.Empty;

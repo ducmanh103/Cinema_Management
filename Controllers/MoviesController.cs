@@ -19,6 +19,7 @@ namespace CinemaManagement.Controllers
         public async Task<IActionResult> Index()
         {
             var movies = await _context.Movies
+                .AsNoTracking()
                 .Include(m => m.MovieGenres)
                     .ThenInclude(mg => mg.Genre)
                 .ToListAsync();
@@ -30,6 +31,7 @@ namespace CinemaManagement.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var movie = await _context.Movies
+                .AsNoTracking()
                 .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
                 .Include(m => m.Showtimes)
                     .ThenInclude(st => st.Room).ThenInclude(r => r.Theater)

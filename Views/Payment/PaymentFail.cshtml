@@ -1,0 +1,91 @@
+@using CinemaManagement.Models.ViewModels
+@model VnPaymentResponseModel
+@{
+    ViewData["Title"] = "Thanh toán thất bại";
+    Layout = "_Layout";
+
+    string MapVnPayError(string code) => code switch
+    {
+        "00"  => "Giao dịch thành công",
+        "07"  => "Giao dịch bị nghi ngờ gian lận",
+        "09"  => "Thẻ/Tài khoản chưa đăng ký InternetBanking",
+        "10"  => "Xác thực thông tin thẻ/tài khoản không đúng quá 3 lần",
+        "11"  => "Đã hết hạn chờ thanh toán",
+        "12"  => "Thẻ/Tài khoản bị khoá",
+        "13"  => "Sai mật khẩu xác thực OTP",
+        "24"  => "Khách hàng huỷ giao dịch",
+        "51"  => "Tài khoản không đủ số dư",
+        "65"  => "Vượt quá hạn mức giao dịch trong ngày",
+        "75"  => "Ngân hàng thanh toán đang bảo trì",
+        "79"  => "Sai mật khẩu thanh toán quá số lần quy định",
+        "99"  => "Lỗi không xác định",
+        _     => "Giao dịch không thành công"
+    };
+}
+
+<style>
+    .pay-result-wrap {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 16px;
+        background: radial-gradient(circle at top, rgba(239,68,68,0.12) 0%, rgba(11,12,16,1) 70%);
+    }
+    .pay-card {
+        max-width: 540px;
+        width: 100%;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 24px;
+        padding: 40px 36px;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        text-align: center;
+        color: #e2e8f0;
+    }
+    .pay-card .cross {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+        margin: 0 auto 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 30px rgba(239,68,68,0.45);
+        animation: shake 0.6s ease;
+    }
+    .pay-card .cross i { font-size: 3rem; color: white; }
+    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.08); font-size: 0.95rem; }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .lbl { color: #94a3b8; }
+    .info-row .val { color: #f1f5f9; font-weight: 600; }
+    @@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+</style>
+
+<div class="pay-result-wrap">
+    <div class="pay-card">
+        <div class="cross"><i class="bi bi-x-lg"></i></div>
+        <h2 class="text-light mb-2">Thanh toán thất bại</h2>
+        <p class="text-muted mb-4">@MapVnPayError(Model?.VnPayResponseCode ?? "")</p>
+
+        @if (Model != null)
+        {
+            <div class="text-start">
+                <div class="info-row"><span class="lbl">Mã đơn hàng</span><span class="val">@Model.OrderId</span></div>
+                <div class="info-row"><span class="lbl">Mã lỗi VNPay</span><span class="val">@Model.VnPayResponseCode</span></div>
+                <div class="info-row"><span class="lbl">Mã giao dịch</span><span class="val">@(string.IsNullOrEmpty(Model.TransactionId) ? "-" : Model.TransactionId)</span></div>
+            </div>
+        }
+
+        <div class="d-flex gap-2 mt-4">
+            <a asp-controller="Movies" asp-action="Index" class="btn btn-danger flex-fill rounded-pill fw-bold py-2">
+                <i class="bi bi-arrow-clockwise me-2"></i> Đặt vé lại
+            </a>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light flex-fill rounded-pill fw-bold py-2">
+                <i class="bi bi-house me-2"></i> Trang chủ
+            </a>
+        </div>
+    </div>
+</div>

@@ -1,176 +1,530 @@
+@inject CinemaManagement.Data.CinemaDbContext DbContext
 @{
     ViewData["Title"] = "Trang Chủ";
     Layout = "_Layout";
     var nowShowing = ViewBag.NowShowing as List<CinemaManagement.Models.ViewModels.MovieDto> ?? new();
     var comingSoon = ViewBag.ComingSoon as List<CinemaManagement.Models.ViewModels.MovieDto> ?? new();
-    var featuredMovies = nowShowing.Take(3).ToList();
+    var featuredMovies = nowShowing.Where(m => !string.IsNullOrEmpty(m.BannerUrl)).Take(5).ToList();
+    if (featuredMovies.Count < 2)
+    {
+        featuredMovies = nowShowing.Take(3).ToList();
+    }
+    var theaters = DbContext.Theaters.OrderBy(t => t.TheaterName).ToList();
 }
 
 <style>
 /* Hero Section Styles */
-.hero-banner {
+.hero-carousel-wrapper {
     position: relative;
-    height: 70vh;
-    min-height: 500px;
-    background-size: cover;
-    background-position: center top;
-    display: flex;
-    align-items: flex-end;
-    margin-top: -100px;
-    margin-bottom: 3rem;
+    margin-top: -100px; /* Pull banner under transparent header */
+    margin-bottom: 2rem;
     overflow: hidden;
 }
-.hero-overlay {
+.hero-carousel-item {
+    height: 70vh;
+    min-height: 550px;
+    position: relative;
+    overflow: hidden;
+}
+.hero-bg-image {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, var(--dark) 0%, transparent 60%, rgba(0,0,0,0.4) 100%);
+    background-size: cover;
+    background-position: center top;
+    transition: transform 12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.carousel-item.active .hero-bg-image {
+    transform: scale(1.05);
+}
+.hero-gradient {
+    position: absolute;
+    inset: 0;
+    background: 
+        linear-gradient(to right, rgba(15, 15, 15, 0.95) 0%, rgba(15, 15, 15, 0.6) 40%, rgba(15, 15, 15, 0.1) 100%),
+        linear-gradient(to top, rgba(15, 15, 15, 1) 0%, rgba(15, 15, 15, 0.3) 25%, transparent 100%);
+    z-index: 1;
 }
 .hero-content {
     position: relative;
     z-index: 2;
-    padding-bottom: 50px;
-    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding-top: 60px;
 }
-.hero-title {
-    font-size: 3.5rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
-    margin-bottom: 1rem;
+.hero-poster-float-container {
+    perspective: 1000px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
-.carousel-indicators {
-    margin-bottom: 10px;
+.hero-poster-float {
+    max-height: 380px;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: 16px;
+    box-shadow: 
+        0 20px 45px rgba(0, 0, 0, 0.8), 
+        0 0 35px rgba(229, 9, 20, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    transform: rotateY(-12deg) rotateX(4deg);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hero-poster-float-container:hover .hero-poster-float {
+    transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.9), 
+        0 0 45px rgba(229, 9, 20, 0.25);
+    border-color: var(--primary);
 }
 .carousel-indicators [data-bs-target] {
-    width: 30px;
+    width: 32px;
     height: 4px;
-    background-color: rgba(255,255,255,0.5);
-    border: none;
     border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border: none;
+    transition: all 0.3s ease;
 }
 .carousel-indicators .active {
+    width: 60px;
     background-color: var(--primary);
+    box-shadow: 0 0 10px var(--primary);
+}
+.carousel-control-prev-icon, .carousel-control-next-icon {
+    width: 3rem;
+    height: 3rem;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    background-size: 45%;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+.carousel-control-prev:hover .carousel-control-prev-icon,
+.carousel-control-next:hover .carousel-control-next-icon {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 0 15px var(--primary);
+    transform: scale(1.08);
 }
 
 /* Quick Booking Widget */
 .quick-booking-panel {
-    background: rgba(20, 20, 20, 0.85);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 20px;
-    transform: translateY(-50%);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    background: rgba(20, 20, 20, 0.65);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    box-shadow: 
+        0 20px 45px -10px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    margin-top: -65px;
     position: relative;
-    z-index: 10;
+    z-index: 20;
 }
+.quick-booking-panel:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+}
+.select-custom {
+    background-color: rgba(10, 10, 10, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    padding: 11px 15px !important;
+    font-size: 0.92rem !important;
+    border-radius: 10px !important;
+    transition: all 0.3s ease !important;
+}
+.select-custom:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.25) !important;
+}
+
+/* Section Header Styles */
 .section-title {
     position: relative;
     display: inline-block;
-    padding-bottom: 10px;
+    padding-bottom: 12px;
     margin-bottom: 30px;
-    font-weight: 700;
-    font-size: 2rem;
+    font-weight: 800;
+    font-size: 2.1rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #fff;
 }
 .section-title::after {
     content: '';
     position: absolute;
     left: 0;
     bottom: 0;
-    width: 50px;
+    width: 60px;
     height: 4px;
     background-color: var(--primary);
     border-radius: 2px;
+    box-shadow: 0 0 10px var(--primary);
+}
+
+/* Movie Card System */
+.movie-grid-card {
+    background: rgba(25, 25, 25, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+.movie-grid-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(229, 9, 20, 0.35);
+    box-shadow: 0 20px 40px rgba(229, 9, 20, 0.15), 0 8px 24px rgba(0,0,0,0.5);
+}
+.poster-container {
+    position: relative;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    background: #151515;
+}
+.poster-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.movie-grid-card:hover .poster-img {
+    transform: scale(1.06);
+}
+.card-badge-row {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 4;
+}
+.rating-badge {
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 0.8rem;
+    padding: 5px 9px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+.age-badge {
+    font-weight: 800;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.age-p { background: #28a745; }
+.age-k { background: #007bff; }
+.age-t13 { background: #ffc107; color: #000; }
+.age-t16 { background: #fd7e14; }
+.age-t18 { background: #dc3545; }
+
+.format-badge {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(229, 9, 20, 0.85);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.72rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    z-index: 4;
+}
+.movie-overlay-actions {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 3;
+}
+.movie-grid-card:hover .movie-overlay-actions {
+    opacity: 1;
+}
+
+.movie-info-block {
+    padding: 1.25rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+.card-genre-text {
+    font-size: 0.72rem;
+    color: var(--primary);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+}
+.card-movie-title {
+    font-size: 1.08rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 2.8em;
+}
+.card-movie-title a {
+    color: #fff;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.card-movie-title a:hover {
+    color: var(--primary);
+}
+.card-footer-info {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 10px;
+    font-size: 0.82rem;
+    color: #8e8e93;
+}
+
+/* Advantage Card Grid */
+.advantage-card {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.advantage-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(229, 9, 20, 0.3);
+    box-shadow: 
+        0 15px 30px rgba(0,0,0,0.4),
+        0 0 20px rgba(229, 9, 20, 0.1);
+}
+.advantage-icon-wrapper {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(229, 9, 20, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(229, 9, 20, 0.2);
+    transition: all 0.3s ease;
+}
+.advantage-card:hover .advantage-icon-wrapper {
+    background: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 0 15px var(--primary);
+}
+.advantage-card:hover .advantage-icon-wrapper i {
+    color: #fff !important;
+    transform: scale(1.1);
+}
+.advantage-icon-wrapper i {
+    transition: all 0.3s ease;
+}
+
+/* Promo Card Styling */
+.promo-card {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.promo-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(229, 9, 20, 0.3);
+    box-shadow: 
+        0 15px 30px rgba(0,0,0,0.5),
+        0 0 20px rgba(229, 9, 20, 0.1);
+}
+.promo-image-wrapper {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+}
+.promo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+.promo-card:hover .promo-img {
+    transform: scale(1.05);
+}
+.promo-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 </style>
 
-    <!-- Top-Tier Bootstrap Hero Carousel -->
-    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="4000">
+<!-- WIDESCREEN HERO CAROUSEL -->
+<div class="hero-carousel-wrapper">
+    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="6000">
         <div class="carousel-indicators">
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+            @for (int i = 0; i < featuredMovies.Count; i++)
+            {
+                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : "")" aria-current="@(i == 0 ? "true" : "false")" aria-label="Slide @(i + 1)"></button>
+            }
+        </div>
+        <div class="carousel-inner">
+            @for (int i = 0; i < featuredMovies.Count; i++)
+            {
+                var movie = featuredMovies[i];
+                <div class="carousel-item @(i == 0 ? "active" : "")">
+                    <div class="hero-carousel-item">
+                        <div class="hero-bg-image" style="background-image: url('@movie.BannerUrl');"></div>
+                        <div class="hero-gradient"></div>
+                        <div class="hero-content">
+                            <div class="container">
+                                <div class="row align-items-center g-5">
+                                    <div class="col-lg-8 text-start">
+                                        <span class="badge bg-danger mb-3 px-3 py-2 text-uppercase fw-bold shadow-lg" style="letter-spacing: 1px; font-size: 0.78rem;">
+                                            <i class="bi bi-fire me-1"></i> SIÊU PHẨM NỔI BẬT
+                                        </span>
+                                        <h1 class="display-3 fw-extrabold text-white mb-3 text-uppercase" style="text-shadow: 2px 2px 12px rgba(0,0,0,0.8); font-weight: 850;">
+                                            @movie.Title
+                                        </h1>
+                                        <p class="text-light mb-4 d-none d-md-block" style="font-size: 1.05rem; line-height: 1.7; max-width: 650px; text-shadow: 1px 1px 6px rgba(0,0,0,0.9); color: rgba(255,255,255,0.88) !important;">
+                                            @(movie.Description?.Length > 180 ? movie.Description.Substring(0, 180) + "..." : movie.Description)
+                                        </p>
+                                        <div class="d-flex flex-wrap align-items-center gap-3 mb-4 text-light text-shadow" style="font-size: 0.95rem;">
+                                            <span class="d-flex align-items-center gap-1">
+                                                <i class="bi bi-star-fill text-warning"></i> 
+                                                <strong class="text-white">@GetMovieRating(movie.MovieId).ToString("F1")</strong>/10
+                                            </span>
+                                            <span class="text-muted">|</span>
+                                            <span><i class="bi bi-clock me-1"></i> @movie.Duration phút</span>
+                                            <span class="text-muted">|</span>
+                                            <span class="badge bg-secondary" style="border: 1px solid rgba(255,255,255,0.1);">@GetMovieFormat(movie.Title)</span>
+                                            <span class="text-muted">|</span>
+                                            <span class="badge @GetAgeBadgeClass(movie.Title) age-badge">@GetAgeBadgeText(movie.Title)</span>
+                                        </div>
+                                        <div class="d-flex gap-3">
+                                            <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@movie.MovieId" 
+                                               class="btn btn-primary-custom btn-lg px-4 py-3 rounded-pill fw-bold text-uppercase shadow-lg" style="font-size: 0.9rem; letter-spacing: 0.5px;">
+                                                <i class="bi bi-ticket-fill me-2"></i> Đặt Vé Ngay
+                                            </a>
+                                            <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId" 
+                                               class="btn btn-outline-light btn-lg px-4 py-3 rounded-pill fw-bold text-uppercase" style="font-size: 0.9rem; letter-spacing: 0.5px; border-width: 2px;">
+                                                Chi tiết phim
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 d-none d-lg-block text-end hero-poster-float-container">
+                                        <img src="@movie.PosterUrl" class="hero-poster-float img-fluid" alt="@movie.Title Poster" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
         
-        <div class="carousel-inner" style="height: 70vh; min-height: 500px; margin-top: -100px; margin-bottom: 3rem;">
-            <!-- Xem qua ảnh 1: MAI -->
-            <div class="carousel-item active h-100">
-                <div style="position: absolute; inset: 0; background-image: url('/img/movies/mai-banner.jpg'); background-size: cover; background-position: top center;"></div>
-                <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(11,12,16,0.9) 0%, transparent 60%), linear-gradient(to top, #0b0c10 0%, transparent 30%);"></div>
-                
-                <div class="carousel-caption d-none d-md-block text-start" style="bottom: 15%; left: 8%; width: 50%;">
-                    <span class="badge bg-danger mb-3 px-3 py-2 fs-6 rounded-pill shadow">Khởi chiếu ngay</span>
-                    <h1 class="fw-bolder text-white" style="text-shadow: 2px 2px 30px rgba(0,0,0,0.8); letter-spacing: 2px; font-size: 4rem;">MAI (2024)</h1>
-                    <p class="fs-4 text-light fw-medium mt-3" style="text-shadow: 1px 1px 15px rgba(0,0,0,0.8);">Siêu phẩm điện ảnh phá vỡ mọi kỷ lục phòng vé từ đạo diễn Trấn Thành.</p>
-                </div>
-            </div>
-
-            <!-- Xem qua ảnh 2: Kung Fu Panda 4 -->
-            <div class="carousel-item h-100">
-                <div style="position: absolute; inset: 0; background-image: url('/img/movies/kungfupanda4-banner.jpg'); background-size: cover; background-position: center;"></div>
-                <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(11,12,16,0.9) 0%, transparent 60%), linear-gradient(to top, #0b0c10 0%, transparent 30%);"></div>
-                
-                <div class="carousel-caption d-none d-md-block text-start" style="bottom: 15%; left: 8%; width: 50%;">
-                    <span class="badge bg-warning text-dark mb-3 px-3 py-2 fs-6 rounded-pill shadow">Hành động / Hoạt hình</span>
-                    <h1 class="fw-bolder text-white text-uppercase" style="text-shadow: 2px 2px 30px rgba(0,0,0,0.8); letter-spacing: 3px; font-size: 4rem;">Kung Fu Panda 4</h1>
-                    <p class="fs-4 text-light fw-medium mt-3" style="text-shadow: 1px 1px 15px rgba(0,0,0,0.8);">Sự trở lại hoành tráng của Thần Long Đại Hiệp Po chiến đấu với kẻ thù nguy hiểm nhất.</p>
-                </div>
-            </div>
-
-            <!-- Xem qua ảnh 3: Dune: Phần 2 -->
-            <div class="carousel-item h-100">
-                <div style="position: absolute; inset: 0; background-image: url('/img/movies/DUNE-banner.jpg'); background-size: cover; background-position: top center;"></div>
-                <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(11,12,16,0.9) 0%, transparent 60%), linear-gradient(to top, #0b0c10 0%, transparent 30%);"></div>
-                
-                <div class="carousel-caption d-none d-md-block text-start" style="bottom: 15%; left: 8%; width: 50%;">
-                    <span class="badge bg-info text-dark mb-3 px-3 py-2 fs-6 rounded-pill shadow">Khoa học viễn tưởng</span>
-                    <h1 class="fw-bolder text-white" style="text-shadow: 2px 2px 30px rgba(0,0,0,0.8); font-style: italic; letter-spacing: 4px; font-size: 4rem;">DUNE: PART TWO</h1>
-                    <p class="fs-4 text-light fw-medium mt-3" style="text-shadow: 1px 1px 15px rgba(0,0,0,0.8);">Hành trình sử thi tiếp nối tại Arrakis. Chỉ những kẻ dám vượt qua nỗi sợ mới tồn tại.</p>
-                </div>
-            </div>
-        </div>
-
-        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true" style="width: 4rem; height: 4rem; filter: drop-shadow(0 0 10px #000);"></span>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev" style="z-index: 10; width: 6%;">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
             <span class="visually-hidden">Previous</span>
         </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true" style="width: 4rem; height: 4rem; filter: drop-shadow(0 0 10px #000);"></span>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next" style="z-index: 10; width: 6%;">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
             <span class="visually-hidden">Next</span>
         </button>
         
         <!-- Bottom Shadow Blend to match background -->
         <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to top, #0b0c10 0%, transparent 100%); z-index: 5; pointer-events: none;"></div>
     </div>
+</div>
 
 <div class="container">
-    <!-- Quick Booking -->
-    <div class="row justify-content-center" style="margin-top: -80px;">
+    <!-- FLOATING QUICK BOOKING WIDGET -->
+    <div class="row justify-content-center">
         <div class="col-lg-10">
-            <div class="quick-booking-panel d-flex flex-column flex-md-row gap-3 align-items-center justify-content-between">
-                <div><h5 class="mb-0 fw-bold text-nowrap"><i class="bi bi-lightning-charge-fill text-warning"></i> Chọn Phim Nhanh</h5></div>
-                <div class="flex-grow-1 w-100">
-                    <form asp-controller="Showtimes" asp-action="Index" method="get" class="row g-2">
-                        <div class="col-md-9">
-                            <select name="movieId" class="form-select form-select-lg">
-                                <option value="">-- Chọn phim đang chiếu --</option>
-                                @foreach (var m in nowShowing)
-                                {
-                                    <option value="@m.MovieId">@m.Title</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary-custom btn-lg w-100 fw-bold">Mua vé</button>
-                        </div>
-                    </form>
-                </div>
+            <div class="quick-booking-panel p-4">
+                <form asp-controller="Showtimes" asp-action="Index" method="get" class="row g-3 align-items-center">
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label text-muted small fw-bold text-uppercase"><i class="bi bi-film text-primary me-1"></i> Chọn Phim</label>
+                        <select name="movieId" class="form-select select-custom">
+                            <option value="">-- Tất cả phim đang chiếu --</option>
+                            @foreach (var m in nowShowing)
+                            {
+                                <option value="@m.MovieId">@m.Title</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label text-muted small fw-bold text-uppercase"><i class="bi bi-geo-alt-fill text-primary me-1"></i> Chọn Rạp</label>
+                        <select name="theaterId" class="form-select select-custom">
+                            <option value="">-- Tất cả các rạp --</option>
+                            @foreach (var t in theaters)
+                            {
+                                <option value="@t.TheaterId">@t.TheaterName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label text-muted small fw-bold text-uppercase"><i class="bi bi-calendar-week text-primary me-1"></i> Chọn Ngày</label>
+                        <select name="date" class="form-select select-custom">
+                            @for (int i = 0; i < 14; i++)
+                            {
+                                var targetDate = DateTime.Today.AddDays(i);
+                                var dateValue = targetDate.ToString("yyyy-MM-dd");
+                                var dateText = i == 0 ? "Hôm nay, " + targetDate.ToString("dd/MM") : 
+                                               i == 1 ? "Ngày mai, " + targetDate.ToString("dd/MM") :
+                                               targetDate.ToString("dddd, dd/MM", new System.Globalization.CultureInfo("vi-VN"));
+                                <option value="@dateValue">@dateText</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 pt-md-2 mt-lg-4">
+                        <button type="submit" class="btn btn-primary-custom w-100 py-3 rounded-3 fw-bold text-uppercase shadow-lg d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-lightning-charge-fill text-warning"></i> Đặt Vé Nhanh
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Phim đang chiếu -->
-    <div class="mt-5 pt-3">
+    <!-- PHIM ĐANG CHIẾU GRID -->
+    <div class="mt-5 pt-4">
         <div class="d-flex justify-content-between align-items-end mb-4">
             <h2 class="section-title mb-0">Phim Đang Chiếu</h2>
             <a asp-controller="Movies" asp-action="Index" class="btn btn-outline-light rounded-pill px-4">Xem tất cả <i class="bi bi-arrow-right"></i></a>
@@ -179,62 +533,138 @@
         <div class="row g-4">
             @foreach (var movie in nowShowing.Take(8))
             {
+                var genresStr = movie.Genres.Any() 
+                    ? string.Join(" • ", movie.Genres) 
+                    : "Phim điện ảnh";
+                
                 <div class="col-6 col-md-4 col-lg-3">
-                    <div class="movie-card">
-                        <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@movie.MovieId" class="text-decoration-none text-light">
-                            <div class="movie-poster-wrapper">
-                                @if (!string.IsNullOrEmpty(movie.PosterUrl))
-                                {
-                                    <img src="@movie.PosterUrl" class="movie-poster" alt="@movie.Title" loading="lazy" />
-                                }
-                                else
-                                {
-                                    <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background:#222; font-size:3rem;">🎬</div>
-                                }
-                                <div class="movie-badge-status badge bg-danger">Đang chiếu</div>
-                                
-                                <div class="position-absolute bottom-0 start-0 w-100 p-3" style="background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); opacity: 0; transition: opacity 0.3s; /* Hover overlay target */" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
-                                    <div class="btn btn-primary-custom w-100">Theo Cầu <i class="bi bi-ticket-fill"></i></div>
+                    <div class="movie-grid-card">
+                        <div class="poster-container">
+                            @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                            {
+                                <img src="@movie.PosterUrl" class="poster-img" alt="@movie.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-dark text-muted">
+                                    <i class="bi bi-camera-reels-fill fs-2"></i>
+                                    <span class="small mt-2" style="font-size:0.75rem">Chưa có Poster</span>
                                 </div>
+                            }
+
+                            <!-- Badge Top Row -->
+                            <div class="card-badge-row">
+                                <span class="rating-badge">
+                                    <i class="bi bi-star-fill text-warning"></i> @GetMovieRating(movie.MovieId).ToString("F1")
+                                </span>
+                                <span class="age-badge @GetAgeBadgeClass(movie.Title)" title="@GetAgeBadgeDesc(movie.Title)">
+                                    @GetAgeBadgeText(movie.Title)
+                                </span>
                             </div>
-                            <div class="p-3">
-                                <h6 class="text-truncate fw-bold mb-1" style="font-size: 1.1rem;">@movie.Title</h6>
-                                <div class="d-flex justify-content-between text-muted small">
-                                    <span><i class="bi bi-clock"></i> @movie.Duration'</span>
-                                    <span><i class="bi bi-star-fill text-warning"></i> 9.0</span>
-                                </div>
+
+                            <!-- Format Badge Bottom-Right -->
+                            <div class="format-badge">
+                                @GetMovieFormat(movie.Title)
                             </div>
-                        </a>
+
+                            <!-- Hover Overlay Actions -->
+                            <div class="movie-overlay-actions">
+                                <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@movie.MovieId" 
+                                   class="btn btn-primary-custom w-100 py-2.5 rounded-pill fw-bold text-uppercase shadow">
+                                    <i class="bi bi-ticket-perforated-fill me-2"></i> Đặt Vé
+                                </a>
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId" 
+                                   class="btn btn-outline-light w-100 py-2.5 rounded-pill fw-bold text-uppercase">
+                                    <i class="bi bi-info-circle me-2"></i> Chi Tiết
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Info Area -->
+                        <div class="movie-info-block">
+                            <div class="card-genre-text">@genresStr</div>
+                            <h5 class="card-movie-title" title="@movie.Title">
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId">
+                                    @movie.Title
+                                </a>
+                            </h5>
+                            <div class="card-footer-info">
+                                <span><i class="bi bi-clock me-1"></i> @movie.Duration phút</span>
+                                <span class="text-success"><i class="bi bi-play-circle me-1"></i> Đang chiếu</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             }
         </div>
     </div>
 
-    <!-- Phim sắp chiếu -->
+    <!-- PHIM SẮP CHIẾU GRID -->
     @if (comingSoon.Any())
     {
-        <div class="mt-5 pt-5 mb-5">
-            <h2 class="section-title">Phim Sắp Chiếu</h2>
+        <div class="mt-5 pt-5 mb-4">
+            <h2 class="section-title mb-4">Phim Sắp Chiếu</h2>
             <div class="row g-4">
                 @foreach (var movie in comingSoon.Take(4))
                 {
+                    var genresStr = movie.Genres.Any() 
+                        ? string.Join(" • ", movie.Genres) 
+                        : "Phim điện ảnh";
+                    
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="movie-card" style="opacity: 0.85;">
-                            <div class="movie-poster-wrapper">
+                        <div class="movie-grid-card" style="opacity: 0.95;">
+                            <div class="poster-container">
                                 @if (!string.IsNullOrEmpty(movie.PosterUrl))
                                 {
-                                    <img src="@movie.PosterUrl" class="movie-poster" alt="@movie.Title" loading="lazy" />
+                                    <img src="@movie.PosterUrl" class="poster-img" alt="@movie.Title" loading="lazy" />
                                 }
                                 else
                                 {
-                                    <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background:#222; font-size:3rem;">🎬</div>
+                                    <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-dark text-muted">
+                                        <i class="bi bi-camera-reels-fill fs-2"></i>
+                                        <span class="small mt-2" style="font-size:0.75rem">Chưa có Poster</span>
+                                    </div>
                                 }
-                                <div class="movie-badge-status badge text-dark bg-warning">Sắp chiếu</div>
+
+                                <!-- Badge Top Row -->
+                                <div class="card-badge-row">
+                                    <span class="rating-badge">
+                                        <i class="bi bi-star-fill text-warning"></i> @GetMovieRating(movie.MovieId).ToString("F1")
+                                    </span>
+                                    <span class="age-badge @GetAgeBadgeClass(movie.Title)" title="@GetAgeBadgeDesc(movie.Title)">
+                                        @GetAgeBadgeText(movie.Title)
+                                    </span>
+                                </div>
+
+                                <!-- Format Badge Bottom-Right -->
+                                <div class="format-badge">
+                                    @GetMovieFormat(movie.Title)
+                                </div>
+
+                                <!-- Hover Overlay Actions -->
+                                <div class="movie-overlay-actions">
+                                    <button class="btn btn-secondary w-100 py-2.5 rounded-pill fw-bold text-uppercase" disabled>
+                                        <i class="bi bi-calendar-x me-2"></i> Chưa Chiếu
+                                    </button>
+                                    <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId" 
+                                       class="btn btn-outline-light w-100 py-2.5 rounded-pill fw-bold text-uppercase">
+                                        <i class="bi bi-info-circle me-2"></i> Chi Tiết
+                                    </a>
+                                </div>
                             </div>
-                            <div class="p-3 text-center">
-                                <h6 class="text-truncate fw-bold mb-1">@movie.Title</h6>
-                                <div class="text-muted small">Khởi chiếu: @movie.ReleaseDate?.ToString("dd/MM/yyyy")</div>
+
+                            <!-- Info Area -->
+                            <div class="movie-info-block">
+                                <div class="card-genre-text">@genresStr</div>
+                                <h5 class="card-movie-title" title="@movie.Title">
+                                    <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId">
+                                        @movie.Title
+                                    </a>
+                                </h5>
+                                <div class="card-footer-info">
+                                    <span><i class="bi bi-calendar-event me-1"></i> Khởi chiếu: @movie.ReleaseDate?.ToString("dd/MM/yyyy")</span>
+                                    <span class="text-warning"><i class="bi bi-clock-history me-1"></i> Sắp chiếu</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -243,3 +673,153 @@
         </div>
     }
 </div>
+
+<!-- ADVANTAGES SHOWCASE SECTION -->
+<div class="py-5 mt-5" style="background: linear-gradient(180deg, transparent 0%, rgba(20,20,20,0.5) 50%, transparent 100%);">
+    <div class="container text-center">
+        <h2 class="section-title text-center mx-auto mb-5 d-block" style="width: fit-content;">TRẢI NGHIỆM ĐIỆN ẢNH ĐỈNH CAO</h2>
+        
+        <div class="row g-4 mt-2">
+            <div class="col-md-6 col-lg-3">
+                <div class="advantage-card glass p-4 text-center rounded-4 h-100">
+                    <div class="advantage-icon-wrapper mb-3 mx-auto">
+                        <i class="bi bi-display fs-1 text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold text-white mb-2">MÀN HÌNH IMAX 3D</h5>
+                    <p class="text-muted small mb-0">Trải nghiệm rạp chiếu kích thước khổng lồ với độ tương phản sắc nét tuyệt đối, bao phủ trọn tầm nhìn.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="advantage-card glass p-4 text-center rounded-4 h-100">
+                    <div class="advantage-icon-wrapper mb-3 mx-auto">
+                        <i class="bi bi-music-note-beamed fs-1 text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold text-white mb-2">ÂM THANH DOLBY ATMOS</h5>
+                    <p class="text-muted small mb-0">Hệ thống âm thanh vòm 3D sống động, tái tạo từng chi tiết chân thực nhất bao trùm cả phòng chiếu.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="advantage-card glass p-4 text-center rounded-4 h-100">
+                    <div class="advantage-icon-wrapper mb-3 mx-auto">
+                        <i class="bi bi-cup-straw fs-1 text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold text-white mb-2">QUẦY BẮP NƯỚC VIP</h5>
+                    <p class="text-muted small mb-0">Bắp rang bơ nóng hổi với hương vị caramel, phô mai độc quyền đi kèm thức uống phong phú giải nhiệt cực đã.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="advantage-card glass p-4 text-center rounded-4 h-100">
+                    <div class="advantage-icon-wrapper mb-3 mx-auto">
+                        <i class="bi bi-phone-vibrate fs-1 text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold text-white mb-2">ĐẶT VÉ TIỆN LỢI</h5>
+                    <p class="text-muted small mb-0">Hệ thống đặt vé và thanh toán trực tuyến siêu tốc, giữ chỗ VIP chỉ trong 30 giây mọi lúc mọi nơi.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NEWS & PROMOTIONS SECTION -->
+<div class="container py-5 mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <h2 class="section-title mb-0">TIN TỨC & KHUYẾN MÃI</h2>
+        <a asp-controller="Home" asp-action="News" class="btn btn-outline-light rounded-pill px-4">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="promo-card glass rounded-4 overflow-hidden h-100">
+                <div class="promo-image-wrapper">
+                    <img src="/img/movies/mai-banner.jpg" class="promo-img" alt="Promo Monday" onerror="this.src='/img/movies/mai-banner.jpg'" />
+                    <div class="promo-badge bg-danger text-white">Khuyến Mãi</div>
+                </div>
+                <div class="p-4">
+                    <h5 class="fw-bold text-white mb-2">Thứ Hai Cuối Tháng — Đồng Giá 45K Toàn Hệ Thống</h5>
+                    <p class="text-muted small mb-3">Tận hưởng ngày hội điện ảnh đặc biệt vào ngày thứ Hai cuối cùng của mỗi tháng với mức giá siêu ưu đãi chỉ 45,000đ cho mọi suất chiếu 2D.</p>
+                    <span class="text-primary fw-bold text-uppercase small" style="cursor: pointer;">Chi tiết ưu đãi <i class="bi bi-chevron-right small"></i></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="promo-card glass rounded-4 overflow-hidden h-100">
+                <div class="promo-image-wrapper">
+                    <img src="/img/movies/dune2-banner.jpg" class="promo-img" alt="Promo IMAX" onerror="this.src='/img/movies/dune2-banner.jpg'" />
+                    <div class="promo-badge bg-warning text-dark">Ưu Đãi VIP</div>
+                </div>
+                <div class="p-4">
+                    <h5 class="fw-bold text-white mb-2">Trải Nghiệm IMAX Cực Đỉnh Giảm Ngay 30% Cho VIP</h5>
+                    <p class="text-muted small mb-3">Đắm chìm trong không gian vũ trụ điện ảnh với vé IMAX được giảm ngay 30% dành riêng cho khách hàng sở hữu thẻ thành viên Diamond.</p>
+                    <span class="text-primary fw-bold text-uppercase small" style="cursor: pointer;">Chi tiết ưu đãi <i class="bi bi-chevron-right small"></i></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="promo-card glass rounded-4 overflow-hidden h-100">
+                <div class="promo-image-wrapper">
+                    <img src="/img/movies/kungfupanda4-banner.jpg" class="promo-img" alt="Promo Combo" onerror="this.src='/img/movies/kungfupanda4-banner.jpg'" />
+                    <div class="promo-badge bg-success text-white">Tin Tức</div>
+                </div>
+                <div class="p-4">
+                    <h5 class="fw-bold text-white mb-2">DUNE: PART TWO Phá Vỡ Mọi Kỷ Lục Phòng Vé Toàn Cầu</h5>
+                    <p class="text-muted small mb-3">Siêu phẩm điện ảnh khoa học viễn tưởng của Denis Villeneuve chính thức cán mốc doanh thu 1 tỷ USD toàn cầu, lập kỷ lục vô tiền khoáng hậu.</p>
+                    <span class="text-primary fw-bold text-uppercase small" style="cursor: pointer;">Đọc bài viết <i class="bi bi-chevron-right small"></i></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetAgeBadgeClass(string title)
+    {
+        string t = title.ToLower();
+        if (t.Contains("dune") || t.Contains("mai") || t.Contains("quật mộ") || t.Contains("sát thủ john wick"))
+            return "age-t18";
+        if (t.Contains("biệt đội săn ma") || t.Contains("võ sĩ giác đấu") || t.Contains("deadpool"))
+            return "age-t16";
+        if (t.Contains("vùng đất câm lặng") || t.Contains("fast"))
+            return "age-t13";
+        return "age-p";
+    }
+
+    public string GetAgeBadgeText(string title)
+    {
+        string t = title.ToLower();
+        if (t.Contains("dune") || t.Contains("mai") || t.Contains("quật mộ") || t.Contains("sát thủ john wick"))
+            return "T18";
+        if (t.Contains("biệt đội săn ma") || t.Contains("võ sĩ giác đấu") || t.Contains("deadpool"))
+            return "T16";
+        if (t.Contains("vùng đất câm lặng") || t.Contains("fast"))
+            return "T13";
+        return "P";
+    }
+
+    public string GetAgeBadgeDesc(string title)
+    {
+        string t = title.ToLower();
+        if (t.Contains("dune") || t.Contains("mai") || t.Contains("quật mộ") || t.Contains("sát thủ john wick"))
+            return "Phim dành cho khán giả từ 18 tuổi trở lên";
+        if (t.Contains("biệt đội săn ma") || t.Contains("võ sĩ giác đấu") || t.Contains("deadpool"))
+            return "Phim dành cho khán giả từ 16 tuổi trở lên";
+        if (t.Contains("vùng đất câm lặng") || t.Contains("fast"))
+            return "Phim dành cho khán giả từ 13 tuổi trở lên";
+        return "Phim dành cho mọi lứa tuổi (Phổ biến)";
+    }
+
+    public string GetMovieFormat(string title)
+    {
+        string t = title.ToLower();
+        if (t.Contains("avatar") || t.Contains("godzilla") || t.Contains("dune") || t.Contains("người nhện"))
+            return "IMAX 3D";
+        if (t.Contains("fast") || t.Contains("john wick") || t.Contains("sonic") || t.Contains("mufasa") || t.Contains("giác đấu"))
+            return "3D ATMOS";
+        return "2D DIGITAL";
+    }
+
+    public double GetMovieRating(int id)
+    {
+        return 7.5 + (id % 13) * 0.16;
+    }
+}
+

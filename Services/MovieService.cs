@@ -14,20 +14,40 @@ namespace CinemaManagement.Services
         public async Task<List<MovieDto>> GetAllMoviesAsync()
         {
             return await _context.Movies
-                .Include(m => m.MovieGenres)
-                    .ThenInclude(mg => mg.Genre)
-                .Select(m => ToDto(m))
+                .AsNoTracking()
+                .Select(m => new MovieDto
+                {
+                    MovieId = m.MovieId,
+                    Title = m.Title,
+                    Duration = m.Duration,
+                    Description = m.Description,
+                    ReleaseDate = m.ReleaseDate,
+                    PosterUrl = m.PosterUrl,
+                    BannerUrl = m.BannerUrl,
+                    Status = m.Status,
+                    Genres = m.MovieGenres.Select(mg => mg.Genre != null ? mg.Genre.GenreName : "").ToList()
+                })
                 .ToListAsync();
         }
 
         public async Task<MovieDto?> GetMovieByIdAsync(int id)
         {
-            var movie = await _context.Movies
-                .Include(m => m.MovieGenres)
-                    .ThenInclude(mg => mg.Genre)
-                .FirstOrDefaultAsync(m => m.MovieId == id);
-
-            return movie == null ? null : ToDto(movie);
+            return await _context.Movies
+                .AsNoTracking()
+                .Where(m => m.MovieId == id)
+                .Select(m => new MovieDto
+                {
+                    MovieId = m.MovieId,
+                    Title = m.Title,
+                    Duration = m.Duration,
+                    Description = m.Description,
+                    ReleaseDate = m.ReleaseDate,
+                    PosterUrl = m.PosterUrl,
+                    BannerUrl = m.BannerUrl,
+                    Status = m.Status,
+                    Genres = m.MovieGenres.Select(mg => mg.Genre != null ? mg.Genre.GenreName : "").ToList()
+                })
+                .FirstOrDefaultAsync();
         }
 
         public async Task<MovieDto> CreateMovieAsync(CreateMovieDto dto)
@@ -68,9 +88,9 @@ namespace CinemaManagement.Services
             movie.BannerUrl = dto.BannerUrl;
             movie.Status = dto.Status;
 
-            // Replace genres
-            var oldGenres = _context.MovieGenres.Where(mg => mg.MovieId == id);
-            _context.MovieGenres.RemoveRange(oldGenres);
+            // Delete old genres directly in DB (optimized)
+            await _context.MovieGenres.Where(mg => mg.MovieId == id).ExecuteDeleteAsync();
+
             foreach (var genreId in dto.GenreIds)
             {
                 _context.MovieGenres.Add(new MovieGenre { MovieId = id, GenreId = genreId });
@@ -88,18 +108,5 @@ namespace CinemaManagement.Services
             await _context.SaveChangesAsync();
             return true;
         }
-
-        private static MovieDto ToDto(Movie m) => new()
-        {
-            MovieId = m.MovieId,
-            Title = m.Title,
-            Duration = m.Duration,
-            Description = m.Description,
-            ReleaseDate = m.ReleaseDate,
-            PosterUrl = m.PosterUrl,
-            BannerUrl = m.BannerUrl,
-            Status = m.Status,
-            Genres = m.MovieGenres.Select(mg => mg.Genre?.GenreName ?? "").ToList()
-        };
     }
 }
