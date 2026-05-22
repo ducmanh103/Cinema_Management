@@ -683,6 +683,20 @@
     line-height: 1.2;
 }
 
+.chatbot-showtime-theater-group {
+    margin-top: 6px;
+    padding: 4px 2px;
+}
+
+.chatbot-showtime-theater-name {
+    font-size: 0.64rem;
+    font-weight: 600;
+    color: var(--chat-text-muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
 .chatbot-showtime-pills {
     display: flex;
     flex-wrap: wrap;

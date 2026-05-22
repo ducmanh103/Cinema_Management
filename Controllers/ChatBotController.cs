@@ -102,6 +102,9 @@ namespace CinemaManagement.Controllers
             [JsonPropertyName("roomName")]
             public string RoomName { get; set; } = string.Empty;
 
+            [JsonPropertyName("theaterName")]
+            public string TheaterName { get; set; } = string.Empty;
+
             [JsonPropertyName("price")]
             public decimal Price { get; set; }
         }
@@ -119,6 +122,9 @@ namespace CinemaManagement.Controllers
 
             [JsonPropertyName("roomName")]
             public string RoomName { get; set; } = string.Empty;
+
+            [JsonPropertyName("theaterName")]
+            public string TheaterName { get; set; } = string.Empty;
 
             [JsonPropertyName("seatName")]
             public string SeatName { get; set; } = string.Empty;
@@ -163,7 +169,7 @@ namespace CinemaManagement.Controllers
                     
                     var tickets = await _dbContext.Tickets
                         .Include(t => t.Showtime).ThenInclude(s => s.Movie)
-                        .Include(t => t.Showtime).ThenInclude(s => s.Room)
+                        .Include(t => t.Showtime).ThenInclude(s => s.Room).ThenInclude(r => r.Theater)
                         .Include(t => t.Seat)
                         .Where(t => t.UserId == userId)
                         .OrderByDescending(t => t.BookingTime)
@@ -176,7 +182,7 @@ namespace CinemaManagement.Controllers
                         ticketsSb.AppendLine($"Người dùng này đã đăng nhập tên là {userFullName}. Dưới đây là danh sách vé họ đã đặt:");
                         foreach (var t in tickets)
                         {
-                            ticketsSb.AppendLine($"- Vé mã #{t.TicketId}: Phim: {t.Showtime.Movie.Title} | Phòng: {t.Showtime.Room.RoomName} | Suất chiếu: {t.Showtime.StartTime:dd/MM/yyyy HH:mm} | Ghế: {t.Seat.SeatNumber} | Trạng thái: {t.Status}");
+                            ticketsSb.AppendLine($"- Vé mã #{t.TicketId}: Phim: {t.Showtime.Movie.Title} | Rạp: {t.Showtime.Room.Theater.TheaterName} | Phòng: {t.Showtime.Room.RoomName} | Suất chiếu: {t.Showtime.StartTime:dd/MM/yyyy HH:mm} | Ghế: {t.Seat.SeatNumber} | Trạng thái: {t.Status}");
                         }
                         userTicketsContext = ticketsSb.ToString();
                     }
@@ -212,7 +218,7 @@ namespace CinemaManagement.Controllers
                     var tomorrow = today.AddDays(1);
                     showtimes = await _dbContext.Showtimes
                         .Include(s => s.Movie)
-                        .Include(s => s.Room)
+                        .Include(s => s.Room).ThenInclude(r => r.Theater)
                         .Where(s => matchedMovieIds.Contains(s.MovieId) && s.StartTime >= today && s.StartTime < tomorrow)
                         .OrderBy(s => s.StartTime)
                         .Select(s => new ShowtimeAttachmentDto {
@@ -221,6 +227,7 @@ namespace CinemaManagement.Controllers
                             MovieTitle = s.Movie.Title,
                             StartTime = s.StartTime.ToString("HH:mm"),
                             RoomName = s.Room.RoomName,
+                            TheaterName = s.Room.Theater.TheaterName,
                             Price = s.Price
                         }).ToListAsync();
                 }
@@ -258,7 +265,7 @@ namespace CinemaManagement.Controllers
                     var tomorrow = today.AddDays(1);
                     showtimes = await _dbContext.Showtimes
                         .Include(s => s.Movie)
-                        .Include(s => s.Room)
+                        .Include(s => s.Room).ThenInclude(r => r.Theater)
                         .Where(s => s.StartTime >= today && s.StartTime < tomorrow)
                         .OrderBy(s => s.StartTime)
                         .Select(s => new ShowtimeAttachmentDto {
@@ -267,6 +274,7 @@ namespace CinemaManagement.Controllers
                             MovieTitle = s.Movie.Title,
                             StartTime = s.StartTime.ToString("HH:mm"),
                             RoomName = s.Room.RoomName,
+                            TheaterName = s.Room.Theater.TheaterName,
                             Price = s.Price
                         }).ToListAsync();
                 }
@@ -276,7 +284,7 @@ namespace CinemaManagement.Controllers
                     {
                         userBookings = await _dbContext.Tickets
                             .Include(t => t.Showtime).ThenInclude(s => s.Movie)
-                            .Include(t => t.Showtime).ThenInclude(s => s.Room)
+                            .Include(t => t.Showtime).ThenInclude(s => s.Room).ThenInclude(r => r.Theater)
                             .Include(t => t.Seat)
                             .Where(t => t.UserId == userId)
                             .OrderByDescending(t => t.BookingTime)
@@ -286,6 +294,7 @@ namespace CinemaManagement.Controllers
                                 MovieTitle = t.Showtime.Movie.Title,
                                 StartTime = t.Showtime.StartTime.ToString("dd/MM/yyyy HH:mm"),
                                 RoomName = t.Showtime.Room.RoomName,
+                                TheaterName = t.Showtime.Room.Theater.TheaterName,
                                 SeatName = t.Seat.SeatNumber,
                                 Status = t.Status,
                                 BookingTime = t.BookingTime.ToString("dd/MM/yyyy HH:mm")
@@ -327,7 +336,7 @@ namespace CinemaManagement.Controllers
                 
                 var fallbackResponse = ProcessOfflineQuery(request.Message, contextData, userFullName, isLoggedIn, movies, showtimes);
                 return Ok(new ChatResponse { 
-                    Response = "Đã xảy ra lỗi kết nối. Dưới đây là phản hồi offline của hệ thống: \n\n" + fallbackResponse, 
+                    Response = fallbackResponse, 
                     Mode = "offline-error",
                     Movies = movies,
                     Showtimes = showtimes,
@@ -357,13 +366,14 @@ namespace CinemaManagement.Controllers
             // 3. Lấy suất chiếu hôm nay
             var todayShowtimes = await _dbContext.Showtimes
                 .Include(s => s.Movie)
-                .Include(s => s.Room)
+                .Include(s => s.Room).ThenInclude(r => r.Theater)
                 .Where(s => s.StartTime >= today && s.StartTime < tomorrow)
                 .OrderBy(s => s.StartTime)
                 .Select(s => new ShowtimeContextInfo
                 {
                     MovieTitle = s.Movie.Title,
                     RoomName = s.Room.RoomName,
+                    TheaterName = s.Room.Theater.TheaterName,
                     StartTime = s.StartTime.ToString("HH:mm"),
                     Price = s.Price
                 })
@@ -380,7 +390,8 @@ namespace CinemaManagement.Controllers
 
         private async Task<string> CallGeminiApiAsync(string message, List<ChatMessageDto> history, CinemaContextData context, string apiKey, string userFullName, string userTicketsContext, bool isLoggedIn)
         {
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={apiKey}";
+            var modelName = _configuration["Gemini:Model"] ?? "gemini-3.5-flash";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{modelName}:generateContent?key={apiKey}";
 
             // Xây dựng System Instruction chứa ngữ cảnh rạp phim và người dùng
             var systemInstruction = new StringBuilder();
@@ -421,7 +432,7 @@ namespace CinemaManagement.Controllers
             {
                 foreach (var st in context.TodayShowtimes)
                 {
-                    systemInstruction.AppendLine($"- Phim: {st.MovieTitle} | Suất: {st.StartTime} | Phòng: {st.RoomName} | Giá vé: {st.Price:N0} VNĐ");
+                    systemInstruction.AppendLine($"- Phim: {st.MovieTitle} | Rạp: {st.TheaterName} | Phòng: {st.RoomName} | Suất: {st.StartTime} | Giá vé: {st.Price:N0} VNĐ");
                 }
             }
             else
@@ -650,7 +661,7 @@ namespace CinemaManagement.Controllers
             {
                 var greeting = isLoggedIn ? $"Xin chào **{userFullName}**! Tôi là Trợ lý ảo CinemaHub Assistant.\n\n" : "Xin chào! Tôi là Trợ lý ảo CinemaHub Assistant.\n\n";
                 return greeting +
-                       "Hiện tại hệ thống AI đang ở chế độ rà soát ngoại tuyến. Tôi có thể hỗ trợ bạn nhanh các thông tin sau:\n" +
+                       "Tôi có thể hỗ trợ bạn nhanh các thông tin sau:\n" +
                        "- [Xem danh sách phim đang chiếu hoặc phim sắp chiếu](query:phim đang chiếu)\n" +
                        "- [Xem lịch chiếu hôm nay](query:lịch chiếu hôm nay)\n" +
                        "- [Thông tin giá vé, địa chỉ, hotline liên hệ](query:giá vé)\n" +
@@ -659,7 +670,7 @@ namespace CinemaManagement.Controllers
             }
 
             // Mặc định
-            return "Cảm ơn câu hỏi của bạn. Tôi là Trợ lý ảo CinemaHub. Ở chế độ ngoại tuyến, tôi chưa hiểu được câu hỏi này.\n\n" +
+            return "Cảm ơn câu hỏi của bạn. Tôi là Trợ lý ảo CinemaHub. Hiện tại tôi chưa hiểu rõ yêu cầu này.\n\n" +
                    "Bạn có thể thử nhập câu hỏi trực tiếp hoặc nhấn vào các hành động gợi ý dưới đây:\n" +
                    "- [Phim đang chiếu](query:phim đang chiếu)\n" +
                    "- [Lịch chiếu hôm nay](query:lịch chiếu hôm nay)\n" +
@@ -872,6 +883,7 @@ namespace CinemaManagement.Controllers
         {
             public string MovieTitle { get; set; } = string.Empty;
             public string RoomName { get; set; } = string.Empty;
+            public string TheaterName { get; set; } = string.Empty;
             public string StartTime { get; set; } = string.Empty;
             public decimal Price { get; set; }
         }

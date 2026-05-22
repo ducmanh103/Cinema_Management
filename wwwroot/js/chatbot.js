@@ -237,13 +237,17 @@ document.addEventListener("DOMContentLoaded", function () {
             const showtimesContainer = document.createElement("div");
             showtimesContainer.className = "chatbot-showtimes-container";
             
-            // Group showtimes by movie title
+            // Group showtimes by movie title and then by theater name
             const groups = {};
             showtimes.forEach(st => {
                 if (!groups[st.movieTitle]) {
-                    groups[st.movieTitle] = [];
+                    groups[st.movieTitle] = {};
                 }
-                groups[st.movieTitle].push(st);
+                const theater = st.theaterName || "CinemaHub";
+                if (!groups[st.movieTitle][theater]) {
+                    groups[st.movieTitle][theater] = [];
+                }
+                groups[st.movieTitle][theater].push(st);
             });
             
             Object.keys(groups).forEach(movieTitle => {
@@ -255,22 +259,35 @@ document.addEventListener("DOMContentLoaded", function () {
                 titleDiv.innerText = movieTitle;
                 groupDiv.appendChild(titleDiv);
                 
-                const pillsDiv = document.createElement("div");
-                pillsDiv.className = "chatbot-showtime-pills";
-                
-                groups[movieTitle].forEach(st => {
-                    const pill = document.createElement("a");
-                    pill.className = "chatbot-showtime-pill";
-                    pill.href = `/Booking/SelectSeat/${st.showtimeId}`;
-                    pill.innerHTML = `
-                        <span class="chatbot-showtime-time">${st.startTime}</span>
-                        <span class="chatbot-showtime-room">${st.roomName}</span>
-                        <span class="chatbot-showtime-price">${st.price.toLocaleString('vi-VN')}đ</span>
-                    `;
-                    pillsDiv.appendChild(pill);
+                const theatersObj = groups[movieTitle];
+                Object.keys(theatersObj).forEach(theaterName => {
+                    const theaterDiv = document.createElement("div");
+                    theaterDiv.className = "chatbot-showtime-theater-group";
+                    
+                    const theaterHeader = document.createElement("div");
+                    theaterHeader.className = "chatbot-showtime-theater-name";
+                    theaterHeader.innerText = theaterName;
+                    theaterDiv.appendChild(theaterHeader);
+                    
+                    const pillsDiv = document.createElement("div");
+                    pillsDiv.className = "chatbot-showtime-pills";
+                    
+                    theatersObj[theaterName].forEach(st => {
+                        const pill = document.createElement("a");
+                        pill.className = "chatbot-showtime-pill";
+                        pill.href = `/Booking/SelectSeat/${st.showtimeId}`;
+                        pill.innerHTML = `
+                            <span class="chatbot-showtime-time">${st.startTime}</span>
+                            <span class="chatbot-showtime-room">${st.roomName}</span>
+                            <span class="chatbot-showtime-price">${st.price.toLocaleString('vi-VN')}đ</span>
+                        `;
+                        pillsDiv.appendChild(pill);
+                    });
+                    
+                    theaterDiv.appendChild(pillsDiv);
+                    groupDiv.appendChild(theaterDiv);
                 });
                 
-                groupDiv.appendChild(pillsDiv);
                 showtimesContainer.appendChild(groupDiv);
             });
             
@@ -296,8 +313,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         <div class="chatbot-ticket-title">${booking.movieTitle}</div>
                         <div class="chatbot-ticket-row">
                             <div class="chatbot-ticket-col">
-                                <span class="chatbot-ticket-label">Suất chiếu</span>
-                                <span class="chatbot-ticket-value">${booking.startTime}</span>
+                                <span class="chatbot-ticket-label">Rạp</span>
+                                <span class="chatbot-ticket-value">${booking.theaterName || "CinemaHub"}</span>
                             </div>
                             <div class="chatbot-ticket-col">
                                 <span class="chatbot-ticket-label">Phòng</span>
@@ -305,6 +322,10 @@ document.addEventListener("DOMContentLoaded", function () {
                             </div>
                         </div>
                         <div class="chatbot-ticket-row">
+                            <div class="chatbot-ticket-col">
+                                <span class="chatbot-ticket-label">Suất chiếu</span>
+                                <span class="chatbot-ticket-value">${booking.startTime}</span>
+                            </div>
                             <div class="chatbot-ticket-col">
                                 <span class="chatbot-ticket-label">Ghế</span>
                                 <span class="chatbot-ticket-value">${booking.seatName}</span>
