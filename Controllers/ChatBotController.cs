@@ -348,7 +348,7 @@ namespace CinemaManagement.Controllers
 
         private async Task<string> CallGeminiApiAsync(string message, List<ChatMessageDto> history, CinemaContextData context, string apiKey, string userFullName, string userTicketsContext, bool isLoggedIn)
         {
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={apiKey}";
 
             // Xây dựng System Instruction chứa ngữ cảnh rạp phim và người dùng
             var systemInstruction = new StringBuilder();
@@ -410,24 +410,46 @@ namespace CinemaManagement.Controllers
             // Chuẩn bị payload body cho Gemini API
             var contentsList = new List<object>();
 
-            // Áp dụng lịch sử chat (tối đa 6 tin gần nhất để tiết kiệm token và đảm bảo tốc độ)
-            var recentHistory = history.Skip(Math.Max(0, history.Count - 6)).ToList();
+            // Gộp lịch sử chat và tin nhắn hiện tại
+            var allMessages = new List<ChatMessageDto>(history);
+            
+            // Nếu tin nhắn cuối trong lịch sử trùng với tin nhắn hiện tại (cả về sender và nội dung),
+            // ta không cần thêm tin nhắn hiện tại vào nữa để tránh bị trùng lặp.
+            bool alreadyContainsCurrent = allMessages.Count > 0 && 
+                allMessages[^1].Sender.Equals("user", StringComparison.OrdinalIgnoreCase) && 
+                allMessages[^1].Text == message;
+
+            if (!alreadyContainsCurrent)
+            {
+                allMessages.Add(new ChatMessageDto { Sender = "user", Text = message });
+            }
+
+            // Đảm bảo các lượt hội thoại xen kẽ (user - model - user - model) theo yêu cầu của Gemini API
+            var alternatingMessages = new List<ChatMessageDto>();
+            foreach (var msg in allMessages)
+            {
+                var role = msg.Sender.Equals("user", StringComparison.OrdinalIgnoreCase) ? "user" : "model";
+                if (alternatingMessages.Count > 0 && alternatingMessages[^1].Sender == role)
+                {
+                    // Nếu trùng role liên tiếp, gộp nội dung lại bằng dấu xuống dòng
+                    alternatingMessages[^1].Text += "\n" + msg.Text;
+                }
+                else
+                {
+                    alternatingMessages.Add(new ChatMessageDto { Sender = role, Text = msg.Text });
+                }
+            }
+
+            // Lấy tối đa 6 lượt hội thoại gần nhất để tiết kiệm token và đảm bảo tốc độ
+            var recentHistory = alternatingMessages.Skip(Math.Max(0, alternatingMessages.Count - 6)).ToList();
             foreach (var msg in recentHistory)
             {
-                var role = msg.Sender.ToLower() == "user" ? "user" : "model";
                 contentsList.Add(new
                 {
-                    role = role,
+                    role = msg.Sender,
                     parts = new[] { new { text = msg.Text } }
                 });
             }
-
-            // Tin nhắn hiện tại của user
-            contentsList.Add(new
-            {
-                role = "user",
-                parts = new[] { new { text = message } }
-            });
 
             var requestBody = new
             {
@@ -439,7 +461,7 @@ namespace CinemaManagement.Controllers
                 generationConfig = new
                 {
                     temperature = 0.5,
-                    maxOutputTokens = 800
+                    maxOutputTokens = 2048
                 }
             };
 
