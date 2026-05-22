@@ -26,9 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Sự kiện xóa lịch sử chat
     if (clearBtn) {
         clearBtn.addEventListener("click", function () {
-            if (confirm("Bạn có chắc chắn muốn xóa lịch sử trò chuyện không?")) {
-                clearChatHistory();
-            }
+            clearChatHistory();
         });
     }
 
