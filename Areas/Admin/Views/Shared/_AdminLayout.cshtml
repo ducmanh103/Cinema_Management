@@ -31,7 +31,7 @@
     <!-- Main Header -->
     <header class="main-header">
         <!-- Logo -->
-        <a asp-controller="Admin" asp-action="Index" class="logo">
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="logo">
             <span class="logo-mini"><b>C</b>H</span>
             <span class="logo-lg"><b>Cinema</b>Hub Admin</span>
         </a>
@@ -58,12 +58,12 @@
                             </li>
                             <li class="user-footer">
                                 <div class="pull-left">
-                                    <a asp-controller="Home" asp-action="Index" class="btn btn-default btn-flat">
+                                    <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-default btn-flat">
                                         <i class="fa fa-home"></i> Trang chủ
                                     </a>
                                 </div>
                                 <div class="pull-right">
-                                    <form asp-controller="Account" asp-action="Logout" method="post" class="inline-form">
+                                    <form asp-area="Admin" asp-controller="Account" asp-action="Logout" method="post" class="inline-form">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-danger btn-flat">
                                             <i class="fa fa-sign-out"></i> Đăng xuất
@@ -96,37 +96,37 @@
             <ul class="sidebar-menu">
                 <li class="header">QUẢN TRỊ</li>
 
-                <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
-                    <a asp-controller="Admin" asp-action="Index">
+                <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
                         <i class="fa fa-dashboard"></i> <span>Dashboard</span>
                     </a>
                 </li>
 
                 @if (User.IsInRole("Admin"))
                 {
-                    <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Movies" || ViewContext.RouteData.Values["action"]?.ToString() == "Details" ? "active" : "")">
-                        <a asp-controller="Admin" asp-action="Movies">
+                    <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Movies" ? "active" : "")">
+                        <a asp-area="Admin" asp-controller="Movies" asp-action="Index">
                             <i class="fa fa-film"></i> <span>Quản lý phim</span>
                         </a>
                     </li>
                 }
 
-                <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Showtimes" ? "active" : "")">
-                    <a asp-controller="Admin" asp-action="Showtimes">
+                <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Showtimes" ? "active" : "")">
+                    <a asp-area="Admin" asp-controller="Showtimes" asp-action="Index">
                         <i class="fa fa-calendar"></i> <span>Suất chiếu</span>
                     </a>
                 </li>
 
-                <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Users" ? "active" : "")">
-                    <a asp-controller="Admin" asp-action="Users">
+                <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
+                    <a asp-area="Admin" asp-controller="Users" asp-action="Index">
                         <i class="fa fa-users"></i> <span>Quản lý người dùng</span>
                     </a>
                 </li>
 
                 @if (User.IsInRole("Admin"))
                 {
-                    <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Revenue" ? "active" : "")">
-                        <a asp-controller="Admin" asp-action="Revenue">
+                    <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Revenue" ? "active" : "")">
+                        <a asp-area="Admin" asp-controller="Revenue" asp-action="Index">
                             <i class="fa fa-bar-chart"></i> <span>Thống kê doanh thu</span>
                             <small class="label pull-right bg-green">Admin</small>
                         </a>
@@ -146,7 +146,7 @@
                 }
 
                 <li>
-                    <a asp-controller="Home" asp-action="Index">
+                    <a asp-area="" asp-controller="Home" asp-action="Index">
                         <i class="fa fa-home"></i> <span>Về trang chính</span>
                     </a>
                 </li>

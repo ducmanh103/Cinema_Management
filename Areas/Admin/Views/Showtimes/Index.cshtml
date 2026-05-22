@@ -1,35 +1,28 @@
 @using CinemaManagement.Models
-@model List<Showtime>
+@using CinemaManagement.Models.ViewModels
+@model List<ShowtimeDto>
 @{
     ViewData["Title"] = "Quản lý suất chiếu";
-    Layout = "_AdminLayout";
     bool isAdmin = User.IsInRole("Admin");
     var movies = ViewBag.Movies as List<Movie> ?? new();
     var rooms = ViewBag.Rooms as List<Room> ?? new();
 }
 
-<!-- Content Header -->
 <section class="content-header">
-    <h1>
-        Suất chiếu
-        <small>Danh sách lịch chiếu phim</small>
-    </h1>
+    <h1>Suất chiếu <small>Danh sách lịch chiếu phim</small></h1>
     <ol class="breadcrumb">
-        <li><a asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a asp-controller="Dashboard" asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
         <li class="active">Suất chiếu</li>
     </ol>
 </section>
 
-<!-- Main content -->
 <section class="content">
     <div class="row">
         <div class="col-md-12">
             <div class="box box-primary">
                 <div class="box-header with-border">
                     <h3 class="box-title"><i class="fa fa-calendar"></i> Danh sách suất chiếu (@Model.Count)</h3>
-                    <div class="box-tools pull-right">
-                        <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
-                    </div>
+                    <div class="box-tools pull-right"><button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button></div>
                 </div>
                 <div class="box-body">
                     <div class="margin-bottom">
@@ -37,74 +30,49 @@
                             <i class="fa fa-plus"></i> Thêm suất chiếu mới
                         </button>
                     </div>
+                    <div id="showtimes-table-wrapper" style="opacity:0; transition: opacity 0.25s ease;">
                     <table id="showtimes-table" class="table table-bordered table-striped table-hover">
                         <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Phim</th>
-                                <th>Rạp</th>
-                                <th>Phòng chiếu</th>
-                                <th>Giờ chiếu</th>
-                                <th>Giá vé</th>
-                                <th>Trạng thái</th>
-                                <th>Thao tác</th>
-                            </tr>
+                            <tr><th>ID</th><th>Phim</th><th>Rạp</th><th>Phòng chiếu</th><th>Giờ chiếu</th><th>Giá vé</th><th>Trạng thái</th><th>Thao tác</th></tr>
                         </thead>
                         <tbody>
                             @foreach (var showtime in Model)
                             {
                                 <tr>
                                     <td>@showtime.ShowtimeId</td>
-                                    <td><strong>@showtime.Movie?.Title</strong></td>
-                                    <td>@showtime.Room?.Theater?.TheaterName</td>
-                                    <td>@showtime.Room?.RoomName</td>
+                                    <td><strong>@showtime.MovieTitle</strong></td>
+                                    <td>@showtime.TheaterName</td>
+                                    <td>@showtime.RoomName</td>
                                     <td>@showtime.StartTime.ToString("HH:mm dd/MM/yyyy")</td>
                                     <td>@showtime.Price.ToString("N0") ₫</td>
                                     <td>
-                                        @if (showtime.StartTime > DateTime.Now)
-                                        {
-                                            <span class="label label-success">Sắp chiếu</span>
-                                        }
-                                        else if (showtime.StartTime <= DateTime.Now && showtime.StartTime.AddMinutes(showtime.Movie?.Duration ?? 120) > DateTime.Now)
-                                        {
-                                            <span class="label label-warning">Đang chiếu</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="label label-default">Đã chiếu</span>
-                                        }
+                                        @if (showtime.StartTime > DateTime.Now) { <span class="label label-success">Sắp chiếu</span> }
+                                        else if (showtime.StartTime <= DateTime.Now && showtime.StartTime.AddMinutes(showtime.MovieDuration) > DateTime.Now) { <span class="label label-warning">Đang chiếu</span> }
+                                        else { <span class="label label-default">Đã chiếu</span> }
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-xs btn-info btn-edit-showtime"
-                                                data-id="@showtime.ShowtimeId"
-                                                data-movie="@showtime.MovieId"
-                                                data-room="@showtime.RoomId"
-                                                data-time="@showtime.StartTime.ToString("yyyy-MM-ddTHH:mm")"
-                                                data-price="@showtime.Price">
+                                        <button type="button" class="btn btn-xs btn-info btn-edit-showtime" data-id="@showtime.ShowtimeId" data-movie="@showtime.MovieId" data-room="@showtime.RoomId" data-time="@showtime.StartTime.ToString("yyyy-MM-ddTHH:mm")" data-price="@showtime.Price">
                                             <i class="fa fa-edit"></i> Sửa
                                         </button>
                                         @if (isAdmin)
                                         {
-                                            <form asp-action="DeleteShowtime" asp-route-id="@showtime.ShowtimeId" method="post" class="inline-form" style="display:inline">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-xs btn-danger"
-                                                        onclick="return confirm('Xoá suất chiếu #@showtime.ShowtimeId (@showtime.Movie?.Title)?\nThao tác không thể hoàn tác!')">
-                                                    <i class="fa fa-trash"></i> Xoá
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-xs btn-danger btn-delete-showtime" data-id="@showtime.ShowtimeId" data-title="@showtime.MovieTitle">
+                                                <i class="fa fa-trash"></i> Xoá
+                                            </button>
                                         }
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- ===================== MODAL: Thêm suất chiếu ===================== -->
+<!-- MODAL: Thêm suất chiếu -->
 <div class="modal fade" id="createShowtimeModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -119,20 +87,14 @@
                         <label>Phim <span class="text-danger">*</span></label>
                         <select name="movieId" class="form-control" required>
                             <option value="">-- Chọn phim --</option>
-                            @foreach (var m in movies)
-                            {
-                                <option value="@m.MovieId">@m.Title (@m.Duration phút)</option>
-                            }
+                            @foreach (var m in movies) { <option value="@m.MovieId">@m.Title (@m.Duration phút)</option> }
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Phòng chiếu <span class="text-danger">*</span></label>
                         <select name="roomId" class="form-control" required>
                             <option value="">-- Chọn phòng --</option>
-                            @foreach (var r in rooms)
-                            {
-                                <option value="@r.RoomId">@r.Theater?.TheaterName – @r.RoomName (@r.SeatCount ghế)</option>
-                            }
+                            @foreach (var r in rooms) { <option value="@r.RoomId">@r.Theater?.TheaterName – @r.RoomName (@r.SeatCount ghế)</option> }
                         </select>
                     </div>
                     <div class="form-group">
@@ -153,7 +115,7 @@
     </div>
 </div>
 
-<!-- ===================== MODAL: Sửa suất chiếu ===================== -->
+<!-- MODAL: Sửa suất chiếu -->
 <div class="modal fade" id="editShowtimeModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -169,20 +131,14 @@
                         <label>Phim <span class="text-danger">*</span></label>
                         <select name="movieId" id="edit-movie-id" class="form-control" required>
                             <option value="">-- Chọn phim --</option>
-                            @foreach (var m in movies)
-                            {
-                                <option value="@m.MovieId">@m.Title (@m.Duration phút)</option>
-                            }
+                            @foreach (var m in movies) { <option value="@m.MovieId">@m.Title (@m.Duration phút)</option> }
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Phòng chiếu <span class="text-danger">*</span></label>
                         <select name="roomId" id="edit-room-id" class="form-control" required>
                             <option value="">-- Chọn phòng --</option>
-                            @foreach (var r in rooms)
-                            {
-                                <option value="@r.RoomId">@r.Theater?.TheaterName – @r.RoomName (@r.SeatCount ghế)</option>
-                            }
+                            @foreach (var r in rooms) { <option value="@r.RoomId">@r.Theater?.TheaterName – @r.RoomName (@r.SeatCount ghế)</option> }
                         </select>
                     </div>
                     <div class="form-group">
@@ -203,38 +159,35 @@
     </div>
 </div>
 
+<form id="delete-showtime-form" asp-action="DeleteShowtime" method="post" style="display:none">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" id="delete-showtime-id-input" />
+</form>
+
 @section Scripts {
     <script>
         $(function () {
-            // DataTable
             $('#showtimes-table').DataTable({
-                "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Vietnamese.json"
-                },
-                "order": [[4, "desc"]],
-                "pageLength": 25,
-                "responsive": true,
-                "columnDefs": [
-                    { "orderable": false, "targets": [7] }
-                ]
+                "language": { "url": "/adminlte/plugins/datatables/Vietnamese.json" },
+                "order": [[0, "asc"]], "pageLength": 25, "responsive": true,
+                "columnDefs": [{ "orderable": false, "targets": [7] }],
+                "initComplete": function () { $('#showtimes-table-wrapper').css('opacity', '1'); }
             });
-
-            // Mở modal Sửa và điền dữ liệu
             $(document).on('click', '.btn-edit-showtime', function () {
-                var id = $(this).data('id');
-                var movieId = $(this).data('movie');
-                var roomId = $(this).data('room');
-                var time = $(this).data('time');
-                var price = $(this).data('price');
-
-                $('#edit-showtime-id').val(id);
-                $('#edit-showtime-label').text('#' + id);
-                $('#edit-movie-id').val(movieId);
-                $('#edit-room-id').val(roomId);
-                $('#edit-start-time').val(time);
-                $('#edit-price').val(price);
-
+                $('#edit-showtime-id').val($(this).data('id'));
+                $('#edit-showtime-label').text('#' + $(this).data('id'));
+                $('#edit-movie-id').val($(this).data('movie'));
+                $('#edit-room-id').val($(this).data('room'));
+                $('#edit-start-time').val($(this).data('time'));
+                $('#edit-price').val($(this).data('price'));
                 $('#editShowtimeModal').modal('show');
+            });
+            $(document).on('click', '.btn-delete-showtime', function () {
+                var id = $(this).data('id'), title = $(this).data('title');
+                if (confirm('Xoá suất chiếu #' + id + ' (' + title + ')?\nThao tác không thể hoàn tác!')) {
+                    $('#delete-showtime-id-input').val(id);
+                    $('#delete-showtime-form').submit();
+                }
             });
         });
     </script>

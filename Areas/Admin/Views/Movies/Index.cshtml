@@ -2,22 +2,16 @@
 @model List<MovieDto>
 @{
     ViewData["Title"] = "Quản lý phim";
-    Layout = "_AdminLayout";
 }
 
-<!-- Content Header -->
 <section class="content-header">
-    <h1>
-        Phim
-        <small>Danh sách phim trong hệ thống</small>
-    </h1>
+    <h1>Phim <small>Danh sách phim trong hệ thống</small></h1>
     <ol class="breadcrumb">
-        <li><a asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a asp-controller="Dashboard" asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
         <li class="active">Phim</li>
     </ol>
 </section>
 
-<!-- Main content -->
 <section class="content">
     <div class="row">
         <div class="col-md-12">
@@ -94,21 +88,15 @@
 </section>
 
 @section Scripts {
-    <style>
-        .vertical-align-middle { vertical-align: middle !important; }
-    </style>
+    <style>.vertical-align-middle { vertical-align: middle !important; }</style>
     <script>
         $(function () {
             $('#movies-table').DataTable({
-                "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Vietnamese.json"
-                },
-                "order": [[1, "desc"]], // Sắp xếp theo ID giảm dần mặc định
+                "language": { "url": "/adminlte/plugins/datatables/Vietnamese.json" },
+                "order": [[1, "desc"]],
                 "pageLength": 10,
                 "responsive": true,
-                "columnDefs": [
-                    { "orderable": false, "targets": [0, 7] } // Không sort cột poster và thao tác
-                ]
+                "columnDefs": [{ "orderable": false, "targets": [0, 7] }]
             });
         });
     </script>

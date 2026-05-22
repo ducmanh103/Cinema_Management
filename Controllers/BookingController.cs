@@ -13,11 +13,13 @@ namespace CinemaManagement.Controllers
     {
         private readonly IShowtimeService _showtimeService;
         private readonly ITicketService _ticketService;
+        private readonly IVnPayService _vnPayService;
 
-        public BookingController(IShowtimeService showtimeService, ITicketService ticketService)
+        public BookingController(IShowtimeService showtimeService, ITicketService ticketService, IVnPayService vnPayService)
         {
             _showtimeService = showtimeService;
             _ticketService = ticketService;
+            _vnPayService = vnPayService;
         }
 
         // GET: /Booking/SelectSeat/5  (showtimeId)
@@ -49,7 +51,24 @@ namespace CinemaManagement.Controllers
 
             try
             {
-                var ticket = await _ticketService.BookTicketAsync(userId, dto);
+                // Flow VnPay: tạo pending booking rồi redirect sang cổng thanh toán
+                if (dto.PaymentMethod == "VnPay")
+                {
+                    var (ticket, paymentId) = await _ticketService.CreatePendingBookingAsync(userId, dto);
+                    var model = new CinemaManagement.Models.ViewModels.VnPaymentRequestModel
+                    {
+                        OrderId = paymentId.ToString(),
+                        OrderDescription = $"Thanh toan ve {ticket.MovieTitle} - Ghe {ticket.SeatNumber}",
+                        Amount = ticket.Price,
+                        Name = User.Identity?.Name ?? string.Empty,
+                        CreatedDate = DateTime.Now
+                    };
+                    var paymentUrl = _vnPayService.CreatePaymentUrl(HttpContext, model);
+                    return Redirect(paymentUrl);
+                }
+
+                // Flow Cash: tạo booking hoàn tất ngay
+                var cashTicket = await _ticketService.BookTicketAsync(userId, dto);
                 TempData["Success"] = "Đặt vé thành công!";
                 return RedirectToAction(nameof(MyTickets));
             }

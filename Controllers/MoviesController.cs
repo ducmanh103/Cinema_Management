@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CinemaManagement.Data;
-using CinemaManagement.Models;
-using Microsoft.AspNetCore.Authorization;
 
 namespace CinemaManagement.Controllers
 {
@@ -15,7 +13,7 @@ namespace CinemaManagement.Controllers
             _context = context;
         }
 
-        // GET: Movies
+        // GET: Movies (public listing)
         public async Task<IActionResult> Index()
         {
             var movies = await _context.Movies
@@ -27,7 +25,7 @@ namespace CinemaManagement.Controllers
             return View(movies);
         }
 
-        // GET: Movies/Details/5
+        // GET: Movies/Details/5 (public details)
         public async Task<IActionResult> Details(int id)
         {
             var movie = await _context.Movies
@@ -35,147 +33,13 @@ namespace CinemaManagement.Controllers
                 .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
                 .Include(m => m.Showtimes)
                     .ThenInclude(st => st.Room).ThenInclude(r => r.Theater)
-                .Include(m => m.Showtimes)
-                    .ThenInclude(st => st.Tickets).ThenInclude(t => t.Payment)
                 .FirstOrDefaultAsync(m => m.MovieId == id);
 
             if (movie == null) return NotFound();
 
-            // Thể loại dạng string list
             ViewBag.Genres = movie.MovieGenres.Select(mg => mg.Genre.GenreName).ToList();
 
-            // Tổng vé đã bán (Booked, Completed)
-            var bookedTickets = movie.Showtimes
-                .SelectMany(st => st.Tickets)
-                .Where(t => t.Status == "Booked")
-                .ToList();
-
-            ViewBag.TotalTickets = bookedTickets.Count;
-
-            // Tổng doanh thu (thanh toán Completed)
-            ViewBag.TotalRevenue = bookedTickets
-                .Where(t => t.Payment?.Status == "Completed")
-                .Sum(t => t.Payment?.Amount ?? 0m);
-
             return View(movie);
-        }
-
-        // GET: Movies/Create
-        [Authorize(Roles = "Admin")]
-        public IActionResult Create()
-        {
-            ViewBag.Genres = _context.Genres.ToList();
-            return View();
-        }
-
-        // POST: Movies/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create(Movie movie, int[] selectedGenres)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Movies.Add(movie);
-                await _context.SaveChangesAsync();
-
-                if (selectedGenres != null)
-                {
-                    foreach (var genreId in selectedGenres)
-                    {
-                        _context.MovieGenres.Add(new MovieGenre
-                        {
-                            MovieId = movie.MovieId,
-                            GenreId = genreId
-                        });
-                    }
-                    await _context.SaveChangesAsync();
-                }
-
-                TempData["Success"] = $"Đã thêm phim '{movie.Title}' thành công.";
-                return RedirectToAction("Movies", "Admin");
-            }
-
-            ViewBag.Genres = _context.Genres.ToList();
-            return View(movie);
-        }
-
-        // GET: Movies/Edit/5
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id)
-        {
-            var movie = await _context.Movies
-                .Include(m => m.MovieGenres)
-                .FirstOrDefaultAsync(m => m.MovieId == id);
-
-            if (movie == null) return NotFound();
-
-            ViewBag.Genres = _context.Genres.ToList();
-            ViewBag.SelectedGenres = movie.MovieGenres.Select(mg => mg.GenreId).ToList();
-
-            return View(movie);
-        }
-
-        // POST: Movies/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, Movie movie, int[] selectedGenres)
-        {
-            if (id != movie.MovieId) return NotFound();
-
-            if (ModelState.IsValid)
-            {
-                _context.Update(movie);
-
-                var oldGenres = _context.MovieGenres.Where(mg => mg.MovieId == id);
-                _context.MovieGenres.RemoveRange(oldGenres);
-
-                if (selectedGenres != null)
-                {
-                    foreach (var genreId in selectedGenres)
-                    {
-                        _context.MovieGenres.Add(new MovieGenre
-                        {
-                            MovieId = id,
-                            GenreId = genreId
-                        });
-                    }
-                }
-
-                await _context.SaveChangesAsync();
-                TempData["Success"] = $"Đã cập nhật phim '{movie.Title}'.";
-                return RedirectToAction("Movies", "Admin");
-            }
-
-            ViewBag.Genres = _context.Genres.ToList();
-            return View(movie);
-        }
-
-        // GET: Movies/Delete/5
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var movie = await _context.Movies.FindAsync(id);
-            if (movie == null) return NotFound();
-
-            return View(movie);
-        }
-
-        // POST: Movies/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var movie = await _context.Movies.FindAsync(id);
-            if (movie != null)
-            {
-                _context.Movies.Remove(movie);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = $"Đã xoá phim thành công.";
-            }
-            return RedirectToAction("Movies", "Admin");
         }
     }
 }

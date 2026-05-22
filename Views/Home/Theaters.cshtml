@@ -1240,10 +1240,10 @@
                     html += `
                         <div class="modal-movie-card">
                             <div class="mmc-poster-wrap">
-                                <img src="${movie.posterUrl}" class="mmc-poster" alt="${movie.title}" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=200&auto=format&fit=crop'" />
+                                <img src="${escapeHtml(movie.posterUrl)}" class="mmc-poster" alt="${escapeHtml(movie.title)}" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=200&auto=format&fit=crop'" />
                             </div>
                             <div class="mmc-info">
-                                <h6 class="mmc-title fw-bold text-white mb-2">${movie.title}</h6>
+                                <h6 class="mmc-title fw-bold text-white mb-2">${escapeHtml(movie.title)}</h6>
                                 <div class="mmc-meta">
                                     <span><i class="bi bi-clock"></i> 120 phút</span>
                                     <span><i class="bi bi-tags"></i> 2D Phụ Đề</span>
@@ -1257,6 +1257,14 @@
                 });
                 
                 $('#modal-showtimes-content').html(html);
+            }
+
+            // Hàm escape HTML để chống XSS
+            function escapeHtml(str) {
+                if (!str) return '';
+                var div = document.createElement('div');
+                div.appendChild(document.createTextNode(str));
+                return div.innerHTML;
             }
 
             function renderEmptyState(message) {

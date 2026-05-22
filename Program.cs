@@ -39,6 +39,18 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
+
+        // Redirect sang Admin Login nếu truy cập Admin Area mà chưa đăng nhập
+        options.Events.OnRedirectToLogin = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/Admin"))
+            {
+                var returnUrl = context.Request.Path + context.Request.QueryString;
+                context.RedirectUri = "/Admin/Account/Login?returnUrl=" + Uri.EscapeDataString(returnUrl);
+            }
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -50,6 +62,9 @@ builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
+
+// Background service: tự động hủy booking pending quá 15 phút
+builder.Services.AddHostedService<PendingBookingCleanupService>();
 
 // ================================
 var app = builder.Build();
@@ -74,6 +89,10 @@ app.UseRouting();
 // ⇒ Auth phải nằm GIỮA Routing và Authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",

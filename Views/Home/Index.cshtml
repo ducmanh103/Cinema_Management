@@ -771,55 +771,15 @@
 </div>
 
 @functions {
+    // Delegate sang shared helper (Home dùng CSS class prefix 'age-' thay vì 'badge-age-')
     public string GetAgeBadgeClass(string title)
     {
-        string t = title.ToLower();
-        if (t.Contains("dune") || t.Contains("mai") || t.Contains("quật mộ") || t.Contains("sát thủ john wick"))
-            return "age-t18";
-        if (t.Contains("biệt đội săn ma") || t.Contains("võ sĩ giác đấu") || t.Contains("deadpool"))
-            return "age-t16";
-        if (t.Contains("vùng đất câm lặng") || t.Contains("fast"))
-            return "age-t13";
-        return "age-p";
+        var cls = CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeClass(title);
+        return cls.Replace("badge-age-", "age-");
     }
-
-    public string GetAgeBadgeText(string title)
-    {
-        string t = title.ToLower();
-        if (t.Contains("dune") || t.Contains("mai") || t.Contains("quật mộ") || t.Contains("sát thủ john wick"))
-            return "T18";
-        if (t.Contains("biệt đội săn ma") || t.Contains("võ sĩ giác đấu") || t.Contains("deadpool"))
-            return "T16";
-        if (t.Contains("vùng đất câm lặng") || t.Contains("fast"))
-            return "T13";
-        return "P";
-    }
-
-    public string GetAgeBadgeDesc(string title)
-    {
-        string t = title.ToLower();
-        if (t.Contains("dune") || t.Contains("mai") || t.Contains("quật mộ") || t.Contains("sát thủ john wick"))
-            return "Phim dành cho khán giả từ 18 tuổi trở lên";
-        if (t.Contains("biệt đội săn ma") || t.Contains("võ sĩ giác đấu") || t.Contains("deadpool"))
-            return "Phim dành cho khán giả từ 16 tuổi trở lên";
-        if (t.Contains("vùng đất câm lặng") || t.Contains("fast"))
-            return "Phim dành cho khán giả từ 13 tuổi trở lên";
-        return "Phim dành cho mọi lứa tuổi (Phổ biến)";
-    }
-
-    public string GetMovieFormat(string title)
-    {
-        string t = title.ToLower();
-        if (t.Contains("avatar") || t.Contains("godzilla") || t.Contains("dune") || t.Contains("người nhện"))
-            return "IMAX 3D";
-        if (t.Contains("fast") || t.Contains("john wick") || t.Contains("sonic") || t.Contains("mufasa") || t.Contains("giác đấu"))
-            return "3D ATMOS";
-        return "2D DIGITAL";
-    }
-
-    public double GetMovieRating(int id)
-    {
-        return 7.5 + (id % 13) * 0.16;
-    }
+    public string GetAgeBadgeText(string title) => CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeText(title);
+    public string GetAgeBadgeDesc(string title) => CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeDesc(title);
+    public string GetMovieFormat(string title) => CinemaManagement.Helpers.MovieDisplayHelper.GetMovieFormat(title);
+    public double GetMovieRating(int id) => CinemaManagement.Helpers.MovieDisplayHelper.GetMovieRating(id);
 }
 

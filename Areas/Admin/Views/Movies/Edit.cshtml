@@ -1,20 +1,15 @@
 @model CinemaManagement.Models.Movie
 @{
     ViewData["Title"] = "Sửa phim – " + Model.Title;
-    Layout = "_AdminLayout";
     var genres = ViewBag.Genres as List<CinemaManagement.Models.Genre> ?? new();
     var selectedGenres = ViewBag.SelectedGenres as List<int> ?? new();
 }
 
-<!-- Content Header -->
 <section class="content-header">
-    <h1>
-        Sửa phim
-        <small>@Model.Title</small>
-    </h1>
+    <h1>Sửa phim <small>@Model.Title</small></h1>
     <ol class="breadcrumb">
-        <li><a asp-action="Index" asp-controller="Admin"><i class="fa fa-dashboard"></i> Dashboard</a></li>
-        <li><a asp-action="Movies" asp-controller="Admin"><i class="fa fa-film"></i> Phim</a></li>
+        <li><a asp-controller="Dashboard" asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a asp-controller="Movies" asp-action="Index"><i class="fa fa-film"></i> Phim</a></li>
         <li class="active">Sửa</li>
     </ol>
 </section>
@@ -90,8 +85,7 @@
                                     <div class="col-md-3 col-xs-6">
                                         <div class="checkbox">
                                             <label>
-                                                <input type="checkbox" name="selectedGenres"
-                                                       value="@g.GenreId" id="edit-genre-@g.GenreId"
+                                                <input type="checkbox" name="selectedGenres" value="@g.GenreId" id="edit-genre-@g.GenreId"
                                                        @(selectedGenres.Contains(g.GenreId) ? "checked" : "") />
                                                 @g.GenreName
                                             </label>
@@ -100,15 +94,11 @@
                                 }
                             </div>
                         </div>
-
-                        <!-- Xem trước poster -->
                         @if (!string.IsNullOrEmpty(Model.PosterUrl))
                         {
                             <div id="poster-preview-wrap">
                                 <label>Poster hiện tại:</label><br />
-                                <img id="poster-preview" src="@Model.PosterUrl"
-                                     style="max-height:180px; border-radius:4px; border:1px solid #ddd"
-                                     onerror="this.style.display='none'" />
+                                <img id="poster-preview" src="@Model.PosterUrl" style="max-height:180px; border-radius:4px; border:1px solid #ddd" onerror="this.style.display='none'" />
                             </div>
                         }
                         else
@@ -123,11 +113,10 @@
                         <button type="submit" class="btn btn-warning" id="update-movie-btn">
                             <i class="fa fa-save"></i> Cập nhật
                         </button>
-                        <a asp-action="Details" asp-controller="Movies" asp-route-id="@Model.MovieId"
-                           class="btn btn-default">
+                        <a asp-controller="Movies" asp-action="Details" asp-route-id="@Model.MovieId" class="btn btn-default">
                             <i class="fa fa-eye"></i> Xem chi tiết
                         </a>
-                        <a asp-action="Movies" asp-controller="Admin" class="btn btn-default pull-right">
+                        <a asp-controller="Movies" asp-action="Index" class="btn btn-default pull-right">
                             <i class="fa fa-arrow-left"></i> Quay lại
                         </a>
                     </div>
@@ -140,17 +129,12 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // Cập nhật preview khi đổi URL poster
         $('#edit-poster').on('input', function () {
             var url = $(this).val().trim();
             var wrap = $('#poster-preview-wrap');
             var img = $('#poster-preview');
-            if (url) {
-                img.attr('src', url).show();
-                wrap.show();
-            } else {
-                wrap.hide();
-            }
+            if (url) { img.attr('src', url).show(); wrap.show(); }
+            else { wrap.hide(); }
         });
     </script>
 }

@@ -40,9 +40,13 @@ namespace CinemaManagement.Services
                                                     : model.OrderDescription);
             pay.AddRequestData("vnp_OrderType", model.OrderType);
             pay.AddRequestData("vnp_ReturnUrl", returnUrl);
-            // TxnRef phải duy nhất. Dùng paymentId + 6 số cuối ticks → vẫn parse được, không chứa ký tự đặc biệt.
-            string ticksTail = (DateTime.Now.Ticks % 1000000).ToString("D6");
-            pay.AddRequestData("vnp_TxnRef", $"{model.OrderId}{ticksTail}");
+            // TxnRef phải duy nhất. Dùng paymentId_timestamp với delimiter rõ ràng.
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            pay.AddRequestData("vnp_TxnRef", $"{model.OrderId}_{timestamp}");
+
+            // Thêm thời gian hết hạn thanh toán (15 phút)
+            var expireDate = model.CreatedDate.AddMinutes(15);
+            pay.AddRequestData("vnp_ExpireDate", expireDate.ToString("yyyyMMddHHmmss"));
 
             // Nếu cấu hình BankCode (ví dụ VNPAYQR) → vào thẳng trang QR
             if (!string.IsNullOrWhiteSpace(bankCode))
@@ -70,12 +74,12 @@ namespace CinemaManagement.Services
             var amountRaw       = pay.GetResponseData("vnp_Amount");
             var vnpSecureHash   = collections.FirstOrDefault(p => p.Key == "vnp_SecureHash").Value.ToString();
 
-            // TxnRef dạng "{paymentId}{6-digit-ticks}". Strip 6 chữ số cuối để lấy paymentId.
+            // TxnRef dạng "{paymentId}_{timestamp}". Lấy phần trước underscore.
             string orderId = txnRef;
-            if (txnRef.Length > 6 && txnRef.All(char.IsDigit))
-                orderId = txnRef.Substring(0, txnRef.Length - 6);
-            else if (txnRef.Contains('_'))
-                orderId = txnRef.Split('_')[0]; // fallback cho format cũ
+            if (txnRef.Contains('_'))
+                orderId = txnRef.Split('_')[0];
+            else if (txnRef.Length > 6 && txnRef.All(char.IsDigit))
+                orderId = txnRef.Substring(0, txnRef.Length - 6); // fallback cho format cũ
 
             decimal amount = 0;
             if (long.TryParse(amountRaw, out var raw)) amount = raw / 100M;

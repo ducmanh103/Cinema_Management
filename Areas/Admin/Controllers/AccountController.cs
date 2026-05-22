@@ -1,5 +1,4 @@
 using CinemaManagement.Data;
-using CinemaManagement.Models;
 using CinemaManagement.Models.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -7,26 +6,28 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace CinemaManagement.Controllers
+namespace CinemaManagement.Areas.Admin.Controllers
 {
+    [Area("Admin")]
     public class AccountController : Controller
     {
         private readonly CinemaDbContext _context;
 
         public AccountController(CinemaDbContext context) => _context = context;
 
-        // GET: /Account/Login
+        // GET: /Admin/Account/Login
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
-            if (User.Identity?.IsAuthenticated == true)
-                return RedirectToAction("Index", "Home");
+            if (User.Identity?.IsAuthenticated == true
+                && (User.IsInRole("Admin") || User.IsInRole("Staff")))
+                return RedirectToAction("Index", "Dashboard");
 
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
 
-        // POST: /Account/Login
+        // POST: /Admin/Account/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
@@ -44,7 +45,13 @@ namespace CinemaManagement.Controllers
                 return View(model);
             }
 
-            // Tạo claims
+            // Chỉ cho phép Admin hoặc Staff đăng nhập vào trang Admin
+            if (user.Role.RoleName != "Admin" && user.Role.RoleName != "Staff")
+            {
+                ModelState.AddModelError("", "Bạn không có quyền truy cập trang quản trị.");
+                return View(model);
+            }
+
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
@@ -64,64 +71,16 @@ namespace CinemaManagement.Controllers
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
 
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Dashboard");
         }
 
-        // GET: /Account/Register
-        [HttpGet]
-        public IActionResult Register() => View();
-
-        // POST: /Account/Register
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(RegisterViewModel model)
-        {
-            if (!ModelState.IsValid) return View(model);
-
-            if (await _context.Users.AnyAsync(u => u.Username == model.Username))
-            {
-                ModelState.AddModelError("Username", "Tên đăng nhập đã tồn tại.");
-                return View(model);
-            }
-
-            if (!string.IsNullOrEmpty(model.Email) && await _context.Users.AnyAsync(u => u.Email == model.Email))
-            {
-                ModelState.AddModelError("Email", "Email đã được sử dụng.");
-                return View(model);
-            }
-
-            var customerRole = await _context.Roles
-                .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.RoleName == "Customer");
-            if (customerRole == null) return BadRequest("Lỗi hệ thống: vai trò Customer chưa được khởi tạo.");
-
-            var user = new User
-            {
-                Username = model.Username,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
-                FullName = model.FullName,
-                Email = model.Email,
-                Status = "Active",
-                RoleId = customerRole.RoleId
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Đăng ký thành công! Vui lòng đăng nhập.";
-            return RedirectToAction(nameof(Login));
-        }
-
-        // POST: /Account/Logout
+        // POST: /Admin/Account/Logout
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Login");
         }
-
-        // GET: /Account/AccessDenied
-        public IActionResult AccessDenied() => View();
     }
 }

@@ -3,7 +3,7 @@ using CinemaManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CinemaManagement.Controllers.Api
+namespace CinemaManagement.Areas.Admin.Controllers.Api
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -56,8 +56,15 @@ namespace CinemaManagement.Controllers.Api
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _showtimeService.DeleteShowtimeAsync(id);
-            return result ? NoContent() : NotFound();
+            try
+            {
+                var result = await _showtimeService.DeleteShowtimeAsync(id);
+                return result ? NoContent() : NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
     }
 }

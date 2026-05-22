@@ -1,7 +1,6 @@
 @using CinemaManagement.Models.ViewModels
 @{
     ViewData["Title"] = "Dashboard";
-    Layout = "_AdminLayout";
     var recentTickets = ViewBag.RecentTickets as List<TicketDto> ?? new();
 }
 
@@ -29,7 +28,7 @@
                     <p>Tổng phim</p>
                 </div>
                 <div class="icon"><i class="fa fa-film"></i></div>
-                <a asp-action="Movies" class="small-box-footer">Xem tất cả <i class="fa fa-arrow-circle-right"></i></a>
+                <a asp-controller="Movies" asp-action="Index" class="small-box-footer">Xem tất cả <i class="fa fa-arrow-circle-right"></i></a>
             </div>
         </div>
         <div class="col-lg-3 col-xs-6">
@@ -39,7 +38,7 @@
                     <p>Người dùng</p>
                 </div>
                 <div class="icon"><i class="fa fa-users"></i></div>
-                <a asp-action="Users" class="small-box-footer">Xem tất cả <i class="fa fa-arrow-circle-right"></i></a>
+                <a asp-controller="Users" asp-action="Index" class="small-box-footer">Xem tất cả <i class="fa fa-arrow-circle-right"></i></a>
             </div>
         </div>
         <div class="col-lg-3 col-xs-6">
@@ -49,7 +48,7 @@
                     <p>Tổng vé đặt</p>
                 </div>
                 <div class="icon"><i class="fa fa-ticket"></i></div>
-                <a asp-action="Showtimes" class="small-box-footer">Xem suất chiếu <i class="fa fa-arrow-circle-right"></i></a>
+                <a asp-controller="Showtimes" asp-action="Index" class="small-box-footer">Xem suất chiếu <i class="fa fa-arrow-circle-right"></i></a>
             </div>
         </div>
         <div class="col-lg-3 col-xs-6">
@@ -70,7 +69,7 @@
                     <p>Doanh thu</p>
                 </div>
                 <div class="icon"><i class="fa fa-money"></i></div>
-                <a asp-action="Revenue" class="small-box-footer">Thống kê <i class="fa fa-arrow-circle-right"></i></a>
+                <a asp-controller="Revenue" asp-action="Index" class="small-box-footer">Thống kê <i class="fa fa-arrow-circle-right"></i></a>
             </div>
         </div>
     </div>
@@ -89,22 +88,22 @@
                             <i class="fa fa-plus-circle"></i> Thêm phim mới
                         </a>
                         <span>&nbsp;</span>
-                        <a asp-action="Movies" class="btn btn-primary btn-sm">
+                        <a asp-controller="Movies" asp-action="Index" class="btn btn-primary btn-sm">
                             <i class="fa fa-film"></i> Quản lý phim
                         </a>
                         <span>&nbsp;</span>
                     }
-                    <a asp-action="Users" class="btn btn-success btn-sm">
+                    <a asp-controller="Users" asp-action="Index" class="btn btn-success btn-sm">
                         <i class="fa fa-users"></i> Quản lý người dùng
                     </a>
                     &nbsp;
-                    <a asp-action="Showtimes" class="btn btn-warning btn-sm">
+                    <a asp-controller="Showtimes" asp-action="Index" class="btn btn-warning btn-sm">
                         <i class="fa fa-calendar"></i> Quản lý suất chiếu
                     </a>
                     @if (User.IsInRole("Admin"))
                     {
                         <span>&nbsp;</span>
-                        <a asp-action="Revenue" class="btn btn-info btn-sm">
+                        <a asp-controller="Revenue" asp-action="Index" class="btn btn-info btn-sm">
                             <i class="fa fa-bar-chart"></i> Thống kê doanh thu
                         </a>
                     }
@@ -257,7 +256,7 @@
     @* Hidden form dùng để POST xoá vé (submit bằng JS) *@
     @if (User.IsInRole("Admin"))
     {
-        <form id="delete-ticket-form" asp-action="DeleteTicket" method="post" style="display:none">
+        <form id="delete-ticket-form" asp-controller="Dashboard" asp-action="DeleteTicket" method="post" style="display:none">
             @Html.AntiForgeryToken()
             <input type="hidden" id="delete-ticket-id" name="id" />
         </form>
@@ -267,7 +266,7 @@
         $(function () {
             var table = $('#tickets-table').DataTable({
                 "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Vietnamese.json"
+                    "url": "/adminlte/plugins/datatables/Vietnamese.json"
                 },
                 "order": [[0, "desc"]],
                 "pageLength": 20,
@@ -293,14 +292,12 @@
                 var formData = $('#delete-ticket-form').serialize();
 
                 $.ajax({
-                    url: '@Url.Action("DeleteTicket", "Admin")',
+                    url: '@Url.Action("DeleteTicket", "Dashboard")',
                     type: 'POST',
                     data: formData,
                     success: function (res) {
                         if (res.success) {
-                            // Xoá row khỏi DataTable
                             table.row($row).remove().draw(false);
-                            // Cập nhật badge đếm
                             var currentCount = parseInt($('.label-primary').text()) || 0;
                             $('.label-primary').text(currentCount - 1);
                         } else {
@@ -317,4 +314,3 @@
         });
     </script>
 }
-

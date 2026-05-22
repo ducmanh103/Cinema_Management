@@ -38,6 +38,7 @@ namespace CinemaManagement.Models.ViewModels
         public int MovieId { get; set; }
         public string MovieTitle { get; set; } = string.Empty;
         public string? MoviePosterUrl { get; set; }
+        public int MovieDuration { get; set; }
         public int RoomId { get; set; }
         public string RoomName { get; set; } = string.Empty;
         public string TheaterName { get; set; } = string.Empty;
@@ -111,5 +112,24 @@ namespace CinemaManagement.Models.ViewModels
         public int Year { get; set; }
         public decimal TotalRevenue { get; set; }
         public int TicketCount { get; set; }
+    }
+
+    // ─────────── Theater DTOs ───────────
+    public class TheaterFilterDto
+    {
+        public int TheaterId { get; set; }
+        public string TheaterName { get; set; } = string.Empty;
+    }
+
+    public class TheaterCardDto
+    {
+        public int TheaterId { get; set; }
+        public string TheaterName { get; set; } = string.Empty;
+        public string? Address { get; set; }
+        public int RoomCount { get; set; }
+        public int SeatCount { get; set; }
+        public int MoviesNow { get; set; }
+        public int ShowtimesToday { get; set; }
+        public DateTime? NextShowtime { get; set; }
     }
 }

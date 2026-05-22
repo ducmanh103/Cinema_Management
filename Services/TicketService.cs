@@ -117,9 +117,14 @@ namespace CinemaManagement.Services
         public async Task<bool> CancelTicketAsync(int ticketId, int userId)
         {
             var ticket = await _context.Tickets
+                .Include(t => t.Showtime)
                 .FirstOrDefaultAsync(t => t.TicketId == ticketId && t.UserId == userId);
 
             if (ticket == null || ticket.Status == "Cancelled") return false;
+
+            // Không cho hủy vé nếu suất chiếu đã bắt đầu
+            if (ticket.Showtime != null && ticket.Showtime.StartTime <= DateTime.Now)
+                return false;
 
             ticket.Status = "Cancelled";
 
@@ -178,8 +183,8 @@ namespace CinemaManagement.Services
                     TicketId = ticket.TicketId,
                     Amount = actualPrice,
                     Method = dto.PaymentMethod, // "VnPay"
-                    Status = "Pending",
-                    PaidAt = DateTime.Now
+                    Status = "Pending"
+                    // PaidAt sẽ được set khi ConfirmPaymentAsync(success: true)
                 };
                 _context.Payments.Add(payment);
                 await _context.SaveChangesAsync();
@@ -219,11 +224,14 @@ namespace CinemaManagement.Services
                 .FirstOrDefaultAsync(p => p.PaymentId == paymentId);
 
             if (payment == null) return false;
-            if (payment.Status == "Completed") return true; // idempotent: tránh xử lý 2 lần
+            // Idempotent: không xử lý lại payment đã hoàn thành hoặc đã thất bại
+            if (payment.Status == "Completed") return true;
+            if (payment.Status == "Failed") return false;
 
             if (success)
             {
                 payment.Status = "Completed";
+                payment.TransactionId = transactionId;
                 payment.PaidAt = DateTime.Now;
             }
             else

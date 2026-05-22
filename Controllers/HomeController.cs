@@ -32,10 +32,7 @@ namespace CinemaManagement.Controllers
             return View();
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+
 
         public async Task<IActionResult> Theaters()
         {

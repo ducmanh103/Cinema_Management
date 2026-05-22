@@ -3,7 +3,7 @@ using CinemaManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CinemaManagement.Controllers.Api
+namespace CinemaManagement.Areas.Admin.Controllers.Api
 {
     [ApiController]
     [Route("api/[controller]")]

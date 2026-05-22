@@ -1,19 +1,14 @@
 @model CinemaManagement.Models.Movie
 @{
     ViewData["Title"] = "Thêm phim mới";
-    Layout = "_AdminLayout";
     var genres = ViewBag.Genres as List<CinemaManagement.Models.Genre> ?? new();
 }
 
-<!-- Content Header -->
 <section class="content-header">
-    <h1>
-        Thêm phim
-        <small>Nhập thông tin phim mới</small>
-    </h1>
+    <h1>Thêm phim <small>Nhập thông tin phim mới</small></h1>
     <ol class="breadcrumb">
-        <li><a asp-action="Index" asp-controller="Admin"><i class="fa fa-dashboard"></i> Dashboard</a></li>
-        <li><a asp-action="Movies" asp-controller="Admin"><i class="fa fa-film"></i> Phim</a></li>
+        <li><a asp-controller="Dashboard" asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a asp-controller="Movies" asp-action="Index"><i class="fa fa-film"></i> Phim</a></li>
         <li class="active">Thêm mới</li>
     </ol>
 </section>
@@ -78,8 +73,7 @@
                         </div>
                         <div class="form-group">
                             <label asp-for="Description">Mô tả</label>
-                            <textarea asp-for="Description" class="form-control" rows="4"
-                                      placeholder="Nội dung phim..." id="movie-desc"></textarea>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Nội dung phim..." id="movie-desc"></textarea>
                         </div>
                         <div class="form-group">
                             <label>Thể loại</label>
@@ -89,8 +83,7 @@
                                     <div class="col-md-3 col-xs-6">
                                         <div class="checkbox">
                                             <label>
-                                                <input type="checkbox" name="selectedGenres"
-                                                       value="@g.GenreId" id="genre-@g.GenreId" />
+                                                <input type="checkbox" name="selectedGenres" value="@g.GenreId" id="genre-@g.GenreId" />
                                                 @g.GenreName
                                             </label>
                                         </div>
@@ -98,8 +91,6 @@
                                 }
                             </div>
                         </div>
-
-                        <!-- Xem trước poster -->
                         <div id="poster-preview-wrap" style="display:none; margin-top:8px">
                             <label>Xem trước poster:</label><br />
                             <img id="poster-preview" src="" style="max-height:180px; border-radius:4px; border:1px solid #ddd" />
@@ -109,7 +100,7 @@
                         <button type="submit" class="btn btn-primary" id="save-movie-btn">
                             <i class="fa fa-save"></i> Lưu phim
                         </button>
-                        <a asp-action="Movies" asp-controller="Admin" class="btn btn-default pull-right">
+                        <a asp-controller="Movies" asp-action="Index" class="btn btn-default pull-right">
                             <i class="fa fa-arrow-left"></i> Huỷ
                         </a>
                     </div>
@@ -122,15 +113,10 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // Xem trước poster khi nhập URL
         $('#movie-poster').on('input', function () {
             var url = $(this).val().trim();
-            if (url) {
-                $('#poster-preview').attr('src', url);
-                $('#poster-preview-wrap').show();
-            } else {
-                $('#poster-preview-wrap').hide();
-            }
+            if (url) { $('#poster-preview').attr('src', url); $('#poster-preview-wrap').show(); }
+            else { $('#poster-preview-wrap').hide(); }
         });
     </script>
 }

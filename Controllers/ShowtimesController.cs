@@ -50,6 +50,13 @@ namespace CinemaManagement.Controllers
                 ViewBag.MovieId           = movieId.Value;
                 ViewBag.SelectedDate      = selectedDate2;
                 ViewBag.SelectedTheaterId = selectedTheaterId2;
+
+                // Cung cấp dữ liệu phim chi tiết cho View
+                ViewBag.ActiveMovie = await _context.Movies
+                    .AsNoTracking()
+                    .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
+                    .FirstOrDefaultAsync(m => m.MovieId == movieId.Value);
+
                 return View(showtimes);
             }
 
@@ -63,6 +70,15 @@ namespace CinemaManagement.Controllers
             ViewBag.MovieId           = null;
 
             var result = await _showtimeService.GetShowtimesByDateAndTheaterAsync(selectedDate, selectedTheaterId);
+
+            // Cung cấp dữ liệu phim cho View (tránh inject DbContext trong View)
+            var distinctTitles = result.Select(s => s.MovieTitle).Distinct().ToList();
+            ViewBag.MovieInfoDict = await _context.Movies
+                .AsNoTracking()
+                .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
+                .Where(m => distinctTitles.Contains(m.Title))
+                .ToDictionaryAsync(m => m.Title, m => m);
+
             return View(result);
         }
     }

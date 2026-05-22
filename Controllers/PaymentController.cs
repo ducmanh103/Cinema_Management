@@ -111,7 +111,7 @@ namespace CinemaManagement.Controllers
             }
 
             // Nếu chữ ký không hợp lệ → coi như failure và huỷ ticket
-            if (response.Token == null || !response.Success && response.VnPayResponseCode != "00")
+            if (response.Token == null || !response.Success || response.VnPayResponseCode != "00")
             {
                 await _ticketService.ConfirmPaymentAsync(paymentId, response.TransactionId, false);
                 TempData["Error"] = $"Thanh toán không thành công. Mã lỗi: {response.VnPayResponseCode}";

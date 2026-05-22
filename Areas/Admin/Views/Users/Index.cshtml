@@ -3,7 +3,6 @@
 @model List<UserDto>
 @{
     ViewData["Title"] = "Quản lý người dùng";
-    Layout = "_AdminLayout";
     var roles = ViewBag.Roles as List<Role> ?? new();
     bool isAdmin = User.IsInRole("Admin");
 }
@@ -15,7 +14,7 @@
         <small>Danh sách tài khoản</small>
     </h1>
     <ol class="breadcrumb">
-        <li><a asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a asp-controller="Dashboard" asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
         <li class="active">Người dùng</li>
     </ol>
 </section>
@@ -55,7 +54,7 @@
                             @foreach (var user in Model)
                             {
                                 bool isTargetAdmin = user.RoleName == "Admin";
-                                bool canToggle = isAdmin || !isTargetAdmin; // Staff chỉ khoá được non-Admin
+                                bool canToggle = isAdmin || !isTargetAdmin;
                                 <tr>
                                     <td>@user.UserId</td>
                                     <td><strong>@user.Username</strong></td>
@@ -149,7 +148,7 @@
         $(function () {
             $('#users-table').DataTable({
                 "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Vietnamese.json"
+                    "url": "/adminlte/plugins/datatables/Vietnamese.json"
                 },
                 "pageLength": 25,
                 "responsive": true,

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace CinemaManagement.Controllers.Api
+namespace CinemaManagement.Areas.Admin.Controllers.Api
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -61,6 +61,9 @@ namespace CinemaManagement.Controllers.Api
         [HttpPut("{id}/status")]
         public async Task<IActionResult> ChangeStatus(int id, [FromBody] string status)
         {
+            if (status != "Active" && status != "Inactive")
+                return BadRequest(new { message = "Status phải là 'Active' hoặc 'Inactive'." });
+
             var affected = await _context.Users
                 .Where(u => u.UserId == id)
                 .ExecuteUpdateAsync(s => s.SetProperty(u => u.Status, status));
@@ -73,6 +76,10 @@ namespace CinemaManagement.Controllers.Api
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            bool hasTickets = await _context.Tickets.AnyAsync(t => t.UserId == id);
+            if (hasTickets)
+                return Conflict(new { message = "Không thể xoá người dùng đã có vé. Hãy khoá tài khoản thay vì xoá." });
+
             var affected = await _context.Users
                 .Where(u => u.UserId == id)
                 .ExecuteDeleteAsync();

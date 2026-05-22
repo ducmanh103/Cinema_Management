@@ -1,0 +1,357 @@
+@model CinemaManagement.Models.ViewModels.LoginViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>🎬 CinemaHub Admin – Đăng nhập</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/adminlte/plugins/font-awesome/css/font-awesome.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #0a0e1a;
+        }
+
+        /* ─── Animated gradient background ─── */
+        .bg-animated {
+            position: fixed; inset: 0; z-index: 0;
+            background: linear-gradient(-45deg, #0a0e1a, #1a1040, #0d2137, #0a1628, #1a0a2e);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        @@keyframes gradientShift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* ─── Floating particles ─── */
+        .particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(96, 165, 250, 0.08);
+            animation: floatUp linear infinite;
+        }
+        .particle:nth-child(1)  { width: 6px;  height: 6px;  left: 10%; animation-duration: 18s; animation-delay: 0s; }
+        .particle:nth-child(2)  { width: 4px;  height: 4px;  left: 25%; animation-duration: 22s; animation-delay: 2s; background: rgba(167,139,250,0.1); }
+        .particle:nth-child(3)  { width: 8px;  height: 8px;  left: 40%; animation-duration: 16s; animation-delay: 4s; }
+        .particle:nth-child(4)  { width: 3px;  height: 3px;  left: 55%; animation-duration: 25s; animation-delay: 1s; background: rgba(251,191,36,0.08); }
+        .particle:nth-child(5)  { width: 5px;  height: 5px;  left: 70%; animation-duration: 20s; animation-delay: 3s; }
+        .particle:nth-child(6)  { width: 7px;  height: 7px;  left: 85%; animation-duration: 17s; animation-delay: 5s; background: rgba(167,139,250,0.08); }
+        .particle:nth-child(7)  { width: 4px;  height: 4px;  left: 15%; animation-duration: 23s; animation-delay: 6s; }
+        .particle:nth-child(8)  { width: 6px;  height: 6px;  left: 60%; animation-duration: 19s; animation-delay: 7s; background: rgba(96,165,250,0.06); }
+        .particle:nth-child(9)  { width: 3px;  height: 3px;  left: 35%; animation-duration: 21s; animation-delay: 2s; background: rgba(251,191,36,0.06); }
+        .particle:nth-child(10) { width: 5px;  height: 5px;  left: 90%; animation-duration: 24s; animation-delay: 4s; }
+        @@keyframes floatUp {
+            0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+        }
+
+        /* ─── Glow orbs ─── */
+        .orb {
+            position: fixed; border-radius: 50%; filter: blur(80px); z-index: 0; pointer-events: none;
+        }
+        .orb-1 { width: 300px; height: 300px; background: rgba(59,130,246,0.12); top: -80px; right: -60px; animation: orbFloat 8s ease-in-out infinite; }
+        .orb-2 { width: 250px; height: 250px; background: rgba(139,92,246,0.1);  bottom: -60px; left: -40px; animation: orbFloat 10s ease-in-out infinite reverse; }
+        .orb-3 { width: 200px; height: 200px; background: rgba(251,191,36,0.06); top: 50%; left: 60%; animation: orbFloat 12s ease-in-out infinite 2s; }
+        @@keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0); }
+            33%      { transform: translate(30px, -20px); }
+            66%      { transform: translate(-20px, 15px); }
+        }
+
+        /* ─── Login card ─── */
+        .login-wrapper {
+            position: relative; z-index: 10;
+            width: 100%; max-width: 420px;
+            padding: 20px;
+            animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        @@keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(30px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .login-card {
+            background: rgba(15, 20, 40, 0.65);
+            backdrop-filter: blur(24px) saturate(1.4);
+            -webkit-backdrop-filter: blur(24px) saturate(1.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 44px 36px 36px;
+            box-shadow:
+                0 24px 80px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(255,255,255,0.05) inset,
+                0 1px 0 rgba(255,255,255,0.06) inset;
+        }
+
+        /* ─── Logo / Header ─── */
+        .login-header { text-align: center; margin-bottom: 32px; }
+        .login-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 16px;
+            display: inline-flex; align-items: center; justify-content: center;
+            margin-bottom: 18px;
+            box-shadow: 0 8px 32px rgba(59,130,246,0.3);
+            animation: iconPulse 3s ease-in-out infinite;
+        }
+        @@keyframes iconPulse {
+            0%, 100% { box-shadow: 0 8px 32px rgba(59,130,246,0.3); }
+            50%      { box-shadow: 0 8px 48px rgba(139,92,246,0.4); }
+        }
+        .login-icon i { font-size: 28px; color: #fff; }
+        .login-title {
+            font-size: 24px; font-weight: 800; letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #e2e8f0, #fff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .login-title span { 
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text; background-clip: text;
+        }
+        .login-subtitle {
+            color: rgba(148,163,184,0.8); font-size: 13.5px; margin-top: 6px; font-weight: 400;
+        }
+
+        /* ─── Alert ─── */
+        .login-alert {
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            animation: shakeX 0.5s ease-in-out;
+        }
+        .login-alert p {
+            color: #fca5a5; font-size: 13px; margin: 0; line-height: 1.5;
+        }
+        .login-alert i { color: #f87171; margin-right: 6px; }
+        @@keyframes shakeX {
+            0%, 100% { transform: translateX(0); }
+            20%      { transform: translateX(-8px); }
+            40%      { transform: translateX(8px); }
+            60%      { transform: translateX(-4px); }
+            80%      { transform: translateX(4px); }
+        }
+
+        /* ─── Form fields ─── */
+        .form-field { margin-bottom: 18px; position: relative; }
+        .form-field label {
+            display: block; font-size: 12px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.8px; color: rgba(148,163,184,0.7); margin-bottom: 8px;
+        }
+        .input-wrap {
+            position: relative;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.3s ease;
+        }
+        .input-wrap:focus-within {
+            border-color: rgba(96,165,250,0.5);
+            background: rgba(255,255,255,0.06);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1), 0 0 20px rgba(59,130,246,0.05);
+        }
+        .input-wrap > i {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: rgba(148,163,184,0.4); font-size: 15px;
+            transition: color 0.3s;
+        }
+        .input-wrap:focus-within > i { color: #60a5fa; }
+        .input-wrap input {
+            width: 100%; background: transparent; border: none; outline: none;
+            padding: 13px 42px 13px 42px;
+            color: #e2e8f0; font-size: 14.5px; font-family: inherit; font-weight: 400;
+        }
+        .input-wrap input::placeholder { color: rgba(148,163,184,0.35); }
+
+        /* ─── Password toggle ─── */
+        .pw-toggle {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: rgba(148,163,184,0.4); cursor: pointer;
+            padding: 4px 6px; font-size: 14px; transition: color 0.2s;
+        }
+        .pw-toggle:hover { color: #94a3b8; }
+
+        /* ─── Remember me ─── */
+        .remember-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .remember-check {
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+        }
+        .remember-check input[type="checkbox"] {
+            width: 16px; height: 16px; accent-color: #3b82f6; cursor: pointer;
+            border-radius: 4px;
+        }
+        .remember-check span { color: rgba(148,163,184,0.7); font-size: 13px; }
+
+        /* ─── Submit button ─── */
+        .btn-login {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #3b82f6, #7c3aed);
+            border: none; border-radius: 12px;
+            color: #fff; font-size: 15px; font-weight: 600; font-family: inherit;
+            cursor: pointer; position: relative; overflow: hidden;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+        }
+        .btn-login::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(59,130,246,0.35); }
+        .btn-login:hover::before { opacity: 1; }
+        .btn-login:active { transform: translateY(0); }
+        .btn-login span { position: relative; z-index: 1; }
+        .btn-login i { position: relative; z-index: 1; margin-right: 8px; }
+
+        /* ─── Divider ─── */
+        .login-divider {
+            display: flex; align-items: center; gap: 16px; margin: 24px 0;
+        }
+        .login-divider::before, .login-divider::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+        }
+        .login-divider span { color: rgba(148,163,184,0.4); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* ─── Footer link ─── */
+        .login-footer { text-align: center; }
+        .login-footer a {
+            color: rgba(148,163,184,0.6); text-decoration: none; font-size: 13.5px;
+            transition: color 0.2s; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .login-footer a:hover { color: #60a5fa; }
+        .login-footer a i { font-size: 14px; }
+
+        /* ─── Bottom branding ─── */
+        .login-brand {
+            text-align: center; margin-top: 20px;
+            color: rgba(148,163,184,0.25); font-size: 11px; letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background layers -->
+    <div class="bg-animated"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="particles">
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="login-wrapper">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="login-icon">
+                    <i class="fa fa-film"></i>
+                </div>
+                <div class="login-title"><span>CinemaHub</span> Admin</div>
+                <div class="login-subtitle">Đăng nhập vào hệ thống quản trị</div>
+            </div>
+
+            <!-- Error Alert -->
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="login-alert">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <p><i class="fa fa-exclamation-circle"></i> @error.ErrorMessage</p>
+                    }
+                </div>
+            }
+
+            <!-- Form -->
+            <form asp-area="Admin" asp-controller="Account" asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+                <div class="form-field">
+                    <label>Tên đăng nhập</label>
+                    <div class="input-wrap">
+                        <i class="fa fa-user"></i>
+                        <input asp-for="Username" placeholder="Nhập tài khoản admin" autofocus autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label>Mật khẩu</label>
+                    <div class="input-wrap">
+                        <i class="fa fa-lock"></i>
+                        <input asp-for="Password" id="passwordInput" placeholder="Nhập mật khẩu" autocomplete="current-password">
+                        <button type="button" class="pw-toggle" onclick="togglePw()" title="Hiện/ẩn mật khẩu">
+                            <i class="fa fa-eye" id="pwIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="remember-row">
+                    <label class="remember-check">
+                        <input asp-for="RememberMe">
+                        <span>Ghi nhớ đăng nhập</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-login">
+                    <i class="fa fa-sign-in"></i>
+                    <span>Đăng nhập</span>
+                </button>
+            </form>
+
+            <div class="login-divider"><span>hoặc</span></div>
+
+            <div class="login-footer">
+                <a href="/">
+                    <i class="fa fa-arrow-left"></i>
+                    Về trang chính CinemaHub
+                </a>
+            </div>
+        </div>
+
+        <div class="login-brand">
+            © 2026 CinemaHub — Hệ thống quản trị rạp chiếu phim
+        </div>
+    </div>
+
+    <script>
+        function togglePw() {
+            var inp = document.getElementById('passwordInput');
+            var ico = document.getElementById('pwIcon');
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                ico.className = 'fa fa-eye-slash';
+            } else {
+                inp.type = 'password';
+                ico.className = 'fa fa-eye';
+            }
+        }
+    </script>
+</body>
+</html>

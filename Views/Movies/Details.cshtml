@@ -308,38 +308,25 @@ else
             font-size: 1.1rem;
             font-weight: 600;
         }
-        .showtime-group {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(5px);
-        }
-        .showtime-pill {
+        /* Badges system */
+        .badge-capsule {
             display: inline-block;
-            background: rgba(229, 9, 20, 0.15);
-            border: 1px solid rgba(229, 9, 20, 0.3);
-            color: #fff;
-            padding: 8px 18px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            text-align: center;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
         }
-        .showtime-pill:hover {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: #fff;
-            box-shadow: 0 0 12px rgba(229, 9, 20, 0.5);
-            transform: translateY(-2px);
-        }
-        .showtime-pill.passed {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.1);
-            color: #666;
-            pointer-events: none;
+        .badge-age-t18 { background: #dc3545; color: #fff; }
+        .badge-age-t16 { background: #fd7e14; color: #fff; }
+        .badge-age-t13 { background: #ffc107; color: #212529; }
+        .badge-age-p   { background: #198754; color: #fff; }
+
+        .badge-format {
+            background: rgba(245, 166, 35, 0.15);
+            color: #f5a623;
+            border: 1px solid rgba(245, 166, 35, 0.3);
         }
     </style>
 
@@ -385,7 +372,13 @@ else
                         }
                     </div>
 
-                    <h1 class="fw-bolder mb-3" style="font-size: 3rem; text-shadow: 2px 2px 8px rgba(0,0,0,0.5);">@Model.Title</h1>
+                    <h1 class="fw-bolder mb-3 d-flex align-items-center gap-3 flex-wrap" style="font-size: 2.8rem; text-shadow: 2px 2px 8px rgba(0,0,0,0.5);">
+                        @Model.Title
+                        <span class="badge-capsule @CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeClass(Model.Title)" 
+                              title="@CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeDesc(Model.Title)">
+                            @CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeText(Model.Title)
+                        </span>
+                    </h1>
 
                     <!-- Stats Row -->
                     <div class="row g-4 my-3 py-3 border-top border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
@@ -398,14 +391,16 @@ else
                             <div class="info-value">@(Model.ReleaseDate?.ToString("dd/MM/yyyy") ?? "N/A")</div>
                         </div>
                         <div class="col-6 col-sm-3">
-                            <div class="info-label"><i class="bi bi-info-circle"></i> Trạng thái</div>
-                            <div class="info-value text-warning">
-                                @(Model.Status == "Now Showing" ? "Đang chiếu" : Model.Status == "Coming Soon" ? "Sắp chiếu" : "Ngừng chiếu")
+                            <div class="info-label"><i class="bi bi-film"></i> Định dạng</div>
+                            <div class="info-value">
+                                <span class="badge-capsule badge-format">
+                                    @CinemaManagement.Helpers.MovieDisplayHelper.GetMovieFormat(Model.Title)
+                                </span>
                             </div>
                         </div>
                         <div class="col-6 col-sm-3">
-                            <div class="info-label"><i class="bi bi-ticket-perforated"></i> Đã bán</div>
-                            <div class="info-value">@totalTickets vé</div>
+                            <div class="info-label"><i class="bi bi-star-fill text-warning"></i> Đánh giá</div>
+                            <div class="info-value text-warning">@CinemaManagement.Helpers.MovieDisplayHelper.GetMovieRating(Model.MovieId).ToString("0.0")/10</div>
                         </div>
                     </div>
 
@@ -420,7 +415,7 @@ else
                     <div class="d-flex gap-3 mt-4">
                         @if (Model.Status == "Now Showing")
                         {
-                            <a href="#booking-section" class="btn btn-primary-custom btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg">
+                            <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@Model.MovieId" class="btn btn-primary-custom btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg">
                                 <i class="bi bi-ticket-fill me-2"></i> ĐẶT VÉ NGAY
                             </a>
                         }
@@ -443,64 +438,5 @@ else
             </div>
         </div>
     }
-
-    <!-- Booking Section -->
-    <div id="booking-section" class="glass p-4 p-md-5 rounded-4 mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold mb-0 text-white"><i class="bi bi-calendar3 text-danger"></i> Lịch Chiếu Dự Kiến</h3>
-            <span class="badge bg-danger px-3 py-2 rounded-pill">Hôm nay: @DateTime.Today.ToString("dd/MM/yyyy")</span>
-        </div>
-
-        @if (Model.Showtimes.Any(st => st.StartTime > DateTime.Now))
-        {
-            var upcomingShowtimes = Model.Showtimes.Where(st => st.StartTime > DateTime.Now).OrderBy(st => st.StartTime).ToList();
-            var groupedByTheater = upcomingShowtimes.GroupBy(st => st.Room?.Theater).ToList();
-
-            foreach (var theaterGroup in groupedByTheater)
-            {
-                var theater = theaterGroup.Key;
-                if (theater == null) continue;
-
-                <div class="showtime-group">
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="bi bi-building fs-4 text-warning me-2"></i>
-                        <h5 class="fw-bold mb-0 text-white">@theater.TheaterName</h5>
-                        <small class="text-muted ms-3"><i class="bi bi-geo-alt"></i> @theater.Address</small>
-                    </div>
-
-                    <!-- Group by date to show showtimes nicely -->
-                    @{
-                        var showtimesByDate = theaterGroup.GroupBy(st => st.StartTime.Date).OrderBy(g => g.Key).ToList();
-                    }
-
-                    @foreach (var dateGroup in showtimesByDate)
-                    {
-                        <div class="mb-3">
-                            <div class="text-white-50 fw-semibold mb-2" style="font-size: 0.95rem;">
-                                <i class="bi bi-calendar-check me-1"></i> @dateGroup.Key.ToString("dddd, dd/MM/yyyy")
-                            </div>
-                            <div class="d-flex flex-wrap gap-3">
-                                @foreach (var st in dateGroup.OrderBy(s => s.StartTime))
-                                {
-                                    <a asp-controller="Booking" asp-action="SelectSeat" asp-route-id="@st.ShowtimeId" class="showtime-pill">
-                                        <div class="fs-5 fw-bold">@st.StartTime.ToString("HH:mm")</div>
-                                        <small style="font-size: 0.75rem; opacity: 0.8;">@st.Room?.RoomName</small>
-                                    </a>
-                                }
-                            </div>
-                        </div>
-                    }
-                </div>
-            }
-        }
-        else
-        {
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-calendar-x fs-1 mb-3"></i>
-                <h5>Hiện không có suất chiếu nào tiếp theo cho phim này.</h5>
-                <p class="mb-0">Vui lòng quay lại sau hoặc liên hệ Hotline để biết thêm chi tiết.</p>
-            </div>
-        }
-    </div>
 }
 

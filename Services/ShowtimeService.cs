@@ -24,6 +24,7 @@ namespace CinemaManagement.Services
                     MovieId      = s.MovieId,
                     MovieTitle   = s.Movie.Title,
                     MoviePosterUrl = s.Movie.PosterUrl,
+                    MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
@@ -59,6 +60,7 @@ namespace CinemaManagement.Services
                     MovieId      = s.MovieId,
                     MovieTitle   = s.Movie.Title,
                     MoviePosterUrl = s.Movie.PosterUrl,
+                    MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
@@ -71,9 +73,10 @@ namespace CinemaManagement.Services
         public async Task<List<ShowtimeDto>> GetShowtimesByDateAsync(DateTime date)
         {
             var start = date.Date;
+            var end = start.AddDays(1);
             return await _context.Showtimes
                 .AsNoTracking()
-                .Where(s => s.StartTime >= start)
+                .Where(s => s.StartTime >= start && s.StartTime < end)
                 .Select(s => new ShowtimeDto
                 {
                     ShowtimeId   = s.ShowtimeId,
@@ -82,6 +85,7 @@ namespace CinemaManagement.Services
                     MovieId      = s.MovieId,
                     MovieTitle   = s.Movie.Title,
                     MoviePosterUrl = s.Movie.PosterUrl,
+                    MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
@@ -105,6 +109,7 @@ namespace CinemaManagement.Services
                     MovieId      = s.MovieId,
                     MovieTitle   = s.Movie.Title,
                     MoviePosterUrl = s.Movie.PosterUrl,
+                    MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
@@ -135,6 +140,7 @@ namespace CinemaManagement.Services
                     MovieId      = s.MovieId,
                     MovieTitle   = s.Movie.Title,
                     MoviePosterUrl = s.Movie.PosterUrl,
+                    MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
@@ -157,6 +163,7 @@ namespace CinemaManagement.Services
                     MovieId      = s.MovieId,
                     MovieTitle   = s.Movie.Title,
                     MoviePosterUrl = s.Movie.PosterUrl,
+                    MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
@@ -215,6 +222,12 @@ namespace CinemaManagement.Services
         {
             var showtime = await _context.Showtimes.FindAsync(id);
             if (showtime == null) return false;
+
+            // Kiểm tra có vé đã đặt trước khi xóa
+            bool hasTickets = await _context.Tickets.AnyAsync(t => t.ShowtimeId == id && t.Status == "Booked");
+            if (hasTickets)
+                throw new InvalidOperationException("Không thể xoá suất chiếu có vé đã đặt.");
+
             _context.Showtimes.Remove(showtime);
             await _context.SaveChangesAsync();
             return true;
