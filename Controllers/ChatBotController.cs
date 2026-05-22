@@ -140,6 +140,12 @@ namespace CinemaManagement.Controllers
 
             var apiKey = _configuration["Gemini:ApiKey"];
 
+            List<MovieAttachmentDto>? movies = null;
+            List<ShowtimeAttachmentDto>? showtimes = null;
+            List<BookingAttachmentDto>? userBookings = null;
+            string userFullName = "Khách";
+            bool isLoggedIn = false;
+
             try
             {
                 // Lấy thông tin thực tế từ database để làm ngữ cảnh
@@ -147,9 +153,7 @@ namespace CinemaManagement.Controllers
                 
                 // Tra cứu thông tin người dùng đang đăng nhập
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                string userFullName = "Khách";
                 string userTicketsContext = "Không có thông tin vé đã mua.";
-                bool isLoggedIn = false;
                 int userId = 0;
 
                 if (userIdClaim != null && int.TryParse(userIdClaim, out userId))
@@ -182,13 +186,45 @@ namespace CinemaManagement.Controllers
                     }
                 }
 
-                // Phân loại ý định của câu hỏi để đính kèm dữ liệu (Rich Attachments) cho frontend
+                 // Phân loại ý định của câu hỏi để đính kèm dữ liệu (Rich Attachments) cho frontend
                 var normalizedMessage = RemoveDiacritics(request.Message.ToLower());
-                List<MovieAttachmentDto>? movies = null;
-                List<ShowtimeAttachmentDto>? showtimes = null;
-                List<BookingAttachmentDto>? userBookings = null;
 
-                if (normalizedMessage.Contains("phim dang chieu") || normalizedMessage.Contains("phim hot") || normalizedMessage.Contains("dang chieu") || normalizedMessage.Contains("phim moi"))
+                // 1. Kiểm tra xem tin nhắn có hỏi về phim cụ thể nào trong database không
+                var allMoviesInDb = await _dbContext.Movies
+                    .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
+                    .ToListAsync();
+
+                var matchedMovies = allMoviesInDb.Where(m => IsMovieMatch(request.Message, m.Title)).ToList();
+
+                if (matchedMovies.Any())
+                {
+                    movies = matchedMovies.Select(m => new MovieAttachmentDto {
+                        MovieId = m.MovieId,
+                        Title = m.Title,
+                        Duration = m.Duration,
+                        PosterUrl = m.PosterUrl,
+                        Genres = m.MovieGenres.Select(mg => mg.Genre.GenreName).ToList(),
+                        Status = m.Status
+                    }).ToList();
+
+                    var matchedMovieIds = matchedMovies.Select(m => m.MovieId).ToList();
+                    var today = DateTime.Today;
+                    var tomorrow = today.AddDays(1);
+                    showtimes = await _dbContext.Showtimes
+                        .Include(s => s.Movie)
+                        .Include(s => s.Room)
+                        .Where(s => matchedMovieIds.Contains(s.MovieId) && s.StartTime >= today && s.StartTime < tomorrow)
+                        .OrderBy(s => s.StartTime)
+                        .Select(s => new ShowtimeAttachmentDto {
+                            ShowtimeId = s.ShowtimeId,
+                            MovieId = s.MovieId,
+                            MovieTitle = s.Movie.Title,
+                            StartTime = s.StartTime.ToString("HH:mm"),
+                            RoomName = s.Room.RoomName,
+                            Price = s.Price
+                        }).ToListAsync();
+                }
+                else if (normalizedMessage.Contains("phim dang chieu") || normalizedMessage.Contains("phim hot") || normalizedMessage.Contains("dang chieu") || normalizedMessage.Contains("phim moi"))
                 {
                     movies = await _dbContext.Movies
                         .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
@@ -274,7 +310,7 @@ namespace CinemaManagement.Controllers
                 }
 
                 // Chế độ Offline (Fallback): Xử lý bằng từ khóa & truy vấn Db cục bộ
-                var fallbackResponse = ProcessOfflineQuery(request.Message, contextData, userFullName, isLoggedIn);
+                var fallbackResponse = ProcessOfflineQuery(request.Message, contextData, userFullName, isLoggedIn, movies, showtimes);
                 return Ok(new ChatResponse { 
                     Response = fallbackResponse, 
                     Mode = "offline",
@@ -289,17 +325,13 @@ namespace CinemaManagement.Controllers
                 Console.WriteLine($"ChatBot Error: {ex.Message}");
                 var contextData = await GetCinemaContextAsync();
                 
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                string userFullName = "Khách";
-                bool isLoggedIn = userIdClaim != null;
-                
-                var fallbackResponse = ProcessOfflineQuery(request.Message, contextData, userFullName, isLoggedIn);
+                var fallbackResponse = ProcessOfflineQuery(request.Message, contextData, userFullName, isLoggedIn, movies, showtimes);
                 return Ok(new ChatResponse { 
                     Response = "Đã xảy ra lỗi kết nối. Dưới đây là phản hồi offline của hệ thống: \n\n" + fallbackResponse, 
                     Mode = "offline-error",
-                    Movies = null,
-                    Showtimes = null,
-                    UserBookings = null
+                    Movies = movies,
+                    Showtimes = showtimes,
+                    UserBookings = userBookings
                 });
             }
         }
@@ -492,8 +524,36 @@ namespace CinemaManagement.Controllers
             }
         }
 
-        private string ProcessOfflineQuery(string message, CinemaContextData context, string userFullName, bool isLoggedIn)
+        private string ProcessOfflineQuery(string message, CinemaContextData context, string userFullName, bool isLoggedIn, List<MovieAttachmentDto>? matchedMovies = null, List<ShowtimeAttachmentDto>? matchedShowtimes = null)
         {
+            if (matchedMovies != null && matchedMovies.Any())
+            {
+                var sb = new StringBuilder();
+                if (isLoggedIn)
+                {
+                    sb.AppendLine($"Chào **{userFullName}**! Tôi đã tìm thấy thông tin phim bạn yêu cầu:");
+                }
+                else
+                {
+                    sb.AppendLine("Tôi đã tìm thấy thông tin phim bạn yêu cầu:");
+                }
+
+                foreach (var m in matchedMovies)
+                {
+                    sb.AppendLine($"- **{m.Title}** ({m.Duration} phút) - Trạng thái: *{(m.Status == "Now Showing" ? "Đang chiếu" : "Sắp chiếu")}*");
+                }
+
+                if (matchedShowtimes != null && matchedShowtimes.Any())
+                {
+                    sb.AppendLine("\nDưới đây là lịch chiếu hôm nay của phim. Bạn có thể chọn suất chiếu để đặt vé ngay:");
+                }
+                else
+                {
+                    sb.AppendLine("\nHiện tại hôm nay chưa có suất chiếu nào cho phim này. Bạn vui lòng xem thông tin chi tiết hoặc quay lại sau nhé!");
+                }
+                return sb.ToString();
+            }
+
             var text = RemoveDiacritics(message.ToLower().Trim());
 
             // 1. Phim đang chiếu
@@ -605,6 +665,166 @@ namespace CinemaManagement.Controllers
                    "- [Lịch chiếu hôm nay](query:lịch chiếu hôm nay)\n" +
                    "- [Giá vé & Liên hệ](query:giá vé)\n" +
                    "- [Đặt vé online](query:đặt vé)";
+        }
+
+        private string CleanAndNormalize(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+            var normalized = RemoveDiacritics(text.ToLower());
+            var sb = new StringBuilder();
+            foreach (var c in normalized)
+            {
+                if (char.IsLetterOrDigit(c))
+                {
+                    sb.Append(c);
+                }
+                else
+                {
+                    sb.Append(' ');
+                }
+            }
+            return string.Join(" ", sb.ToString().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        private List<string> GetMovieKeywords(string title)
+        {
+            var keywords = new List<string>();
+            var cleanTitle = CleanAndNormalize(title);
+            keywords.Add(cleanTitle);
+
+            var parts = title.Split(new[] { ':', '-' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length > 1)
+            {
+                foreach (var part in parts)
+                {
+                    var cleanPart = CleanAndNormalize(part);
+                    if (cleanPart.Length >= 3)
+                    {
+                        keywords.Add(cleanPart);
+                    }
+                }
+            }
+
+            var lowerTitle = title.ToLower();
+            if (lowerTitle.Contains("người nhện") || lowerTitle.Contains("spider-man"))
+            {
+                keywords.Add("nguoi nhen");
+                keywords.Add("spiderman");
+                keywords.Add("spider man");
+            }
+            if (lowerTitle.Contains("dune"))
+            {
+                keywords.Add("dune");
+                keywords.Add("dune 2");
+            }
+            if (lowerTitle.Contains("kung fu panda"))
+            {
+                keywords.Add("kung fu panda");
+                keywords.Add("kungfu panda");
+                keywords.Add("panda");
+            }
+            if (lowerTitle.Contains("quật mộ"))
+            {
+                keywords.Add("quat mo");
+                keywords.Add("trung ma");
+            }
+            if (lowerTitle.Contains("godzilla"))
+            {
+                keywords.Add("godzilla");
+                keywords.Add("kong");
+            }
+            if (lowerTitle.Contains("deadpool"))
+            {
+                keywords.Add("deadpool");
+            }
+            if (lowerTitle.Contains("fast & furious") || lowerTitle.Contains("fast &amp; furious"))
+            {
+                keywords.Add("fast");
+                keywords.Add("furious");
+                keywords.Add("fast and furious");
+            }
+            if (lowerTitle.Contains("săn ma"))
+            {
+                keywords.Add("san ma");
+                keywords.Add("biet doi san ma");
+            }
+            if (lowerTitle.Contains("võ sĩ giác đấu"))
+            {
+                keywords.Add("vo si giac dau");
+                keywords.Add("gladiator");
+            }
+            if (lowerTitle.Contains("john wick"))
+            {
+                keywords.Add("john wick");
+            }
+            if (lowerTitle.Contains("vua sư tử") || lowerTitle.Contains("mufasa"))
+            {
+                keywords.Add("mufasa");
+                keywords.Add("vua su tu");
+            }
+            if (lowerTitle.Contains("vùng đất câm lặng"))
+            {
+                keywords.Add("vung dat cam lang");
+                keywords.Add("quiet place");
+            }
+            if (lowerTitle.Contains("sonic"))
+            {
+                keywords.Add("sonic");
+            }
+            if (lowerTitle.Contains("báo đen") || lowerTitle.Contains("wakanda"))
+            {
+                keywords.Add("wakanda");
+                keywords.Add("bao den");
+            }
+
+            return keywords.Distinct().ToList();
+        }
+
+        private bool IsMovieMatch(string query, string title)
+        {
+            var cleanQuery = CleanAndNormalize(query);
+            if (string.IsNullOrEmpty(cleanQuery)) return false;
+
+            if (title.Equals("Mai", StringComparison.OrdinalIgnoreCase))
+            {
+                if (cleanQuery.Contains("phim mai") || cleanQuery.Contains("xem mai") || cleanQuery.Contains("ve mai") || cleanQuery.Contains("dat mai"))
+                {
+                    return true;
+                }
+
+                var words = cleanQuery.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < words.Length; i++)
+                {
+                    if (words[i] == "mai")
+                    {
+                        if (i > 0 && (words[i - 1] == "ngay" || words[i - 1] == "hom" || words[i - 1] == "chieu"))
+                        {
+                            return false;
+                        }
+                        if (i < words.Length - 1 && (words[i + 1] == "chieu" || words[i + 1] == "co" || words[i + 1] == "rap"))
+                        {
+                            return false;
+                        }
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            var keywords = GetMovieKeywords(title);
+            foreach (var kw in keywords)
+            {
+                if (cleanQuery.Contains(kw))
+                {
+                    var pattern = @"\b" + System.Text.RegularExpressions.Regex.Escape(kw) + @"\b";
+                    if (System.Text.RegularExpressions.Regex.IsMatch(cleanQuery, pattern))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         // Loại bỏ dấu tiếng Việt để so khớp keyword chính xác
