@@ -89,7 +89,7 @@ Hoặc sử dụng file SQL tại `DB/CinemaManagement.sql` để import databas
 dotnet restore
 dotnet run
 ```
-Ứng dụng sẽ khởi động tại: `https://localhost:7079`
+Ứng dụng sẽ khởi động tại: `https://localhost:7290`
 
 ---
 
@@ -145,7 +145,7 @@ Cinema_Management/
 
 ## 🛠️ Truy Cập Tài Liệu API
 
-Swagger UI: `https://localhost:7079/swagger`
+Swagger UI: `https://localhost:7290/swagger`
 
 ---
 
