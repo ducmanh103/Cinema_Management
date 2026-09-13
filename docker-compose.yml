@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database Service
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: cinemahub_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: CinemaManagement
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SecretPassword123!
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./DB/CinemaManagement_PostgreSQL.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # 2. CinemaHub Web Application (.NET 8)
+  web_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cinemahub_web
+    restart: always
+    depends_on:
+      - postgres_db
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres_db;Port=5432;Database=CinemaManagement;Username=postgres;Password=SecretPassword123!
+      - Gemini__ApiKey=${GEMINI_API_KEY}
+      - Gemini__Model=gemini-2.5-flash
+      - VnPay__TmnCode=${VNPAY_TMN_CODE}
+      - VnPay__HashSecret=${VNPAY_HASH_SECRET}
+
+volumes:
+  pgdata:

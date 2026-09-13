@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.RateLimiting;
 
+// Hỗ trợ DateTime Local / Unspecified trong PostgreSQL Npgsql (tránh lỗi DateTime.Kind mismatch)
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ================================
@@ -130,9 +133,9 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-// 4. Database
+// 4. Database (PostgreSQL)
 builder.Services.AddDbContext<CinemaDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ================================
 // 5. Authentication (Cookie)

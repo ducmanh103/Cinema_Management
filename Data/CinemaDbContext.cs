@@ -98,16 +98,11 @@ namespace CinemaManagement.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ==================== Unique: ShowtimeId + SeatId ====================
-            // Filtered Unique Index: chỉ enforce uniqueness cho ticket có Status = 'Booked'.
-            // Cho phép nhiều ticket Cancelled cho cùng (ShowtimeId, SeatId).
-            // Điều này giúp:
-            //   1. Ngăn double-booking cùng ghế trong cùng suất chiếu
-            //   2. Cho phép re-book ghế sau khi vé bị hủy
-            //   3. Giữ lịch sử ticket cancelled trong database
+            // Filtered Unique Index cho PostgreSQL: chỉ áp dụng khi Status = 'Booked'
             modelBuilder.Entity<Ticket>()
                 .HasIndex(t => new { t.ShowtimeId, t.SeatId })
                 .IsUnique()
-                .HasFilter("[Status] = N'Booked'")
+                .HasFilter("\"Status\" = 'Booked'")
                 .HasDatabaseName("UQ_Ticket_Showtime_Seat");
 
             // ==================== Payment → Ticket (1-1) ====================
