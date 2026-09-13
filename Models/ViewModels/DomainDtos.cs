@@ -15,6 +15,9 @@ namespace CinemaManagement.Models.ViewModels
         public string? BannerUrl { get; set; }
         public string Status { get; set; } = string.Empty;
         public List<string> Genres { get; set; } = new();
+        public bool HasShowtimes { get; set; }
+        public int BookedTicketCount { get; set; }
+        public bool IsHot => BookedTicketCount >= 5;
     }
 
     public class CreateMovieDto

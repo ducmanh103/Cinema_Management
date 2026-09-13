@@ -1,4 +1,4 @@
-@model IEnumerable<CinemaManagement.Models.Movie>
+@model IEnumerable<CinemaManagement.Models.ViewModels.MovieDto>
 @{
     ViewData["Title"] = "Danh sách phim";
     Layout = "_Layout";
@@ -484,7 +484,7 @@
             <div class="col-lg-6 col-md-8">
                 <div class="genres-scroll-wrapper" id="genreFilters">
                     <button class="genre-tag active" data-genre="all">Tất cả thể loại</button>
-                    @foreach (var genre in Model.SelectMany(m => m.MovieGenres).Select(mg => mg.Genre?.GenreName).Distinct().Where(g => g != null).OrderBy(g => g))
+                    @foreach (var genre in Model.SelectMany(m => m.Genres).Distinct().Where(g => !string.IsNullOrEmpty(g)).OrderBy(g => g))
                     {
                         <button class="genre-tag" data-genre="@genre">@genre</button>
                     }
@@ -496,6 +496,7 @@
                 <div class="status-segmented-container">
                     <button class="status-pill active" data-status="Now Showing">Đang chiếu</button>
                     <button class="status-pill" data-status="Coming Soon">Sắp chiếu</button>
+                    <button class="status-pill" data-status="Ended">Ngừng chiếu</button>
                     <button class="status-pill" data-status="all">Tất cả</button>
                 </div>
             </div>
@@ -511,8 +512,8 @@
     <div class="row g-4" id="moviesCatalogGrid">
         @foreach (var movie in Model)
         {
-            var genresStr = movie.MovieGenres.Any() 
-                ? string.Join(",", movie.MovieGenres.Select(mg => mg.Genre?.GenreName)) 
+            var genresStr = movie.Genres.Any() 
+                ? string.Join(",", movie.Genres) 
                 : "Phim điện ảnh";
             
             <div class="col-6 col-md-4 col-lg-3 movie-card-item" 
@@ -539,6 +540,12 @@
                             <span class="rating-badge">
                                 <i class="bi bi-star-fill text-warning"></i> @GetMovieRating(movie.MovieId).ToString("F1")
                             </span>
+                            @if (movie.IsHot)
+                            {
+                                <span class="badge bg-danger shadow-sm text-uppercase fw-bold" style="font-size:0.72rem; letter-spacing:0.5px;">
+                                    <i class="bi bi-fire text-warning me-1"></i> HOT
+                                </span>
+                            }
                             <span class="age-badge @GetAgeBadgeClass(movie.Title)" title="@GetAgeBadgeDesc(movie.Title)">
                                 @GetAgeBadgeText(movie.Title)
                             </span>
@@ -551,17 +558,29 @@
 
                         <!-- Hover Overlay Actions -->
                         <div class="movie-overlay-actions">
-                            @if (movie.Status == "Now Showing")
+                            @if (movie.Status == "Now Showing" && movie.HasShowtimes)
                             {
                                 <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@movie.MovieId" 
                                    class="btn btn-primary-custom w-100 py-2.5 rounded-pill fw-bold text-uppercase shadow">
                                     <i class="bi bi-ticket-perforated-fill me-2"></i> Đặt Vé
                                 </a>
                             }
+                            else if (movie.Status == "Now Showing" && !movie.HasShowtimes)
+                            {
+                                <button class="btn btn-secondary w-100 py-2.5 rounded-pill fw-bold text-uppercase" style="opacity: 0.75; cursor: not-allowed;" title="Chưa có suất chiếu khả dụng" disabled>
+                                    <i class="bi bi-calendar-x me-2"></i> Chưa có lịch
+                                </button>
+                            }
+                            else if (movie.Status == "Coming Soon")
+                            {
+                                <button class="btn btn-secondary w-100 py-2.5 rounded-pill fw-bold text-uppercase" style="opacity: 0.75; cursor: not-allowed;" disabled>
+                                    <i class="bi bi-clock-history me-2"></i> Sắp chiếu
+                                </button>
+                            }
                             else
                             {
-                                <button class="btn btn-secondary w-100 py-2.5 rounded-pill fw-bold text-uppercase" disabled>
-                                    <i class="bi bi-calendar-x me-2"></i> Chưa chiếu
+                                <button class="btn btn-dark w-100 py-2.5 rounded-pill fw-bold text-uppercase" style="opacity: 0.7; cursor: not-allowed; border: 1px solid rgba(255,255,255,0.2);" disabled>
+                                    <i class="bi bi-dash-circle me-2"></i> Ngừng chiếu
                                 </button>
                             }
                             <a asp-action="Details" asp-route-id="@movie.MovieId" 
@@ -574,8 +593,8 @@
                     <!-- Info Area -->
                     <div class="movie-info-block">
                         <div class="card-genre-text">
-                            @(movie.MovieGenres.Any() 
-                                ? string.Join(" • ", movie.MovieGenres.Select(mg => mg.Genre?.GenreName)) 
+                            @(movie.Genres.Any() 
+                                ? string.Join(" • ", movie.Genres) 
                                 : "Phim điện ảnh")
                         </div>
                         <h5 class="card-movie-title" title="@movie.Title">
@@ -587,11 +606,22 @@
                             <span><i class="bi bi-clock me-1"></i> @movie.Duration phút</span>
                             @if (movie.Status == "Now Showing")
                             {
-                                <span class="text-success"><i class="bi bi-play-circle me-1"></i> Đang chiếu</span>
+                                @if (movie.HasShowtimes)
+                                {
+                                    <span class="text-success"><i class="bi bi-play-circle me-1"></i> Đang chiếu</span>
+                                }
+                                else
+                                {
+                                    <span class="text-info"><i class="bi bi-calendar-minus me-1"></i> Chưa có suất</span>
+                                }
+                            }
+                            else if (movie.Status == "Coming Soon")
+                            {
+                                <span class="text-warning"><i class="bi bi-calendar-event me-1"></i> Sắp chiếu</span>
                             }
                             else
                             {
-                                <span class="text-warning"><i class="bi bi-calendar-event me-1"></i> Sắp chiếu</span>
+                                <span class="text-secondary"><i class="bi bi-dash-circle me-1"></i> Ngừng chiếu</span>
                             }
                         </div>
                     </div>
@@ -652,6 +682,8 @@
                     sectionHeader.textContent = "Phim Đang Chiếu";
                 } else if (currentStatus === "Coming Soon") {
                     sectionHeader.textContent = "Phim Sắp Chiếu";
+                } else if (currentStatus === "Ended") {
+                    sectionHeader.textContent = "Phim Đã Ngừng Chiếu";
                 } else {
                     sectionHeader.textContent = "Tất Cả Phim";
                 }

@@ -13,7 +13,8 @@ namespace CinemaManagement.Services
 
         public async Task<List<MovieDto>> GetAllMoviesAsync()
         {
-            return await _context.Movies
+            var now = DateTime.Now;
+            var movies = await _context.Movies
                 .AsNoTracking()
                 .Select(m => new MovieDto
                 {
@@ -25,9 +26,23 @@ namespace CinemaManagement.Services
                     PosterUrl = m.PosterUrl,
                     BannerUrl = m.BannerUrl,
                     Status = m.Status,
-                    Genres = m.MovieGenres.Select(mg => mg.Genre != null ? mg.Genre.GenreName : "").ToList()
+                    Genres = m.MovieGenres.Select(mg => mg.Genre != null ? mg.Genre.GenreName : "").ToList(),
+                    HasShowtimes = m.Showtimes.Any(s => s.StartTime >= now),
+                    BookedTicketCount = m.Showtimes.SelectMany(s => s.Tickets).Count(t => t.Status == "Booked")
                 })
                 .ToListAsync();
+
+            // Sắp xếp ưu tiên:
+            // 1. Phim đang chiếu (Now Showing) -> Sắp chiếu (Coming Soon) -> Ngừng chiếu (Ended)
+            // 2. Phim có suất chiếu khả dụng trong tương lai lên đầu
+            // 3. Phim hot (có nhiều vé đặt nhất)
+            // 4. Ngày phát hành / ID mới nhất
+            return movies
+                .OrderBy(m => m.Status == "Now Showing" ? 0 : (m.Status == "Coming Soon" ? 1 : 2))
+                .ThenByDescending(m => m.HasShowtimes)
+                .ThenByDescending(m => m.BookedTicketCount)
+                .ThenByDescending(m => m.MovieId)
+                .ToList();
         }
 
         public async Task<MovieDto?> GetMovieByIdAsync(int id)

@@ -1,27 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CinemaManagement.Data;
+using CinemaManagement.Services;
 
 namespace CinemaManagement.Controllers
 {
     public class MoviesController : Controller
     {
         private readonly CinemaDbContext _context;
+        private readonly IMovieService _movieService;
 
-        public MoviesController(CinemaDbContext context)
+        public MoviesController(CinemaDbContext context, IMovieService movieService)
         {
             _context = context;
+            _movieService = movieService;
         }
 
         // GET: Movies (public listing)
         public async Task<IActionResult> Index()
         {
-            var movies = await _context.Movies
-                .AsNoTracking()
-                .Include(m => m.MovieGenres)
-                    .ThenInclude(mg => mg.Genre)
-                .ToListAsync();
-
+            var movies = await _movieService.GetAllMoviesAsync();
             return View(movies);
         }
 
