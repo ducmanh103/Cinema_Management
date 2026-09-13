@@ -98,11 +98,11 @@ namespace CinemaManagement.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ==================== Unique: ShowtimeId + SeatId ====================
-            // Filtered Unique Index cho PostgreSQL: chỉ áp dụng khi Status = 'Booked'
+            // Filtered Unique Index cho PostgreSQL: chỉ áp dụng khi Status = 'Booked' hoặc 'Pending'
             modelBuilder.Entity<Ticket>()
                 .HasIndex(t => new { t.ShowtimeId, t.SeatId })
                 .IsUnique()
-                .HasFilter("\"Status\" = 'Booked'")
+                .HasFilter("\"Status\" IN ('Booked', 'Pending')")
                 .HasDatabaseName("UQ_Ticket_Showtime_Seat");
 
             // ==================== Payment → Ticket (1-1) ====================

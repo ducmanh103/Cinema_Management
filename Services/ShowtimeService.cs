@@ -13,9 +13,10 @@ namespace CinemaManagement.Services
 
         public async Task<List<ShowtimeDto>> GetShowtimesByMovieAsync(int movieId)
         {
+            var now = DateTime.Now;
             return await _context.Showtimes
                 .AsNoTracking()
-                .Where(s => s.MovieId == movieId && s.StartTime >= DateTime.Now)
+                .Where(s => s.MovieId == movieId && s.StartTime >= now)
                 .Select(s => new ShowtimeDto
                 {
                     ShowtimeId   = s.ShowtimeId,
@@ -29,16 +30,17 @@ namespace CinemaManagement.Services
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
-                                   - s.Tickets.Count(t => t.Status == "Booked")
+                                   - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
                 })
                 .ToListAsync();
         }
 
         public async Task<List<ShowtimeDto>> GetShowtimesByMovieAndFiltersAsync(int movieId, DateTime? date, int? theaterId)
         {
+            var now = DateTime.Now;
             var query = _context.Showtimes
                 .AsNoTracking()
-                .Where(s => s.MovieId == movieId && s.StartTime >= DateTime.Now);
+                .Where(s => s.MovieId == movieId && s.StartTime >= now);
 
             if (date.HasValue)
             {
@@ -65,13 +67,14 @@ namespace CinemaManagement.Services
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
-                                   - s.Tickets.Count(t => t.Status == "Booked")
+                                   - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
                 })
                 .ToListAsync();
         }
 
         public async Task<List<ShowtimeDto>> GetShowtimesByDateAsync(DateTime date)
         {
+            var now = DateTime.Now;
             var start = date.Date;
             var end = start.AddDays(1);
             return await _context.Showtimes
@@ -90,16 +93,17 @@ namespace CinemaManagement.Services
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
-                                   - s.Tickets.Count(t => t.Status == "Booked")
+                                   - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
                 })
                 .ToListAsync();
         }
 
         public async Task<List<ShowtimeDto>> GetShowtimesByTheaterAsync(int theaterId)
         {
+            var now = DateTime.Now;
             return await _context.Showtimes
                 .AsNoTracking()
-                .Where(s => s.Room.TheaterId == theaterId && s.StartTime >= DateTime.Now)
+                .Where(s => s.Room.TheaterId == theaterId && s.StartTime >= now)
                 .OrderBy(s => s.StartTime)
                 .Select(s => new ShowtimeDto
                 {
@@ -114,13 +118,14 @@ namespace CinemaManagement.Services
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
-                                   - s.Tickets.Count(t => t.Status == "Booked")
+                                   - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
                 })
                 .ToListAsync();
         }
 
         public async Task<List<ShowtimeDto>> GetShowtimesByDateAndTheaterAsync(DateTime date, int? theaterId)
         {
+            var now = DateTime.Now;
             var startOfDay = date.Date;
             var endOfDay = startOfDay.AddDays(1);
             var query = _context.Showtimes
@@ -145,13 +150,14 @@ namespace CinemaManagement.Services
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
-                                   - s.Tickets.Count(t => t.Status == "Booked")
+                                   - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
                 })
                 .ToListAsync();
         }
 
         public async Task<ShowtimeDto?> GetShowtimeByIdAsync(int id)
         {
+            var now = DateTime.Now;
             return await _context.Showtimes
                 .AsNoTracking()
                 .Where(s => s.ShowtimeId == id)
@@ -168,14 +174,14 @@ namespace CinemaManagement.Services
                     RoomName     = s.Room.RoomName,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
-                                   - s.Tickets.Count(t => t.Status == "Booked")
+                                   - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
                 })
                 .FirstOrDefaultAsync();
         }
 
         public async Task<List<SeatStatusDto>> GetSeatStatusAsync(int showtimeId)
         {
-            // Lấy RoomId và danh sách SeatId đã đặt qua 2 truy vấn nhỏ thay vì tải cả entity
+            // Lấy RoomId và danh sách SeatId đã đặt hoặc đang giữ chỗ qua truy vấn
             var roomId = await _context.Showtimes
                 .AsNoTracking()
                 .Where(s => s.ShowtimeId == showtimeId)
@@ -184,9 +190,10 @@ namespace CinemaManagement.Services
 
             if (roomId == 0) return new List<SeatStatusDto>();
 
+            var now = DateTime.Now;
             var bookedSeatIds = (await _context.Tickets
                 .AsNoTracking()
-                .Where(t => t.ShowtimeId == showtimeId && t.Status == "Booked")
+                .Where(t => t.ShowtimeId == showtimeId && (t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now))))
                 .Select(t => t.SeatId)
                 .ToListAsync()).ToHashSet();
 
@@ -223,8 +230,9 @@ namespace CinemaManagement.Services
             var showtime = await _context.Showtimes.FindAsync(id);
             if (showtime == null) return false;
 
-            // Kiểm tra có vé đã đặt trước khi xóa
-            bool hasTickets = await _context.Tickets.AnyAsync(t => t.ShowtimeId == id && t.Status == "Booked");
+            // Kiểm tra có vé đã đặt hoặc đang thanh toán trước khi xóa
+            var now = DateTime.Now;
+            bool hasTickets = await _context.Tickets.AnyAsync(t => t.ShowtimeId == id && (t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now))));
             if (hasTickets)
                 throw new InvalidOperationException("Không thể xoá suất chiếu có vé đã đặt.");
 

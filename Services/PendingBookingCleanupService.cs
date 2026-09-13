@@ -44,12 +44,12 @@ namespace CinemaManagement.Services
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
 
-            var cutoff = DateTime.Now.Subtract(_pendingTimeout);
+            var now = DateTime.Now;
 
-            // Tìm các payment Pending có ticket được đặt quá hạn
+            // Tìm các payment Pending hoặc ticket Pending đã quá hạn HeldUntil
             var expiredPayments = await context.Payments
                 .Include(p => p.Ticket)
-                .Where(p => p.Status == "Pending" && p.Ticket != null && p.Ticket.BookingTime < cutoff)
+                .Where(p => p.Status == "Pending" && p.Ticket != null && (p.Ticket.HeldUntil != null ? p.Ticket.HeldUntil < now : p.Ticket.BookingTime < now.Subtract(_pendingTimeout)))
                 .ToListAsync();
 
             if (expiredPayments.Count == 0) return;
@@ -59,7 +59,8 @@ namespace CinemaManagement.Services
                 payment.Status = "Failed";
                 if (payment.Ticket != null)
                 {
-                    payment.Ticket.Status = "Cancelled";
+                    payment.Ticket.Status = "Expired";
+                    payment.Ticket.HeldUntil = null;
                 }
             }
 

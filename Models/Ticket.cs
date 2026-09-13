@@ -10,7 +10,8 @@ namespace CinemaManagement.Models
         public int TicketId { get; set; }
 
         public DateTime BookingTime { get; set; } = DateTime.Now;
-        public string Status { get; set; } = "Booked"; // Booked, Cancelled
+        public DateTime? HeldUntil { get; set; }
+        public string Status { get; set; } = "Booked"; // Pending, Booked, Cancelled, Expired
 
         [ForeignKey("Showtime")]
         public int ShowtimeId { get; set; }

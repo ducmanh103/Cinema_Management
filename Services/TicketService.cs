@@ -160,10 +160,10 @@ namespace CinemaManagement.Services
                 bool alreadyBooked = await _context.Tickets
                     .AnyAsync(t => t.ShowtimeId == dto.ShowtimeId
                                 && t.SeatId == dto.SeatId
-                                && t.Status == "Booked");
+                                && (t.Status == "Booked" || t.Status == "Pending"));
 
                 if (alreadyBooked)
-                    throw new InvalidOperationException("Gh\u1ebf n\u00e0y \u0111\u00e3 \u0111\u01b0\u1ee3c \u0111\u1eb7t. Vui l\u00f2ng ch\u1ecdn gh\u1ebf kh\u00e1c.");
+                    throw new InvalidOperationException("Ghế này đang được người khác chọn hoặc đã đặt. Vui lòng chọn ghế khác.");
 
                 var ticket = new Ticket
                 {
@@ -171,7 +171,8 @@ namespace CinemaManagement.Services
                     SeatId = dto.SeatId,
                     UserId = userId,
                     BookingTime = DateTime.Now,
-                    Status = "Booked" // khoá ghế nhờ unique index
+                    HeldUntil = DateTime.Now.AddMinutes(15), // Giữ ghế trong 15 phút
+                    Status = "Pending" // Khóa ghế ngay nhờ unique index IN ('Booked', 'Pending')
                 };
                 _context.Tickets.Add(ticket);
                 await _context.SaveChangesAsync();
@@ -233,6 +234,11 @@ namespace CinemaManagement.Services
                 payment.Status = "Completed";
                 payment.TransactionId = transactionId;
                 payment.PaidAt = DateTime.Now;
+                if (payment.Ticket != null)
+                {
+                    payment.Ticket.Status = "Booked";
+                    payment.Ticket.HeldUntil = null;
+                }
             }
             else
             {
