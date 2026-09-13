@@ -85,103 +85,179 @@
         box-shadow: 0 0 10px rgba(229, 9, 20, 0.6);
     }
 
-    /* Filter Bar Glassmorphism Styling */
+    /* ============================================================
+       PREMIUM FILTER BAR SYSTEM (2-TIER CLEAN ARCHITECTURE)
+       ============================================================ */
     .filter-section {
         position: relative;
         z-index: 15;
         margin-top: -3.5rem;
     }
     .filter-bar-glass {
-        background: rgba(20, 20, 20, 0.65);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 24px;
-        padding: 1.5rem;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.05);
+        background: rgba(18, 18, 22, 0.75);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 26px;
+        padding: 1.5rem 1.75rem;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
     }
-    .genre-tag {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        color: #b5b5b5;
-        padding: 8px 20px;
-        border-radius: 50px;
-        font-size: 0.88rem;
-        font-weight: 500;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: var(--transition-base);
-        user-select: none;
+
+    /* Top Row: Search (Left) & Status Segmented Switcher (Right) */
+    .filter-top-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        flex-wrap: wrap;
     }
-    .genre-tag:hover {
-        background: rgba(255, 255, 255, 0.08);
-        color: #fff;
-        border-color: rgba(255, 255, 255, 0.15);
+    .search-input-wrapper {
+        position: relative;
+        flex: 1;
+        min-width: 280px;
+        max-width: 460px;
     }
-    .genre-tag.active {
-        background: var(--primary);
-        border-color: var(--primary);
-        color: #fff;
-        box-shadow: 0 0 16px rgba(229, 9, 20, 0.45);
-        font-weight: 600;
+    .search-input-wrapper .search-icon {
+        position: absolute;
+        top: 50%;
+        left: 1.25rem;
+        transform: translateY(-50%);
+        color: #8a8a93;
+        font-size: 1.1rem;
+        pointer-events: none;
+        transition: color 0.25s ease;
     }
-    
-    /* Segmented status selector */
+    .search-input-wrapper input {
+        width: 100%;
+        border-radius: 50px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        padding: 0.65rem 1.25rem 0.65rem 3rem !important;
+        height: 48px;
+        font-size: 0.95rem;
+        color: #fff !important;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    .search-input-wrapper input::placeholder {
+        color: #71717a;
+    }
+    .search-input-wrapper input:focus {
+        background: rgba(255, 255, 255, 0.09) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.2) !important;
+    }
+    .search-input-wrapper:focus-within .search-icon {
+        color: var(--primary);
+    }
+
+    /* Status Segmented Control (Right side) */
     .status-segmented-wrapper {
+        display: flex;
+        align-items: center;
         overflow-x: auto;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
-        display: flex;
-        justify-content: flex-end;
+        cursor: grab;
     }
     .status-segmented-wrapper::-webkit-scrollbar {
         display: none;
     }
     .status-segmented-container {
         display: inline-flex;
-        background: rgba(10, 10, 10, 0.8);
+        background: rgba(0, 0, 0, 0.55);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 50px;
-        padding: 4px;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
-        gap: 4px;
-        flex-shrink: 0;
-        white-space: nowrap;
+        padding: 5px;
+        gap: 6px;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6);
     }
     .status-pill {
-        padding: 8px 18px;
+        padding: 8px 22px;
         border: none;
         background: transparent;
-        color: #a0a0a0;
+        color: #a1a1aa;
         font-size: 0.88rem;
         font-weight: 600;
         border-radius: 50px;
         cursor: pointer;
-        transition: var(--transition-base);
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         text-align: center;
         white-space: nowrap;
         user-select: none;
-        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
     .status-pill:hover {
         color: #fff;
+        background: rgba(255, 255, 255, 0.05);
     }
     .status-pill.active {
         background: var(--primary);
         color: #fff;
-        box-shadow: 0 4px 12px rgba(229, 9, 20, 0.35);
+        box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
     }
 
-    /* Scrollbars for genres */
+    /* Bottom Row: Genre Horizontal Scroller with Label */
+    .filter-genres-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        padding-top: 1rem;
+    }
+    .genre-row-label {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #71717a;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
     .genres-scroll-wrapper {
         display: flex;
         gap: 8px;
         overflow-x: auto;
-        padding-bottom: 4px;
-        scrollbar-width: none; /* Firefox */
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        padding: 4px 2px;
+        cursor: grab;
+        flex: 1;
     }
     .genres-scroll-wrapper::-webkit-scrollbar {
-        display: none; /* Chrome, Safari, Opera */
+        display: none;
+    }
+    .genre-tag {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #a1a1aa;
+        padding: 7px 18px;
+        border-radius: 50px;
+        font-size: 0.86rem;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        user-select: none;
+        flex-shrink: 0;
+    }
+    .genre-tag:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    .genre-tag.active {
+        background: rgba(229, 9, 20, 0.18);
+        border-color: var(--primary);
+        color: #ff5252;
+        box-shadow: 0 0 14px rgba(229, 9, 20, 0.3);
+        font-weight: 600;
     }
 
     /* Movie Cards System */
@@ -482,38 +558,42 @@
 <!-- FILTER BAR SECTION -->
 <div class="container filter-section mb-5">
     <div class="filter-bar-glass">
-        <div class="row g-4 align-items-center">
-            <!-- Search field -->
-            <div class="col-lg-3 col-md-4">
-                <div class="search-input-wrapper">
-                    <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted">
-                        <i class="bi bi-search fs-5"></i>
-                    </span>
-                    <input type="text" id="movieSearch" class="form-control" placeholder="Tìm tên phim, thể loại..." />
-                </div>
+        <!-- Top Row: Search Input (Left) & Status Switches (Right) -->
+        <div class="filter-top-row">
+            <div class="search-input-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" id="movieSearch" class="form-control" placeholder="Tìm tên phim, thể loại, đạo diễn..." />
             </div>
 
-            <!-- Genre list scrolling -->
-            <div class="col-lg-6 col-md-8">
-                <div class="genres-scroll-wrapper" id="genreFilters">
-                    <button class="genre-tag active" data-genre="all">Tất cả thể loại</button>
-                    @foreach (var genre in Model.SelectMany(m => m.Genres).Distinct().Where(g => !string.IsNullOrEmpty(g)).OrderBy(g => g))
-                    {
-                        <button class="genre-tag" data-genre="@genre">@genre</button>
-                    }
+            <div class="status-segmented-wrapper" id="statusFilters">
+                <div class="status-segmented-container">
+                    <button class="status-pill active" data-status="Now Showing">
+                        <i class="bi bi-play-circle-fill"></i> Đang chiếu
+                    </button>
+                    <button class="status-pill" data-status="Coming Soon">
+                        <i class="bi bi-calendar-event"></i> Sắp chiếu
+                    </button>
+                    <button class="status-pill" data-status="Ended">
+                        <i class="bi bi-dash-circle"></i> Ngừng chiếu
+                    </button>
+                    <button class="status-pill" data-status="all">
+                        <i class="bi bi-grid-fill"></i> Tất cả
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Status switches -->
-            <div class="col-lg-4 col-md-12 text-lg-end">
-                <div class="status-segmented-wrapper" id="statusFilters">
-                    <div class="status-segmented-container">
-                        <button class="status-pill active" data-status="Now Showing">Đang chiếu</button>
-                        <button class="status-pill" data-status="Coming Soon">Sắp chiếu</button>
-                        <button class="status-pill" data-status="Ended">Ngừng chiếu</button>
-                        <button class="status-pill" data-status="all">Tất cả</button>
-                    </div>
-                </div>
+        <!-- Bottom Row: Genre Filters with Horizontal Scroll & Drag -->
+        <div class="filter-genres-row">
+            <span class="genre-row-label">
+                <i class="bi bi-tags-fill"></i> Thể loại:
+            </span>
+            <div class="genres-scroll-wrapper" id="genreFilters">
+                <button class="genre-tag active" data-genre="all">Tất cả thể loại</button>
+                @foreach (var genre in Model.SelectMany(m => m.Genres).Distinct().Where(g => !string.IsNullOrEmpty(g)).OrderBy(g => g))
+                {
+                    <button class="genre-tag" data-genre="@genre">@genre</button>
+                }
             </div>
         </div>
     </div>
