@@ -127,18 +127,29 @@
     }
     
     /* Segmented status selector */
+    .status-segmented-wrapper {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        display: flex;
+        justify-content: flex-end;
+    }
+    .status-segmented-wrapper::-webkit-scrollbar {
+        display: none;
+    }
     .status-segmented-container {
         display: inline-flex;
         background: rgba(10, 10, 10, 0.8);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 50px;
         padding: 4px;
-        width: 100%;
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        gap: 4px;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     .status-pill {
-        flex: 1;
-        padding: 8px 16px;
+        padding: 8px 18px;
         border: none;
         background: transparent;
         color: #a0a0a0;
@@ -149,6 +160,8 @@
         transition: var(--transition-base);
         text-align: center;
         white-space: nowrap;
+        user-select: none;
+        flex-shrink: 0;
     }
     .status-pill:hover {
         color: #fff;
@@ -492,12 +505,14 @@
             </div>
 
             <!-- Status switches -->
-            <div class="col-lg-3 col-md-12 text-lg-end">
-                <div class="status-segmented-container">
-                    <button class="status-pill active" data-status="Now Showing">Đang chiếu</button>
-                    <button class="status-pill" data-status="Coming Soon">Sắp chiếu</button>
-                    <button class="status-pill" data-status="Ended">Ngừng chiếu</button>
-                    <button class="status-pill" data-status="all">Tất cả</button>
+            <div class="col-lg-4 col-md-12 text-lg-end">
+                <div class="status-segmented-wrapper" id="statusFilters">
+                    <div class="status-segmented-container">
+                        <button class="status-pill active" data-status="Now Showing">Đang chiếu</button>
+                        <button class="status-pill" data-status="Coming Soon">Sắp chiếu</button>
+                        <button class="status-pill" data-status="Ended">Ngừng chiếu</button>
+                        <button class="status-pill" data-status="all">Tất cả</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -803,6 +818,7 @@
             }
 
             enableDragScroll("genreFilters");
+            enableDragScroll("statusFilters");
         });
     </script>
 }
