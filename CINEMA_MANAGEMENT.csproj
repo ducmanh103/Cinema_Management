@@ -1,10 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>CinemaManagement</RootNamespace>
+    <UserSecretsId>c2f9d3e7-8f37-4e32-b292-06a05a41848f</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

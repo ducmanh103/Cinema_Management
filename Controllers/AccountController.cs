@@ -1,19 +1,27 @@
 using CinemaManagement.Data;
 using CinemaManagement.Models;
 using CinemaManagement.Models.ViewModels;
+using CinemaManagement.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace CinemaManagement.Controllers
 {
+    [EnableRateLimiting("AuthLimit")]
     public class AccountController : Controller
     {
         private readonly CinemaDbContext _context;
+        private readonly ILoginAttemptService _loginAttemptService;
 
-        public AccountController(CinemaDbContext context) => _context = context;
+        public AccountController(CinemaDbContext context, ILoginAttemptService loginAttemptService)
+        {
+            _context = context;
+            _loginAttemptService = loginAttemptService;
+        }
 
         // GET: /Account/Login
         [HttpGet]
@@ -33,6 +41,16 @@ namespace CinemaManagement.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var lockoutKey = $"user_{model.Username}_{ip}";
+
+            if (_loginAttemptService.IsLockedOut(lockoutKey, out var remainingTime))
+            {
+                var minutes = Math.Max(1, (int)Math.Ceiling(remainingTime.TotalMinutes));
+                ModelState.AddModelError("", $"Tài khoản tạm thời bị khóa do đăng nhập sai nhiều lần. Vui lòng thử lại sau {minutes} phút.");
+                return View(model);
+            }
+
             var user = await _context.Users
                 .AsNoTracking()
                 .Include(u => u.Role)
@@ -40,9 +58,13 @@ namespace CinemaManagement.Controllers
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
             {
+                _loginAttemptService.RecordFailedAttempt(lockoutKey);
                 ModelState.AddModelError("", "Tên đăng nhập hoặc mật khẩu không đúng.");
                 return View(model);
             }
+
+            // Đăng nhập đúng -> Xóa lịch sử sai
+            _loginAttemptService.ResetAttempts(lockoutKey);
 
             // Tạo claims
             var claims = new List<Claim>

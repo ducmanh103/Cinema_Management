@@ -1,19 +1,27 @@
 using CinemaManagement.Data;
 using CinemaManagement.Models.ViewModels;
+using CinemaManagement.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace CinemaManagement.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [EnableRateLimiting("AuthLimit")]
     public class AccountController : Controller
     {
         private readonly CinemaDbContext _context;
+        private readonly ILoginAttemptService _loginAttemptService;
 
-        public AccountController(CinemaDbContext context) => _context = context;
+        public AccountController(CinemaDbContext context, ILoginAttemptService loginAttemptService)
+        {
+            _context = context;
+            _loginAttemptService = loginAttemptService;
+        }
 
         // GET: /Admin/Account/Login
         [HttpGet]
@@ -34,6 +42,16 @@ namespace CinemaManagement.Areas.Admin.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var lockoutKey = $"admin_{model.Username}_{ip}";
+
+            if (_loginAttemptService.IsLockedOut(lockoutKey, out var remainingTime))
+            {
+                var minutes = Math.Max(1, (int)Math.Ceiling(remainingTime.TotalMinutes));
+                ModelState.AddModelError("", $"Khu vực quản trị bị tạm khóa do nhập sai nhiều lần. Vui lòng thử lại sau {minutes} phút.");
+                return View(model);
+            }
+
             var user = await _context.Users
                 .AsNoTracking()
                 .Include(u => u.Role)
@@ -41,6 +59,7 @@ namespace CinemaManagement.Areas.Admin.Controllers
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
             {
+                _loginAttemptService.RecordFailedAttempt(lockoutKey);
                 ModelState.AddModelError("", "Tên đăng nhập hoặc mật khẩu không đúng.");
                 return View(model);
             }
@@ -48,9 +67,13 @@ namespace CinemaManagement.Areas.Admin.Controllers
             // Chỉ cho phép Admin hoặc Staff đăng nhập vào trang Admin
             if (user.Role.RoleName != "Admin" && user.Role.RoleName != "Staff")
             {
+                _loginAttemptService.RecordFailedAttempt(lockoutKey);
                 ModelState.AddModelError("", "Bạn không có quyền truy cập trang quản trị.");
                 return View(model);
             }
+
+            // Đăng nhập thành công -> Xóa lockout
+            _loginAttemptService.ResetAttempts(lockoutKey);
 
             var claims = new List<Claim>
             {

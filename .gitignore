@@ -43,5 +43,13 @@ _ReSharper*/
 *.[Re]sharper
 *.DotSettings.user
 
+# App Settings Secrets
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
+appsettings.local.json
+secrets.json
+
 # Mac OS X
 .DS_Store
+

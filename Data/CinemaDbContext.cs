@@ -117,6 +117,24 @@ namespace CinemaManagement.Data
                 .HasForeignKey<Payment>(p => p.TicketId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // ==================== Performance Indexes ====================
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique()
+                .HasDatabaseName("IX_User_Username");
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .HasDatabaseName("IX_User_Email");
+
+            modelBuilder.Entity<Showtime>()
+                .HasIndex(s => new { s.MovieId, s.StartTime })
+                .HasDatabaseName("IX_Showtime_MovieId_StartTime");
+
+            modelBuilder.Entity<Ticket>()
+                .HasIndex(t => new { t.UserId, t.BookingTime })
+                .HasDatabaseName("IX_Ticket_UserId_BookingTime");
+
             // ==================== Decimal precision ====================
             modelBuilder.Entity<Showtime>()
                 .Property(s => s.Price)

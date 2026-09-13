@@ -3,12 +3,14 @@ using CinemaManagement.Models.ViewModels;
 using CinemaManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace CinemaManagement.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("BookingLimit")]
     public class BookingController : Controller
     {
         private readonly IShowtimeService _showtimeService;

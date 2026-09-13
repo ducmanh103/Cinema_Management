@@ -2,11 +2,13 @@ using CinemaManagement.Models.ViewModels;
 using CinemaManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace CinemaManagement.Controllers
 {
     [Authorize]
+    [EnableRateLimiting("BookingLimit")]
     public class PaymentController : Controller
     {
         private readonly IVnPayService _vnPayService;

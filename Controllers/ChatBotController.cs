@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using CinemaManagement.Data;
 using System.Text.Json;
@@ -14,6 +15,7 @@ namespace CinemaManagement.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [EnableRateLimiting("ChatBotLimit")]
     public class ChatBotController : ControllerBase
     {
         private readonly CinemaDbContext _dbContext;
@@ -390,7 +392,7 @@ namespace CinemaManagement.Controllers
 
         private async Task<string> CallGeminiApiAsync(string message, List<ChatMessageDto> history, CinemaContextData context, string apiKey, string userFullName, string userTicketsContext, bool isLoggedIn)
         {
-            var modelName = _configuration["Gemini:Model"] ?? "gemini-3.5-flash";
+            var modelName = _configuration["Gemini:Model"] ?? "gemini-2.5-flash";
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/{modelName}:generateContent?key={apiKey}";
 
             // Xây dựng System Instruction chứa ngữ cảnh rạp phim và người dùng
