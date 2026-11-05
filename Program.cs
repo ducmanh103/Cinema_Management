@@ -1,14 +1,36 @@
 using CinemaManagement.Data;
 using CinemaManagement.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Threading.RateLimiting;
+
+// ================================
+// Serilog Bootstrap Logger
+// ================================
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/cinemahub-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        fileSizeLimitBytes: 50_000_000)
+    .CreateLogger();
+
+try
+{
+Log.Information("🎬 CinemaHub starting up...");
 
 // Hỗ trợ DateTime Local / Unspecified trong PostgreSQL Npgsql (tránh lỗi DateTime.Kind mismatch)
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
 
 // ================================
 // 1. MVC + API + Swagger
@@ -181,11 +203,25 @@ builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddHostedService<PendingBookingCleanupService>();
 
 // ================================
+// 7. Health Checks
+// ================================
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!,
+               name: "postgresql",
+               tags: new[] { "db", "ready" });
+
+// ================================
 var app = builder.Build();
 // ================================
 
 if (!app.Environment.IsDevelopment())
 {
+    // ForwardedHeaders phải đặt trước tất cả middleware khác khi chạy sau reverse proxy (Nginx)
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    });
+
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
@@ -195,6 +231,9 @@ else
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Cinema API v1"));
 }
+
+// Serilog HTTP Request Logging (ghi log mọi request với status code, duration)
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -214,8 +253,27 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Health Check Endpoints
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => false // Liveness: chỉ check app alive
+});
+app.MapHealthChecks("/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready") // Readiness: check DB connection
+});
+
 // Gọi Seed sau khi build
 DbInitializer.Seed(app);
 
 app.Run();
 
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "❌ CinemaHub terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

@@ -53,3 +53,12 @@ secrets.json
 # Mac OS X
 .DS_Store
 
+# Logs
+logs/
+
+# Production Environment
+.env.prod
+.env
+
+# Nginx SSL Certificates
+nginx/certs/

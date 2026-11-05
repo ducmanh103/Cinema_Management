@@ -1,0 +1,27 @@
+**/.git
+**/.vs
+**/.idea
+**/bin
+**/obj
+**/node_modules
+**/*.user
+**/*.suo
+**/*.userosscache
+**/*.sln.docstates
+
+# Documents
+**/BaoCao_DanhGia_BaoMat_CinemaManagement.docx
+**/*.md
+
+# Docker files (avoid recursive copy)
+docker-compose*.yml
+Dockerfile
+
+# Environment files
+.env
+.env.*
+
+# IDE & OS
+.DS_Store
+**/_ReSharper*/
+**/*.DotSettings.user
