@@ -10,7 +10,10 @@ services:
     image: postgres:16-alpine
     container_name: cinemahub_postgres
     restart: unless-stopped
+    env_file:
+      - .env.prod
     environment:
+      TZ: Asia/Ho_Chi_Minh
       POSTGRES_DB: ${DB_NAME:-CinemaManagement}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
@@ -45,6 +48,7 @@ services:
     env_file:
       - .env.prod
     environment:
+      - TZ=Asia/Ho_Chi_Minh
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
       - ConnectionStrings__DefaultConnection=Host=postgres_db;Port=5432;Database=${DB_NAME:-CinemaManagement};Username=${DB_USER:-postgres};Password=${DB_PASSWORD}

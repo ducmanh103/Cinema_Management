@@ -80,20 +80,37 @@ jobs:
     needs: docker-publish
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: production
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
 
     steps:
+      - name: Checkout code
+        if: env.VPS_HOST != ''
+        uses: actions/checkout@v4
+
+      - name: Copy compose, nginx & DB scripts to VPS
+        if: env.VPS_HOST != ''
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "docker-compose.prod.yml,nginx/*,DB/CinemaManagement_PostgreSQL.sql"
+          target: "/opt/cinemahub"
+
       - name: Deploy via SSH
-        if: ${{ secrets.VPS_HOST != '' }}
+        if: env.VPS_HOST != ''
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/cinemahub
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose --env-file .env.prod -f docker-compose.prod.yml pull
+            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans
             docker image prune -f
             echo "✅ Deployed $(date)"
