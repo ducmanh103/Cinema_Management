@@ -24,10 +24,10 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore "CINEMA_MANAGEMENT.csproj"
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build "CINEMA_MANAGEMENT.csproj" --no-restore --configuration Release
 
       # Nếu có Unit Test project thì bật dòng dưới
       # - name: Test
@@ -84,6 +84,7 @@ jobs:
 
     steps:
       - name: Deploy via SSH
+        if: ${{ secrets.VPS_HOST != '' }}
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
