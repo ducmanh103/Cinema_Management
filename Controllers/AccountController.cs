@@ -337,18 +337,8 @@ namespace CinemaManagement.Controllers
                         new { email = user.Email, token = rawToken },
                         Request.Scheme) ?? string.Empty;
 
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            await _emailService.SendPasswordResetEmailAsync(
-                                user.Email!, user.FullName ?? user.Username, resetUrl);
-                        }
-                        catch
-                        {
-                            // Đã được log bên trong EmailService
-                        }
-                    });
+                    await _emailService.SendPasswordResetEmailAsync(
+                        user.Email!, user.FullName ?? user.Username, resetUrl);
                 }
             }
 
