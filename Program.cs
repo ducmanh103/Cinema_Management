@@ -360,6 +360,19 @@ try
     forwardedOptions.KnownProxies.Clear();
     app.UseForwardedHeaders(forwardedOptions);
 
+    // Đảm bảo khi truy cập qua tên miền (ví dụ cinemahubvn.io.vn đi qua CDN về cổng 80), Scheme luôn là https cho Google OAuth & Cookie
+    app.Use((context, next) =>
+    {
+        var host = context.Request.Host.Host;
+        if (!string.IsNullOrEmpty(host)
+            && !host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+            && !IPAddress.TryParse(host, out _))
+        {
+            context.Request.Scheme = "https";
+        }
+        return next();
+    });
+
     if (!app.Environment.IsDevelopment())
     {
         app.UseExceptionHandler("/Home/Error");

@@ -109,6 +109,12 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /opt/cinemahub
+            if [ -n "${{ secrets.VPS_ENV_UPDATE_B64 }}" ]; then
+              sed -i '/^ADMIN_INITIAL_PASSWORD=/d; /^GOOGLE_CLIENT_ID=/d; /^GOOGLE_CLIENT_SECRET=/d; /^SMTP_/d; /^TELEGRAM_/d' .env.prod
+              echo "" >> .env.prod
+              echo "${{ secrets.VPS_ENV_UPDATE_B64 }}" | base64 -d >> .env.prod
+              sed -i '/^[[:space:]]*$/N;/^\n$/D' .env.prod
+            fi
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker compose --env-file .env.prod -f docker-compose.prod.yml pull
             docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans
