@@ -52,15 +52,13 @@ try
         });
     });
 
-    // Hardening Antiforgery Cookie (xử lý cảnh báo ZAP CWE-614)
+    // Hardening Antiforgery Cookie (tự động bật cờ Secure khi truy cập qua HTTPS, vẫn hoạt động qua HTTP IP VPS)
     builder.Services.AddAntiforgery(options =>
     {
         options.Cookie.Name = ".CinemaHub.Antiforgery";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-            ? CookieSecurePolicy.SameAsRequest
-            : CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.HeaderName = "RequestVerificationToken";
     });
 
@@ -76,9 +74,7 @@ try
         options.Cookie.HttpOnly = true;
         options.Cookie.IsEssential = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-            ? CookieSecurePolicy.SameAsRequest
-            : CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     });
 
     // ================================
@@ -209,8 +205,10 @@ try
     builder.Services.AddDbContextPool<CinemaDbContext>(options =>
         options.UseNpgsql(rawConnStr), poolSize: 64);
 
+    var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "dp_keys");
+    Directory.CreateDirectory(keysFolder);
     builder.Services.AddDataProtection()
-        .PersistKeysToDbContext<CinemaDbContext>()
+        .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
         .SetApplicationName("CinemaHub");
 
     // ================================
@@ -226,9 +224,7 @@ try
         options.Cookie.Name = ".CinemaHub.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-            ? CookieSecurePolicy.SameAsRequest
-            : CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/AccessDenied";
@@ -297,9 +293,7 @@ try
         options.Cookie.Name = ".CinemaHub.External";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-            ? CookieSecurePolicy.SameAsRequest
-            : CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
     });
 
@@ -349,39 +343,18 @@ try
     var app = builder.Build();
     // ================================
 
-    // Cấu hình ForwardedHeaders tin cậy mạng nội bộ Docker (172.16.0.0/12, 10.0.0.0/8, 192.168.0.0/16) để lấy đúng IP thật sau Nginx
+    // Cấu hình ForwardedHeaders tin cậy Reverse Proxy Nginx trong mạng Docker
     var forwardedOptions = new ForwardedHeadersOptions
     {
         ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
     };
-    forwardedOptions.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
-    forwardedOptions.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse("172.16.0.0"), 12));
-    forwardedOptions.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse("192.168.0.0"), 16));
+    forwardedOptions.KnownNetworks.Clear();
+    forwardedOptions.KnownProxies.Clear();
     app.UseForwardedHeaders(forwardedOptions);
 
     if (!app.Environment.IsDevelopment())
     {
-        app.UseExceptionHandler(errorApp =>
-        {
-            errorApp.Run(async context =>
-            {
-                var exFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-                if (exFeature?.Error != null)
-                {
-                    var alertSvc = context.RequestServices.GetService<ISecurityAlertService>();
-                    alertSvc?.EnqueueAlert(new SecurityAlert(
-                        SecurityAlertLevel.Critical,
-                        "UNHANDLED_SERVER_EXCEPTION",
-                        "Lỗi hệ thống 500 chưa xử lý (Unhandled Exception)",
-                        $"{exFeature.Error.GetType().Name}: {exFeature.Error.Message}",
-                        IpAddress: context.Connection.RemoteIpAddress?.ToString(),
-                        Username: context.User.Identity?.Name,
-                        Path: exFeature.Path));
-                }
-                context.Response.Redirect("/Home/Error");
-                await Task.CompletedTask;
-            });
-        });
+        app.UseExceptionHandler("/Home/Error");
         app.UseHsts();
     }
     else

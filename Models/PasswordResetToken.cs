@@ -28,3 +28,4 @@ namespace CinemaManagement.Models
         public string? RequestIp { get; set; }
     }
 }
+

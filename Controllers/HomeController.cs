@@ -97,6 +97,19 @@ namespace CinemaManagement.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
+            var exFeature = HttpContext.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+            if (exFeature?.Error != null)
+            {
+                _logger.LogError(exFeature.Error, "Unhandled exception on path {Path}", exFeature.Path);
+                HttpContext.RequestServices.GetService<ISecurityAlertService>()?.EnqueueAlert(new SecurityAlert(
+                    SecurityAlertLevel.Critical,
+                    "UNHANDLED_SERVER_EXCEPTION",
+                    "Lỗi hệ thống 500 chưa xử lý (Unhandled Exception)",
+                    $"{exFeature.Error.GetType().Name}: {exFeature.Error.Message}",
+                    IpAddress: HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    Username: User.Identity?.Name,
+                    Path: exFeature.Path));
+            }
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }

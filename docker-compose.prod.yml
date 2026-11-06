@@ -34,7 +34,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./DB/CinemaManagement_PostgreSQL.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-CinemaManagement}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-CinemaManagement} && psql -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-CinemaManagement} -c \"ALTER USER \\\"$${POSTGRES_USER:-postgres}\\\" WITH PASSWORD '$${POSTGRES_PASSWORD}';\" >/dev/null 2>&1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -57,6 +57,8 @@ services:
         condition: service_healthy
     expose:
       - "8080"
+    volumes:
+      - dp_keys:/app/dp_keys
     env_file:
       - .env.prod
     environment:
@@ -128,6 +130,7 @@ services:
 
 volumes:
   pgdata:
+  dp_keys:
   certbot_webroot:
 
 networks:
