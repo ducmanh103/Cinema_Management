@@ -1,4 +1,5 @@
 using CinemaManagement.Data;
+using CinemaManagement.Helpers;
 using CinemaManagement.Models;
 using CinemaManagement.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,7 @@ namespace CinemaManagement.Services
 
         public async Task<List<ShowtimeDto>> GetShowtimesByMovieAsync(int movieId)
         {
-            var now = DateTime.Now;
+            var now = VietnamTime.Now;
             return await _context.Showtimes
                 .AsNoTracking()
                 .Where(s => s.MovieId == movieId && s.StartTime >= now)
@@ -37,7 +38,7 @@ namespace CinemaManagement.Services
 
         public async Task<List<ShowtimeDto>> GetShowtimesByMovieAndFiltersAsync(int movieId, DateTime? date, int? theaterId)
         {
-            var now = DateTime.Now;
+            var now = VietnamTime.Now;
             var query = _context.Showtimes
                 .AsNoTracking()
                 .Where(s => s.MovieId == movieId && s.StartTime >= now);
@@ -74,7 +75,7 @@ namespace CinemaManagement.Services
 
         public async Task<List<ShowtimeDto>> GetShowtimesByDateAsync(DateTime date)
         {
-            var now = DateTime.Now;
+            var now = VietnamTime.Now;
             var start = date.Date;
             var end = start.AddDays(1);
             return await _context.Showtimes
@@ -100,7 +101,7 @@ namespace CinemaManagement.Services
 
         public async Task<List<ShowtimeDto>> GetShowtimesByTheaterAsync(int theaterId)
         {
-            var now = DateTime.Now;
+            var now = VietnamTime.Now;
             return await _context.Showtimes
                 .AsNoTracking()
                 .Where(s => s.Room.TheaterId == theaterId && s.StartTime >= now)
@@ -125,7 +126,7 @@ namespace CinemaManagement.Services
 
         public async Task<List<ShowtimeDto>> GetShowtimesByDateAndTheaterAsync(DateTime date, int? theaterId)
         {
-            var now = DateTime.Now;
+            var now = VietnamTime.Now;
             var startOfDay = date.Date;
             var endOfDay = startOfDay.AddDays(1);
             var query = _context.Showtimes
@@ -157,7 +158,7 @@ namespace CinemaManagement.Services
 
         public async Task<ShowtimeDto?> GetShowtimeByIdAsync(int id)
         {
-            var now = DateTime.Now;
+            var now = VietnamTime.Now;
             return await _context.Showtimes
                 .AsNoTracking()
                 .Where(s => s.ShowtimeId == id)
@@ -190,7 +191,7 @@ namespace CinemaManagement.Services
 
             if (roomId == 0) return new List<SeatStatusDto>();
 
-            var now = DateTime.Now;
+            var now = VietnamTime.Now;
             var bookedSeatIds = (await _context.Tickets
                 .AsNoTracking()
                 .Where(t => t.ShowtimeId == showtimeId && (t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now))))
@@ -231,7 +232,7 @@ namespace CinemaManagement.Services
             if (showtime == null) return false;
 
             // Kiểm tra có vé đã đặt hoặc đang thanh toán trước khi xóa
-            var now = DateTime.Now;
+            var now = VietnamTime.Now;
             bool hasTickets = await _context.Tickets.AnyAsync(t => t.ShowtimeId == id && (t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now))));
             if (hasTickets)
                 throw new InvalidOperationException("Không thể xoá suất chiếu có vé đã đặt.");

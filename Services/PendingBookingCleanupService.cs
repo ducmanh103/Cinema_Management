@@ -44,7 +44,7 @@ namespace CinemaManagement.Services
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
 
-            var now = DateTime.Now;
+            var now = CinemaManagement.Helpers.VietnamTime.Now;
 
             // Tìm các payment Pending hoặc ticket Pending đã quá hạn HeldUntil
             var expiredPayments = await context.Payments

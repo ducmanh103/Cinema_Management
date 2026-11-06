@@ -6,7 +6,7 @@
 
 <div class="row justify-content-center mt-5">
     <div class="col-md-5">
-        <div class="card" style="background:#1e1e1e; border:1px solid #333">
+        <div class="card" style="background:#1e1e1e; border:1px solid #333; border-radius:14px;">
             <div class="card-body p-4">
                 <h3 class="text-center mb-4" style="color:#e50914"><i class="bi bi-film"></i> Đăng nhập</h3>
 
@@ -24,7 +24,12 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Password" class="form-label">Mật khẩu</label>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label asp-for="Password" class="form-label mb-1">Mật khẩu</label>
+                            <a asp-controller="Account" asp-action="ForgotPassword" class="text-danger small text-decoration-none">
+                                Quên mật khẩu?
+                            </a>
+                        </div>
                         <input asp-for="Password" class="form-control" style="background:#2a2a2a; border-color:#444; color:#fff"
                                placeholder="Nhập mật khẩu" id="password-input" />
                         <span asp-validation-for="Password" class="text-danger small"></span>
@@ -36,20 +41,34 @@
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-danger" id="login-btn">
-                            <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                        <button type="submit" class="btn btn-danger fw-bold py-2" id="login-btn">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập
                         </button>
                     </div>
-
-                    <hr style="border-color:#444" />
-                    <p class="text-center text-muted small">
-                        Chưa có tài khoản?
-                        <a asp-controller="Account" asp-action="Register" class="text-danger">Đăng ký ngay</a>
-                    </p>
-                    <p class="text-center text-muted small">
-                        @* Demo credentials đã được ẩn để bảo mật *@
-                    </p>
                 </form>
+
+                <div class="d-flex align-items-center my-3">
+                    <hr class="flex-grow-1" style="border-color:#444" />
+                    <span class="px-2 text-muted small">HOẶC</span>
+                    <hr class="flex-grow-1" style="border-color:#444" />
+                </div>
+
+                <form asp-controller="Account" asp-action="GoogleLogin" method="post">
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                    @Html.AntiForgeryToken()
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-outline-light d-flex align-items-center justify-content-center gap-2 py-2" id="google-login-btn">
+                            <i class="bi bi-google text-danger"></i>
+                            <span>Đăng nhập với Google</span>
+                        </button>
+                    </div>
+                </form>
+
+                <hr style="border-color:#444" class="mt-4" />
+                <p class="text-center text-muted small mb-0">
+                    Chưa có tài khoản?
+                    <a asp-controller="Account" asp-action="Register" class="text-danger fw-semibold">Đăng ký ngay</a>
+                </p>
             </div>
         </div>
     </div>
@@ -58,7 +77,6 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // Hiển thị validation summary nếu có lỗi
         document.addEventListener('DOMContentLoaded', function() {
             const vs = document.querySelector('[data-valmsg-summary]');
             if (vs && vs.querySelector('li')) vs.style.display = 'block';

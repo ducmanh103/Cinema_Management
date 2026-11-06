@@ -1,7 +1,9 @@
 using CinemaManagement.Data;
+using CinemaManagement.Helpers;
 using CinemaManagement.Models;
 using CinemaManagement.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace CinemaManagement.Services
 {
@@ -16,57 +18,55 @@ namespace CinemaManagement.Services
         /// </summary>
         public async Task<TicketDto> BookTicketAsync(int userId, BookTicketDto dto)
         {
-            // Dùng transaction đảm bảo tính nguyên tử
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // 1. Kiểm tra suất chiếu tồn tại
+                var now = VietnamTime.Now;
+
                 var showtime = await _context.Showtimes
                     .Include(s => s.Movie)
                     .Include(s => s.Room)
                     .FirstOrDefaultAsync(s => s.ShowtimeId == dto.ShowtimeId)
                     ?? throw new InvalidOperationException("Suất chiếu không tồn tại.");
 
-                // 2. Kiểm tra ghế tồn tại và thuộc phòng chiếu
+                if (showtime.StartTime <= now)
+                    throw new InvalidOperationException("Suất chiếu đã bắt đầu hoặc đã kết thúc, không thể đặt vé.");
+
                 var seat = await _context.Seats.FindAsync(dto.SeatId)
                     ?? throw new InvalidOperationException("Ghế không tồn tại.");
 
                 if (seat.RoomId != showtime.RoomId)
                     throw new InvalidOperationException("Ghế không thuộc phòng chiếu này.");
 
-                // 3. Kiểm tra ghế đã được đặt chưa (khóa bản ghi với row-level check)
                 bool alreadyBooked = await _context.Tickets
                     .AnyAsync(t => t.ShowtimeId == dto.ShowtimeId
                                && t.SeatId == dto.SeatId
-                               && t.Status == "Booked");
+                               && (t.Status == "Booked" || t.Status == "Pending"));
 
                 if (alreadyBooked)
-                    throw new InvalidOperationException("Ghế này đã được đặt. Vui lòng chọn ghế khác.");
+                    throw new InvalidOperationException("Ghế này đã được đặt hoặc đang được giữ. Vui lòng chọn ghế khác.");
 
-                // 4. Tạo Ticket
                 var ticket = new Ticket
                 {
                     ShowtimeId = dto.ShowtimeId,
                     SeatId = dto.SeatId,
                     UserId = userId,
-                    BookingTime = DateTime.Now,
+                    BookingTime = VietnamTime.UtcNow,
                     Status = "Booked"
                 };
                 _context.Tickets.Add(ticket);
-                await _context.SaveChangesAsync(); // Unique index sẽ chặn nếu race condition
+                await _context.SaveChangesAsync();
 
-                // Tính toán giá thực tế bao gồm phụ thu ghế VIP
                 decimal actualPrice = showtime.Price + (seat.SeatType == "VIP" ? 15000m : 0m);
 
-                // 5. Tạo Payment
                 var payment = new Payment
                 {
                     TicketId = ticket.TicketId,
                     Amount = actualPrice,
                     Method = dto.PaymentMethod,
                     Status = "Completed",
-                    PaidAt = DateTime.Now
+                    PaidAt = VietnamTime.UtcNow
                 };
                 _context.Payments.Add(payment);
                 await _context.SaveChangesAsync();
@@ -82,9 +82,14 @@ namespace CinemaManagement.Services
                     SeatNumber = seat.SeatNumber,
                     Price = actualPrice,
                     Status = ticket.Status,
-                    BookingTime = ticket.BookingTime,
+                    BookingTime = ticket.BookingTime.ToVietnamTime(),
                     PaymentStatus = payment.Status
                 };
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+            {
+                await transaction.RollbackAsync();
+                throw new InvalidOperationException("Ghế này vừa được người khác đặt cùng lúc. Vui lòng chọn ghế khác.");
             }
             catch
             {
@@ -122,13 +127,11 @@ namespace CinemaManagement.Services
 
             if (ticket == null || ticket.Status == "Cancelled") return false;
 
-            // Không cho hủy vé nếu suất chiếu đã bắt đầu
-            if (ticket.Showtime != null && ticket.Showtime.StartTime <= DateTime.Now)
+            if (ticket.Showtime != null && ticket.Showtime.StartTime <= VietnamTime.Now)
                 return false;
 
             ticket.Status = "Cancelled";
 
-            // Cập nhật payment
             var payment = await _context.Payments.FirstOrDefaultAsync(p => p.TicketId == ticketId);
             if (payment != null) payment.Status = "Refunded";
 
@@ -137,25 +140,29 @@ namespace CinemaManagement.Services
         }
 
         /// <summary>
-        /// Tạo Ticket (Booked) + Payment (Pending) trong cùng 1 transaction để khoá ghế ngay.
-        /// Trả về TicketDto + PaymentId để controller dùng làm OrderId gửi sang VNPay.
+        /// Tạo Ticket (Pending) + Payment (Pending) trong cùng 1 transaction để khoá ghế ngay.
         /// </summary>
         public async Task<(TicketDto Ticket, int PaymentId)> CreatePendingBookingAsync(int userId, BookTicketDto dto)
         {
             await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                var now = VietnamTime.Now;
+
                 var showtime = await _context.Showtimes
                     .Include(s => s.Movie)
                     .Include(s => s.Room)
                     .FirstOrDefaultAsync(s => s.ShowtimeId == dto.ShowtimeId)
-                    ?? throw new InvalidOperationException("Su\u1ea5t chi\u1ebfu kh\u00f4ng t\u1ed3n t\u1ea1i.");
+                    ?? throw new InvalidOperationException("Suất chiếu không tồn tại.");
+
+                if (showtime.StartTime <= now)
+                    throw new InvalidOperationException("Suất chiếu đã bắt đầu hoặc đã kết thúc, không thể đặt vé.");
 
                 var seat = await _context.Seats.FindAsync(dto.SeatId)
-                    ?? throw new InvalidOperationException("Gh\u1ebf kh\u00f4ng t\u1ed3n t\u1ea1i.");
+                    ?? throw new InvalidOperationException("Ghế không tồn tại.");
 
                 if (seat.RoomId != showtime.RoomId)
-                    throw new InvalidOperationException("Gh\u1ebf kh\u00f4ng thu\u1ed9c ph\u00f2ng chi\u1ebfu n\u00e0y.");
+                    throw new InvalidOperationException("Ghế không thuộc phòng chiếu này.");
 
                 bool alreadyBooked = await _context.Tickets
                     .AnyAsync(t => t.ShowtimeId == dto.ShowtimeId
@@ -165,14 +172,15 @@ namespace CinemaManagement.Services
                 if (alreadyBooked)
                     throw new InvalidOperationException("Ghế này đang được người khác chọn hoặc đã đặt. Vui lòng chọn ghế khác.");
 
+                var utcNow = VietnamTime.UtcNow;
                 var ticket = new Ticket
                 {
                     ShowtimeId = dto.ShowtimeId,
                     SeatId = dto.SeatId,
                     UserId = userId,
-                    BookingTime = DateTime.Now,
-                    HeldUntil = DateTime.Now.AddMinutes(15), // Giữ ghế trong 15 phút
-                    Status = "Pending" // Khóa ghế ngay nhờ unique index IN ('Booked', 'Pending')
+                    BookingTime = utcNow,
+                    HeldUntil = utcNow.AddMinutes(15),
+                    Status = "Pending"
                 };
                 _context.Tickets.Add(ticket);
                 await _context.SaveChangesAsync();
@@ -183,9 +191,9 @@ namespace CinemaManagement.Services
                 {
                     TicketId = ticket.TicketId,
                     Amount = actualPrice,
-                    Method = dto.PaymentMethod, // "VnPay"
-                    Status = "Pending"
-                    // PaidAt sẽ được set khi ConfirmPaymentAsync(success: true)
+                    Method = dto.PaymentMethod,
+                    Status = "Pending",
+                    PaidAt = utcNow
                 };
                 _context.Payments.Add(payment);
                 await _context.SaveChangesAsync();
@@ -201,10 +209,15 @@ namespace CinemaManagement.Services
                     SeatNumber = seat.SeatNumber,
                     Price = actualPrice,
                     Status = ticket.Status,
-                    BookingTime = ticket.BookingTime,
+                    BookingTime = ticket.BookingTime.ToVietnamTime(),
                     PaymentStatus = payment.Status
                 };
                 return (ticketDto, payment.PaymentId);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+            {
+                await transaction.RollbackAsync();
+                throw new InvalidOperationException("Ghế này vừa được người khác giữ chỗ. Vui lòng chọn ghế khác.");
             }
             catch
             {
@@ -214,26 +227,38 @@ namespace CinemaManagement.Services
         }
 
         /// <summary>
-        /// Sau khi VNPay redirect về:
-        ///   - success = true  → Payment.Status = Completed
-        ///   - success = false → Payment.Status = Failed, Ticket.Status = Cancelled (giải phóng ghế)
+        /// Xác nhận kết quả thanh toán từ VNPay (ReturnUrl / IPN).
+        /// Có kiểm tra khớp số tiền (paidAmount) để chống giả mạo mệnh giá.
         /// </summary>
-        public async Task<bool> ConfirmPaymentAsync(int paymentId, string transactionId, bool success)
+        public async Task<(bool Handled, string? ErrorReason)> ConfirmPaymentAsync(
+            int paymentId,
+            string transactionId,
+            bool success,
+            decimal? paidAmount = null)
         {
             var payment = await _context.Payments
                 .Include(p => p.Ticket)
                 .FirstOrDefaultAsync(p => p.PaymentId == paymentId);
 
-            if (payment == null) return false;
-            // Idempotent: không xử lý lại payment đã hoàn thành hoặc đã thất bại
-            if (payment.Status == "Completed") return true;
-            if (payment.Status == "Failed") return false;
+            if (payment == null)
+                return (false, "Không tìm thấy đơn thanh toán.");
+
+            if (payment.Status == "Completed")
+                return (true, null);
+
+            if (payment.Status == "Failed")
+                return (false, "Đơn thanh toán này đã bị huỷ hoặc hết hạn trước đó.");
+
+            if (paidAmount.HasValue && Math.Abs(paidAmount.Value - payment.Amount) > 0.01m)
+            {
+                return (false, $"Số tiền thanh toán không khớp (VNPay trả về: {paidAmount.Value:N0}₫, Giá vé: {payment.Amount:N0}₫).");
+            }
 
             if (success)
             {
                 payment.Status = "Completed";
                 payment.TransactionId = transactionId;
-                payment.PaidAt = DateTime.Now;
+                payment.PaidAt = VietnamTime.UtcNow;
                 if (payment.Ticket != null)
                 {
                     payment.Ticket.Status = "Booked";
@@ -243,11 +268,15 @@ namespace CinemaManagement.Services
             else
             {
                 payment.Status = "Failed";
-                if (payment.Ticket != null) payment.Ticket.Status = "Cancelled";
+                if (payment.Ticket != null)
+                {
+                    payment.Ticket.Status = "Cancelled";
+                    payment.Ticket.HeldUntil = null;
+                }
             }
 
             await _context.SaveChangesAsync();
-            return success;
+            return (success, success ? null : "Giao dịch không thành công.");
         }
     }
 }

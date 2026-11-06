@@ -46,8 +46,8 @@
                                     <td>@showtime.StartTime.ToString("HH:mm dd/MM/yyyy")</td>
                                     <td>@showtime.Price.ToString("N0") ₫</td>
                                     <td>
-                                        @if (showtime.StartTime > DateTime.Now) { <span class="label label-success">Sắp chiếu</span> }
-                                        else if (showtime.StartTime <= DateTime.Now && showtime.StartTime.AddMinutes(showtime.MovieDuration) > DateTime.Now) { <span class="label label-warning">Đang chiếu</span> }
+                                        @if (showtime.StartTime > VietnamTime.Now) { <span class="label label-success">Sắp chiếu</span> }
+                                        else if (showtime.StartTime <= VietnamTime.Now && showtime.StartTime.AddMinutes(showtime.MovieDuration) > VietnamTime.Now) { <span class="label label-warning">Đang chiếu</span> }
                                         else { <span class="label label-default">Đã chiếu</span> }
                                     </td>
                                     <td>

@@ -732,7 +732,7 @@
                         <div class="showtimes-grid mb-4">
                             @foreach (var st in dateGroup)
                             {
-                                bool isPassed = st.StartTime < DateTime.Now;
+                                bool isPassed = st.StartTime < VietnamTime.Now;
                                 bool isBookable = st.AvailableSeats > 0 && !isPassed;
 
                                 if (isBookable)
@@ -810,7 +810,7 @@
                                 <div class="showtimes-grid">
                                     @foreach (var st in movieGroup)
                                     {
-                                        bool isPassed = st.StartTime < DateTime.Now;
+                                        bool isPassed = st.StartTime < VietnamTime.Now;
                                         bool isBookable = st.AvailableSeats > 0 && !isPassed;
 
                                         if (isBookable)

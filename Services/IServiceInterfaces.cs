@@ -31,15 +31,16 @@ namespace CinemaManagement.Services
         Task<bool> CancelTicketAsync(int ticketId, int userId);
 
         /// <summary>
-        /// Tạo Ticket (Booked) + Payment (Pending) cho flow thanh toán VNPay.
+        /// Tạo Ticket (Pending) + Payment (Pending) cho flow thanh toán VNPay.
         /// Ghế được khoá ngay (unique index) để tránh user khác đặt cùng lúc.
         /// </summary>
         Task<(TicketDto Ticket, int PaymentId)> CreatePendingBookingAsync(int userId, BookTicketDto dto);
 
         /// <summary>
         /// Đánh dấu Payment Completed (success=true) hoặc Failed + huỷ Ticket (success=false).
+        /// Đối chiếu số tiền thực trả (paidAmount) nếu được cung cấp.
         /// </summary>
-        Task<bool> ConfirmPaymentAsync(int paymentId, string transactionId, bool success);
+        Task<(bool Handled, string? ErrorReason)> ConfirmPaymentAsync(int paymentId, string transactionId, bool success, decimal? paidAmount = null);
     }
 
     /// <summary>
@@ -49,5 +50,34 @@ namespace CinemaManagement.Services
     {
         string CreatePaymentUrl(HttpContext context, VnPaymentRequestModel model);
         VnPaymentResponseModel PaymentExecute(IQueryCollection collections);
+    }
+
+    public interface IEmailService
+    {
+        Task SendPasswordResetEmailAsync(string toEmail, string fullName, string resetUrl);
+    }
+
+    public enum SecurityAlertLevel
+    {
+        Info,
+        Medium,
+        High,
+        Critical
+    }
+
+    public record SecurityAlert(
+        SecurityAlertLevel Level,
+        string Category,
+        string Title,
+        string Details,
+        string? IpAddress = null,
+        string? Username = null,
+        string? Path = null,
+        DateTime? TimestampUtc = null);
+
+    public interface ISecurityAlertService
+    {
+        void EnqueueAlert(SecurityAlert alert);
+        void RecordRateLimitRejection(string policyOrPath, string ipAddress, string? username);
     }
 }

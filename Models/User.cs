@@ -1,5 +1,6 @@
 namespace CinemaManagement.Models
 {
+    using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
 
@@ -12,13 +13,21 @@ namespace CinemaManagement.Models
         [StringLength(50)]
         public string Username { get; set; } = string.Empty;
 
-        [Required]
-        public string PasswordHash { get; set; } = string.Empty;
+        public string? PasswordHash { get; set; } = string.Empty;
 
         public string? FullName { get; set; }
 
         [EmailAddress]
+        [StringLength(150)]
         public string? Email { get; set; }
+
+        [StringLength(100)]
+        public string? GoogleSubjectId { get; set; }
+
+        public bool EmailConfirmed { get; set; } = false;
+
+        [StringLength(64)]
+        public string SecurityStamp { get; set; } = Guid.NewGuid().ToString("N");
 
         public string Status { get; set; } = "Active"; // Active, Inactive
 
@@ -26,5 +35,6 @@ namespace CinemaManagement.Models
         public virtual Role Role { get; set; } = null!;
 
         public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+        public virtual ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
     }
 }

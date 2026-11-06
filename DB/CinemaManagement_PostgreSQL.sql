@@ -7,6 +7,10 @@
 -- =======================================================
 -- 1. DROP EXISTING TABLES
 -- =======================================================
+SET TIME ZONE 'Asia/Ho_Chi_Minh';
+
+DROP TABLE IF EXISTS "PasswordResetTokens" CASCADE;
+DROP TABLE IF EXISTS "DataProtectionKeys" CASCADE;
 DROP TABLE IF EXISTS "Payments" CASCADE;
 DROP TABLE IF EXISTS "Tickets" CASCADE;
 DROP TABLE IF EXISTS "Showtimes" CASCADE;
@@ -31,15 +35,36 @@ CREATE TABLE "Roles" (
 
 -- Users
 CREATE TABLE "Users" (
-    "UserId"       SERIAL PRIMARY KEY,
-    "Username"     VARCHAR(50)  NOT NULL UNIQUE,
-    "PasswordHash" VARCHAR(255) NOT NULL,
-    "FullName"     VARCHAR(100),
-    "Email"        VARCHAR(100),
-    "RoleId"       INT          NOT NULL,
-    "Status"       VARCHAR(20)  DEFAULT 'Active',
+    "UserId"          SERIAL PRIMARY KEY,
+    "Username"        VARCHAR(50)  NOT NULL UNIQUE,
+    "PasswordHash"    VARCHAR(255) NULL,
+    "FullName"        VARCHAR(100),
+    "Email"           VARCHAR(150),
+    "GoogleSubjectId" VARCHAR(100) NULL,
+    "EmailConfirmed"  BOOLEAN      NOT NULL DEFAULT FALSE,
+    "SecurityStamp"   VARCHAR(64)  NOT NULL DEFAULT md5(random()::text || clock_timestamp()::text),
+    "RoleId"          INT          NOT NULL,
+    "Status"          VARCHAR(20)  DEFAULT 'Active',
     CONSTRAINT "FK_Users_Roles" FOREIGN KEY ("RoleId") REFERENCES "Roles"("RoleId"),
     CONSTRAINT "CK_Users_Status" CHECK ("Status" IN ('Active', 'Locked', 'Inactive'))
+);
+
+-- DataProtectionKeys
+CREATE TABLE "DataProtectionKeys" (
+    "Id"           SERIAL PRIMARY KEY,
+    "FriendlyName" TEXT NULL,
+    "Xml"          TEXT NULL
+);
+
+-- PasswordResetTokens
+CREATE TABLE "PasswordResetTokens" (
+    "Id"        SERIAL PRIMARY KEY,
+    "UserId"    INT         NOT NULL REFERENCES "Users"("UserId") ON DELETE CASCADE,
+    "TokenHash" VARCHAR(64) NOT NULL,
+    "ExpiresAt" TIMESTAMPTZ NOT NULL,
+    "UsedAt"    TIMESTAMPTZ NULL,
+    "CreatedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "RequestIp" VARCHAR(45) NULL
 );
 
 -- Genres
@@ -54,7 +79,7 @@ CREATE TABLE "Movies" (
     "Title"       VARCHAR(200) NOT NULL,
     "Duration"    INT          NOT NULL,
     "Description" TEXT,
-    "ReleaseDate" DATE,
+    "ReleaseDate" TIMESTAMPTZ,
     "PosterUrl"   VARCHAR(500),
     "BannerUrl"   VARCHAR(500),
     "Status"      VARCHAR(50)  DEFAULT 'Now Showing',
@@ -98,14 +123,11 @@ CREATE TABLE "Seats" (
 );
 
 -- Showtimes
--- Lưu ý: MovieId/RoomId dùng ON DELETE RESTRICT (không CASCADE) để tránh xung đột
--- với Tickets (vốn không cascade) khi cố xóa một phim/phòng đã có vé đã bán.
--- Nên xóa mềm (đổi Status Movies sang 'Ended') thay vì xóa cứng.
 CREATE TABLE "Showtimes" (
     "ShowtimeId" SERIAL PRIMARY KEY,
     "MovieId"    INT           NOT NULL,
     "RoomId"     INT           NOT NULL,
-    "StartTime"  TIMESTAMP     NOT NULL,
+    "StartTime"  TIMESTAMPTZ   NOT NULL,
     "Price"      DECIMAL(18,2) NOT NULL,
     CONSTRAINT "FK_Showtimes_Movies" FOREIGN KEY ("MovieId") REFERENCES "Movies"("MovieId") ON DELETE RESTRICT,
     CONSTRAINT "FK_Showtimes_Rooms"  FOREIGN KEY ("RoomId")  REFERENCES "Rooms"("RoomId") ON DELETE RESTRICT,
@@ -113,15 +135,13 @@ CREATE TABLE "Showtimes" (
 );
 
 -- Tickets
--- Cột HeldUntil: thời điểm hết hạn giữ ghế tạm (dùng cho PendingBookingCleanupService).
--- Khi Status = 'Pending' và HeldUntil < NOW() → service nền sẽ hủy vé, trả ghế lại.
 CREATE TABLE "Tickets" (
     "TicketId"    SERIAL PRIMARY KEY,
     "ShowtimeId"  INT         NOT NULL,
     "SeatId"      INT         NULL,
     "UserId"      INT         NOT NULL,
-    "BookingTime" TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
-    "HeldUntil"   TIMESTAMP   NULL,
+    "BookingTime" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    "HeldUntil"   TIMESTAMPTZ NULL,
     "Status"      VARCHAR(50) DEFAULT 'Booked',
     CONSTRAINT "FK_Tickets_Showtimes" FOREIGN KEY ("ShowtimeId") REFERENCES "Showtimes"("ShowtimeId"),
     CONSTRAINT "FK_Tickets_Seats"     FOREIGN KEY ("SeatId")     REFERENCES "Seats"("SeatId"),
@@ -129,19 +149,17 @@ CREATE TABLE "Tickets" (
     CONSTRAINT "CK_Tickets_Status" CHECK ("Status" IN ('Pending', 'Booked', 'Cancelled', 'Expired'))
 );
 
--- Chỉ mục unique lọc: đảm bảo ở tầng database KHÔNG BAO GIỜ có 2 vé "Booked" hoặc "Pending"
--- cùng ShowtimeId + SeatId, dù ứng dụng có nhiều instance/nhiều request cùng lúc.
--- Đây là cơ chế chống double-booking khi nhiều người đặt hoặc đang thanh toán cùng 1 ghế.
 CREATE UNIQUE INDEX "UQ_Ticket_Showtime_Seat" ON "Tickets"("ShowtimeId", "SeatId") WHERE "Status" IN ('Booked', 'Pending');
 
 -- Payments
 CREATE TABLE "Payments" (
-    "PaymentId" SERIAL PRIMARY KEY,
-    "Amount"    DECIMAL(18,2) NOT NULL DEFAULT 0,
-    "Method"    VARCHAR(50)   NOT NULL DEFAULT 'Cash',
-    "Status"    VARCHAR(50)   NOT NULL DEFAULT 'Pending',
-    "PaidAt"    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "TicketId"  INT           NOT NULL UNIQUE,
+    "PaymentId"     SERIAL PRIMARY KEY,
+    "Amount"        DECIMAL(18,2) NOT NULL DEFAULT 0,
+    "Method"        VARCHAR(50)   NOT NULL DEFAULT 'Cash',
+    "Status"        VARCHAR(50)   NOT NULL DEFAULT 'Pending',
+    "TransactionId" VARCHAR(100)  NULL,
+    "PaidAt"        TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "TicketId"      INT           NOT NULL UNIQUE,
     CONSTRAINT "FK_Payments_Tickets" FOREIGN KEY ("TicketId") REFERENCES "Tickets"("TicketId") ON DELETE CASCADE
 );
 
@@ -161,18 +179,16 @@ CREATE INDEX "IX_Payments_TicketId" ON "Payments"("TicketId");
 CREATE INDEX "IX_Payments_PaidAt" ON "Payments"("PaidAt");
 CREATE INDEX "IX_Users_RoleId" ON "Users"("RoleId");
 CREATE UNIQUE INDEX "IX_User_Username" ON "Users"("Username");
+CREATE UNIQUE INDEX "UX_Users_Username_Lower" ON "Users"(LOWER("Username"));
 CREATE INDEX "IX_User_Email" ON "Users"("Email");
+CREATE UNIQUE INDEX "UX_Users_Email_Lower" ON "Users"(LOWER("Email")) WHERE "Email" IS NOT NULL AND "Email" <> '';
+CREATE UNIQUE INDEX "UX_User_GoogleSubjectId" ON "Users"("GoogleSubjectId") WHERE "GoogleSubjectId" IS NOT NULL;
+CREATE INDEX "IX_PasswordResetToken_User_Hash" ON "PasswordResetTokens"("UserId", "TokenHash");
 CREATE INDEX "IX_Showtime_MovieId_StartTime" ON "Showtimes"("MovieId", "StartTime");
 CREATE INDEX "IX_Ticket_UserId_BookingTime" ON "Tickets"("UserId", "BookingTime");
-
--- Lọc phim theo trạng thái (trang chủ / sắp chiếu) chạy rất thường xuyên
 CREATE INDEX "IX_Movies_Status" ON "Movies"("Status");
-
--- Partial index riêng cho service dọn dẹp vé giữ chỗ hết hạn:
--- SELECT * FROM "Tickets" WHERE "Status"='Pending' AND "HeldUntil" < NOW();
--- Vì chỉ đánh index trên các dòng Pending, kích thước nhỏ, truy vấn cực nhanh
--- dù bảng Tickets có hàng triệu dòng lịch sử.
 CREATE INDEX "IX_Tickets_Pending_HeldUntil" ON "Tickets"("HeldUntil") WHERE "Status" = 'Pending';
+CREATE INDEX "IX_Payments_Status_Pending" ON "Payments"("Status") WHERE "Status" = 'Pending';
 
 -- =======================================================
 -- 4. SEED DATA

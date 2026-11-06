@@ -38,7 +38,8 @@ namespace CinemaManagement.Controllers
         {
             ViewData["Title"] = "Hệ thống Rạp";
 
-            var today = DateTime.Today;
+            var today = CinemaManagement.Helpers.VietnamTime.Today;
+            var now = CinemaManagement.Helpers.VietnamTime.Now;
             var tomorrow = today.AddDays(1);
 
             var theaters = await _context.Theaters
@@ -57,14 +58,14 @@ namespace CinemaManagement.Controllers
                     // Số phim đang chiếu tại rạp này (7 ngày tới)
                     MoviesNow = t.Rooms
                         .SelectMany(r => r.Showtimes)
-                        .Where(s => s.StartTime >= DateTime.Now && s.StartTime <= tomorrow.AddDays(6))
+                        .Where(s => s.StartTime >= now && s.StartTime <= tomorrow.AddDays(6))
                         .Select(s => s.MovieId)
                         .Distinct()
                         .Count(),
                     // Suất chiếu sắp tới gần nhất (để hiện "Suất chiếu tiếp theo")
                     NextShowtime = t.Rooms
                         .SelectMany(r => r.Showtimes)
-                        .Where(s => s.StartTime >= DateTime.Now)
+                        .Where(s => s.StartTime >= now)
                         .OrderBy(s => s.StartTime)
                         .Select(s => (DateTime?)s.StartTime)
                         .FirstOrDefault()

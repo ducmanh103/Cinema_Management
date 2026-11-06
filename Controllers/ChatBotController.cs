@@ -20,13 +20,13 @@ namespace CinemaManagement.Controllers
     {
         private readonly CinemaDbContext _dbContext;
         private readonly IConfiguration _configuration;
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public ChatBotController(CinemaDbContext dbContext, IConfiguration configuration)
+        public ChatBotController(CinemaDbContext dbContext, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _dbContext = dbContext;
             _configuration = configuration;
-            _httpClient = new HttpClient();
+            _httpClientFactory = httpClientFactory;
         }
 
         // DTOs cho request/response của frontend
@@ -146,6 +146,17 @@ namespace CinemaManagement.Controllers
                 return BadRequest(new { response = "Tin nhắn không được để trống." });
             }
 
+            if (request.Message.Length > 500)
+            {
+                request.Message = request.Message[..500];
+            }
+
+            request.History ??= new List<ChatMessageDto>();
+            if (request.History.Count > 10)
+            {
+                request.History = request.History.TakeLast(10).ToList();
+            }
+
             var apiKey = _configuration["Gemini:ApiKey"];
 
             List<MovieAttachmentDto>? movies = null;
@@ -216,7 +227,7 @@ namespace CinemaManagement.Controllers
                     }).ToList();
 
                     var matchedMovieIds = matchedMovies.Select(m => m.MovieId).ToList();
-                    var today = DateTime.Today;
+                    var today = CinemaManagement.Helpers.VietnamTime.Today;
                     var tomorrow = today.AddDays(1);
                     showtimes = await _dbContext.Showtimes
                         .Include(s => s.Movie)
@@ -263,7 +274,7 @@ namespace CinemaManagement.Controllers
                 }
                 else if (normalizedMessage.Contains("lich chieu") || normalizedMessage.Contains("suat chieu") || normalizedMessage.Contains("gio chieu"))
                 {
-                    var today = DateTime.Today;
+                    var today = CinemaManagement.Helpers.VietnamTime.Today;
                     var tomorrow = today.AddDays(1);
                     showtimes = await _dbContext.Showtimes
                         .Include(s => s.Movie)
@@ -349,8 +360,8 @@ namespace CinemaManagement.Controllers
 
         private async Task<CinemaContextData> GetCinemaContextAsync()
         {
-            var now = DateTime.Now;
-            var today = DateTime.Today;
+            var now = CinemaManagement.Helpers.VietnamTime.Now;
+            var today = CinemaManagement.Helpers.VietnamTime.Today;
             var tomorrow = today.AddDays(1);
 
             // 1. Lấy phim đang chiếu
@@ -393,7 +404,7 @@ namespace CinemaManagement.Controllers
         private async Task<string> CallGeminiApiAsync(string message, List<ChatMessageDto> history, CinemaContextData context, string apiKey, string userFullName, string userTicketsContext, bool isLoggedIn)
         {
             var modelName = _configuration["Gemini:Model"] ?? "gemini-2.5-flash";
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{modelName}:generateContent?key={apiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{modelName}:generateContent";
 
             // Xây dựng System Instruction chứa ngữ cảnh rạp phim và người dùng
             var systemInstruction = new StringBuilder();
@@ -511,9 +522,14 @@ namespace CinemaManagement.Controllers
             };
 
             var jsonPayload = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            using var reqMsg = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json")
+            };
+            reqMsg.Headers.Add("x-goog-api-key", apiKey);
 
-            var response = await _httpClient.PostAsync(url, content);
+            var httpClient = _httpClientFactory.CreateClient("GeminiApi");
+            using var response = await httpClient.SendAsync(reqMsg);
             if (response.IsSuccessStatusCode)
             {
                 var responseContent = await response.Content.ReadAsStringAsync();

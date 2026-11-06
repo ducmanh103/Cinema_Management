@@ -32,7 +32,7 @@ namespace CinemaManagement.Models.ViewModels
         /// </summary>
         public string Name { get; set; } = string.Empty;
 
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public DateTime CreatedDate { get; set; } = CinemaManagement.Helpers.VietnamTime.Now;
     }
 
     /// <summary>
@@ -40,6 +40,7 @@ namespace CinemaManagement.Models.ViewModels
     /// </summary>
     public class VnPaymentResponseModel
     {
+        public bool IsValidSignature { get; set; }
         public bool Success { get; set; }
         public string PaymentMethod { get; set; } = string.Empty;
         public string OrderDescription { get; set; } = string.Empty;

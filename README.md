@@ -138,7 +138,7 @@ Cinema_Management/
 | Trường | Giá trị |
 |--------|---------|
 | **Tên đăng nhập** | `admin` |
-| **Mật khẩu** | `Admin@123` |
+| **Mật khẩu** | *(Cấu hình qua biến môi trường `ADMIN_INITIAL_PASSWORD` trong `.env.prod`)* |
 | **URL Đăng nhập** | `/Admin/Account/Login` |
 
 ---

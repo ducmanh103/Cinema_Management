@@ -1,14 +1,14 @@
 @using CinemaManagement.Models.ViewModels
 @{
     ViewData["Title"] = "Thống kê doanh thu";
-    int selectedYear = ViewBag.SelectedYear ?? DateTime.Now.Year;
+    int selectedYear = ViewBag.SelectedYear ?? VietnamTime.Now.Year;
     decimal totalRevenue = ViewBag.TotalRevenue ?? 0m;
     decimal yearRevenue = ViewBag.YearRevenue ?? 0m;
     int yearTickets = ViewBag.YearTickets ?? 0;
     int totalPaidTickets = ViewBag.TotalPaidTickets ?? 0;
     var topMovies = ViewBag.TopMovies as List<MovieRevenueDto> ?? new();
     var paymentMethods = ViewBag.PaymentMethods as IEnumerable<dynamic> ?? new List<dynamic>();
-    var availableYears = ViewBag.AvailableYears as List<int> ?? new List<int> { DateTime.Now.Year };
+    var availableYears = ViewBag.AvailableYears as List<int> ?? new List<int> { VietnamTime.Now.Year };
     string[] chartLabels = ViewBag.ChartLabels as string[] ?? new string[12];
     decimal[] chartRevenue = ViewBag.ChartRevenue as decimal[] ?? new decimal[12];
     int[] chartTickets = ViewBag.ChartTickets as int[] ?? new int[12];
@@ -97,7 +97,9 @@
 </section>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+            integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g"
+            crossorigin="anonymous"></script>
     <script>
         var labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(chartLabels));
         var revenueData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(chartRevenue));

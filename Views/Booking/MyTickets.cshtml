@@ -48,7 +48,7 @@ else
                             <i class="bi bi-calendar-check"></i> Đặt lúc @ticket.BookingTime.ToString("HH:mm dd/MM/yyyy")
                         </div>
                     </div>
-                    @if (ticket.Status == "Booked" && ticket.StartTime > DateTime.Now)
+                    @if (ticket.Status == "Booked" && ticket.StartTime > VietnamTime.Now)
                     {
                         <div class="card-footer" style="background:#181818; border-top:1px solid #333">
                             <form asp-action="Cancel" asp-route-id="@ticket.TicketId" method="post"

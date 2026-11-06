@@ -1,19 +1,31 @@
+using System;
 using CinemaManagement.Data;
+using CinemaManagement.Helpers;
 using CinemaManagement.Models;
 using CinemaManagement.Models.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CinemaManagement.Services
 {
     public class MovieService : IMovieService
     {
+        private const string AllMoviesCacheKey = "cinema_all_movies_v1";
         private readonly CinemaDbContext _context;
+        private readonly IMemoryCache _cache;
 
-        public MovieService(CinemaDbContext context) => _context = context;
+        public MovieService(CinemaDbContext context, IMemoryCache cache)
+        {
+            _context = context;
+            _cache = cache;
+        }
 
         public async Task<List<MovieDto>> GetAllMoviesAsync()
         {
-            var now = DateTime.Now;
+            if (_cache.TryGetValue(AllMoviesCacheKey, out List<MovieDto>? cached) && cached != null)
+                return cached;
+
+            var now = VietnamTime.Now;
             var movies = await _context.Movies
                 .AsNoTracking()
                 .Select(m => new MovieDto
@@ -32,17 +44,20 @@ namespace CinemaManagement.Services
                 })
                 .ToListAsync();
 
-            // Sắp xếp ưu tiên:
-            // 1. Phim đang chiếu (Now Showing) -> Sắp chiếu (Coming Soon) -> Ngừng chiếu (Ended)
-            // 2. Phim có suất chiếu khả dụng trong tương lai lên đầu
-            // 3. Phim hot (có nhiều vé đặt nhất)
-            // 4. Ngày phát hành / ID mới nhất
-            return movies
+            var sorted = movies
                 .OrderBy(m => m.Status == "Now Showing" ? 0 : (m.Status == "Coming Soon" ? 1 : 2))
                 .ThenByDescending(m => m.HasShowtimes)
                 .ThenByDescending(m => m.BookedTicketCount)
                 .ThenByDescending(m => m.MovieId)
                 .ToList();
+
+            _cache.Set(AllMoviesCacheKey, sorted, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2),
+                Size = 1
+            });
+
+            return sorted;
         }
 
         public async Task<MovieDto?> GetMovieByIdAsync(int id)
@@ -86,6 +101,7 @@ namespace CinemaManagement.Services
                 _context.MovieGenres.Add(new MovieGenre { MovieId = movie.MovieId, GenreId = genreId });
             }
             await _context.SaveChangesAsync();
+            _cache.Remove(AllMoviesCacheKey);
 
             return (await GetMovieByIdAsync(movie.MovieId))!;
         }
@@ -103,7 +119,6 @@ namespace CinemaManagement.Services
             movie.BannerUrl = dto.BannerUrl;
             movie.Status = dto.Status;
 
-            // Delete old genres directly in DB (optimized)
             await _context.MovieGenres.Where(mg => mg.MovieId == id).ExecuteDeleteAsync();
 
             foreach (var genreId in dto.GenreIds)
@@ -112,6 +127,7 @@ namespace CinemaManagement.Services
             }
 
             await _context.SaveChangesAsync();
+            _cache.Remove(AllMoviesCacheKey);
             return true;
         }
 
@@ -121,6 +137,7 @@ namespace CinemaManagement.Services
             if (movie == null) return false;
             _context.Movies.Remove(movie);
             await _context.SaveChangesAsync();
+            _cache.Remove(AllMoviesCacheKey);
             return true;
         }
     }

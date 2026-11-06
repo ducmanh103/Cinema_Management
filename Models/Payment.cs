@@ -13,7 +13,7 @@ namespace CinemaManagement.Models
         public string Method { get; set; } = "Cash"; // Cash, Card, Momo
         public string Status { get; set; } = "Pending"; // Pending, Completed, Failed
         public string? TransactionId { get; set; } // Mã giao dịch VnPay
-        public DateTime PaidAt { get; set; } = DateTime.Now;
+        public DateTime PaidAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey("Ticket")]
         public int TicketId { get; set; }

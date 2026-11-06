@@ -204,9 +204,9 @@
                                     @foreach (var st in Model.Showtimes.OrderBy(s => s.StartTime))
                                     {
                                         string stStatus, stClass;
-                                        if (st.StartTime > DateTime.Now)
+                                        if (st.StartTime > VietnamTime.Now)
                                         { stStatus = "Sắp chiếu"; stClass = "label-success"; }
-                                        else if (st.StartTime.AddMinutes(Model.Duration) > DateTime.Now)
+                                        else if (st.StartTime.AddMinutes(Model.Duration) > VietnamTime.Now)
                                         { stStatus = "Đang chiếu"; stClass = "label-warning"; }
                                         else
                                         { stStatus = "Đã chiếu"; stClass = "label-default"; }
@@ -415,7 +415,7 @@ else
                     <div class="d-flex flex-wrap gap-3 mt-4 align-items-center">
                         @if (Model.Status == "Now Showing")
                         {
-                            bool hasAvailableShowtimes = Model.Showtimes.Any(s => s.StartTime >= DateTime.Now);
+                            bool hasAvailableShowtimes = Model.Showtimes.Any(s => s.StartTime >= VietnamTime.Now);
                             if (hasAvailableShowtimes)
                             {
                                 <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@Model.MovieId" class="btn btn-primary-custom btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg">

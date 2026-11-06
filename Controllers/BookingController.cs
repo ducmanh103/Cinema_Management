@@ -11,6 +11,7 @@ namespace CinemaManagement.Controllers
 {
     [Authorize]
     [EnableRateLimiting("BookingLimit")]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public class BookingController : Controller
     {
         private readonly IShowtimeService _showtimeService;
@@ -63,7 +64,7 @@ namespace CinemaManagement.Controllers
                         OrderDescription = $"Thanh toan ve {ticket.MovieTitle} - Ghe {ticket.SeatNumber}",
                         Amount = ticket.Price,
                         Name = User.Identity?.Name ?? string.Empty,
-                        CreatedDate = DateTime.Now
+                        CreatedDate = CinemaManagement.Helpers.VietnamTime.Now
                     };
                     var paymentUrl = _vnPayService.CreatePaymentUrl(HttpContext, model);
                     return Redirect(paymentUrl);

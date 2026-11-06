@@ -17,7 +17,8 @@ namespace CinemaManagement.Areas.Admin.Controllers
         // GET: /Admin/Revenue
         public async Task<IActionResult> Index(int? year)
         {
-            int selectedYear = year ?? DateTime.Now.Year;
+            int currentYear = CinemaManagement.Helpers.VietnamTime.Now.Year;
+            int selectedYear = year ?? currentYear;
 
             var monthlyRevenue = await _context.Payments
                 .AsNoTracking()
@@ -92,8 +93,8 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 .Distinct()
                 .OrderByDescending(y => y)
                 .ToListAsync();
-            if (!availableYears.Contains(DateTime.Now.Year))
-                availableYears.Insert(0, DateTime.Now.Year);
+            if (!availableYears.Contains(currentYear))
+                availableYears.Insert(0, currentYear);
             ViewBag.AvailableYears = availableYears;
             ViewBag.SelectedYear = selectedYear;
 

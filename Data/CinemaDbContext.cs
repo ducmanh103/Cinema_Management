@@ -1,9 +1,13 @@
-using Microsoft.EntityFrameworkCore;
+using System;
+using CinemaManagement.Helpers;
 using CinemaManagement.Models;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CinemaManagement.Data
 {
-    public class CinemaDbContext : DbContext
+    public class CinemaDbContext : DbContext, IDataProtectionKeyContext
     {
         public CinemaDbContext(DbContextOptions<CinemaDbContext> options)
             : base(options)
@@ -22,6 +26,45 @@ namespace CinemaManagement.Data
         public DbSet<Showtime> Showtimes { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+        public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            base.ConfigureConventions(configurationBuilder);
+
+            // Mọi cột DateTime lưu xuống PostgreSQL đều ở dạng TIMESTAMPTZ (UTC, Kind=Utc)
+            // và tự động quy đổi về giờ Việt Nam (UTC+7) khi đọc lên ứng dụng.
+            configurationBuilder
+                .Properties<DateTime>()
+                .HaveColumnType(" timestamp with time zone")
+                .HaveConversion<VietnamUtcDateTimeConverter>();
+
+            configurationBuilder
+                .Properties<DateTime?>()
+                .HaveColumnType("timestamp with time zone")
+                .HaveConversion<NullableVietnamUtcDateTimeConverter>();
+        }
+
+        private sealed class VietnamUtcDateTimeConverter : ValueConverter<DateTime, DateTime>
+        {
+            public VietnamUtcDateTimeConverter()
+                : base(
+                    v => VietnamTime.EnsureUtc(v),
+                    v => VietnamTime.ToVietnamTime(v))
+            {
+            }
+        }
+
+        private sealed class NullableVietnamUtcDateTimeConverter : ValueConverter<DateTime?, DateTime?>
+        {
+            public NullableVietnamUtcDateTimeConverter()
+                : base(
+                    v => v.HasValue ? VietnamTime.EnsureUtc(v.Value) : null,
+                    v => v.HasValue ? VietnamTime.ToVietnamTime(v.Value) : null)
+            {
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,6 +90,17 @@ namespace CinemaManagement.Data
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // ==================== PasswordResetToken → User (N-1) ====================
+            modelBuilder.Entity<PasswordResetToken>()
+                .HasOne(t => t.User)
+                .WithMany(u => u.PasswordResetTokens)
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PasswordResetToken>()
+                .HasIndex(t => new { t.UserId, t.TokenHash })
+                .HasDatabaseName("IX_PasswordResetToken_User_Hash");
 
             // ==================== Room → Theater (N-1) ====================
             modelBuilder.Entity<Room>()
@@ -98,7 +152,6 @@ namespace CinemaManagement.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ==================== Unique: ShowtimeId + SeatId ====================
-            // Filtered Unique Index cho PostgreSQL: chỉ áp dụng khi Status = 'Booked' hoặc 'Pending'
             modelBuilder.Entity<Ticket>()
                 .HasIndex(t => new { t.ShowtimeId, t.SeatId })
                 .IsUnique()
@@ -112,7 +165,7 @@ namespace CinemaManagement.Data
                 .HasForeignKey<Payment>(p => p.TicketId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ==================== Performance Indexes ====================
+            // ==================== Performance & Security Indexes ====================
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Username)
                 .IsUnique()
@@ -121,6 +174,12 @@ namespace CinemaManagement.Data
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .HasDatabaseName("IX_User_Email");
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.GoogleSubjectId)
+                .IsUnique()
+                .HasFilter("\"GoogleSubjectId\" IS NOT NULL")
+                .HasDatabaseName("UX_User_GoogleSubjectId");
 
             modelBuilder.Entity<Showtime>()
                 .HasIndex(s => new { s.MovieId, s.StartTime })

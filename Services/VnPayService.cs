@@ -1,3 +1,4 @@
+using CinemaManagement.Helpers;
 using CinemaManagement.Models.ViewModels;
 
 namespace CinemaManagement.Services
@@ -17,21 +18,24 @@ namespace CinemaManagement.Services
             var command    = _config["VnPay:Command"]    ?? "pay";
             var currCode   = _config["VnPay:CurrCode"]   ?? "VND";
             var locale     = _config["VnPay:Locale"]     ?? "vn";
-            var bankCode   = _config["VnPay:BankCode"]   ?? string.Empty; // "VNPAYQR" → vào thẳng QR
+            var bankCode   = _config["VnPay:BankCode"]   ?? string.Empty;
 
-            // Nếu ReturnUrl không cấu hình thì tự sinh dựa trên request hiện tại
             var returnUrl  = _config["VnPay:ReturnUrl"];
             if (string.IsNullOrWhiteSpace(returnUrl))
                 returnUrl = $"{context.Request.Scheme}://{context.Request.Host}/Payment/VnpayReturn";
+
+            // VNPay yêu cầu thời gian theo múi giờ GMT+7 (yyyyMMddHHmmss)
+            var vnNow = VietnamTime.Now;
+            var createDate = model.CreatedDate.ToVietnamTime();
+            if (createDate == default) createDate = vnNow;
 
             var pay = new VnPayLibrary();
 
             pay.AddRequestData("vnp_Version",   version);
             pay.AddRequestData("vnp_Command",   command);
             pay.AddRequestData("vnp_TmnCode",   tmnCode);
-            // VNPay yêu cầu Amount nhân 100 và làm tròn về long
             pay.AddRequestData("vnp_Amount",    ((long)(model.Amount * 100M)).ToString());
-            pay.AddRequestData("vnp_CreateDate",model.CreatedDate.ToString("yyyyMMddHHmmss"));
+            pay.AddRequestData("vnp_CreateDate", createDate.ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode",  currCode);
             pay.AddRequestData("vnp_IpAddr",    VnPayLibrary.GetIpAddress(context));
             pay.AddRequestData("vnp_Locale",    locale);
@@ -40,15 +44,13 @@ namespace CinemaManagement.Services
                                                     : model.OrderDescription);
             pay.AddRequestData("vnp_OrderType", model.OrderType);
             pay.AddRequestData("vnp_ReturnUrl", returnUrl);
-            // TxnRef phải duy nhất. Dùng paymentId_timestamp với delimiter rõ ràng.
-            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+
+            string timestamp = vnNow.ToString("yyyyMMddHHmmss");
             pay.AddRequestData("vnp_TxnRef", $"{model.OrderId}_{timestamp}");
 
-            // Thêm thời gian hết hạn thanh toán (15 phút)
-            var expireDate = model.CreatedDate.AddMinutes(15);
+            var expireDate = createDate.AddMinutes(15);
             pay.AddRequestData("vnp_ExpireDate", expireDate.ToString("yyyyMMddHHmmss"));
 
-            // Nếu cấu hình BankCode (ví dụ VNPAYQR) → vào thẳng trang QR
             if (!string.IsNullOrWhiteSpace(bankCode))
                 pay.AddRequestData("vnp_BankCode", bankCode);
 
@@ -74,25 +76,31 @@ namespace CinemaManagement.Services
             var amountRaw       = pay.GetResponseData("vnp_Amount");
             var vnpSecureHash   = collections.FirstOrDefault(p => p.Key == "vnp_SecureHash").Value.ToString();
 
-            // TxnRef dạng "{paymentId}_{timestamp}". Lấy phần trước underscore.
             string orderId = txnRef;
             if (txnRef.Contains('_'))
                 orderId = txnRef.Split('_')[0];
             else if (txnRef.Length > 6 && txnRef.All(char.IsDigit))
-                orderId = txnRef.Substring(0, txnRef.Length - 6); // fallback cho format cũ
+                orderId = txnRef.Substring(0, txnRef.Length - 6);
 
             decimal amount = 0;
             if (long.TryParse(amountRaw, out var raw)) amount = raw / 100M;
 
-            bool isValid = pay.ValidateSignature(vnpSecureHash, hashSecret);
+            bool isValid = !string.IsNullOrEmpty(vnpSecureHash) && pay.ValidateSignature(vnpSecureHash, hashSecret);
             if (!isValid)
             {
-                return new VnPaymentResponseModel { Success = false, OrderId = orderId };
+                return new VnPaymentResponseModel
+                {
+                    IsValidSignature  = false,
+                    Success           = false,
+                    OrderId           = orderId,
+                    Amount            = amount,
+                    VnPayResponseCode = responseCode
+                };
             }
 
-            // ResponseCode "00" = thành công
             return new VnPaymentResponseModel
             {
+                IsValidSignature  = true,
                 Success           = responseCode == "00",
                 PaymentMethod     = "VnPay",
                 OrderDescription  = orderInfo,

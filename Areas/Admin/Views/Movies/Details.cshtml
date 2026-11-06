@@ -114,8 +114,8 @@
                                 @foreach (var st in Model.Showtimes.OrderBy(s => s.StartTime))
                                 {
                                     string stStatus, stClass;
-                                    if (st.StartTime > DateTime.Now) { stStatus = "Sắp chiếu"; stClass = "label-success"; }
-                                    else if (st.StartTime.AddMinutes(Model.Duration) > DateTime.Now) { stStatus = "Đang chiếu"; stClass = "label-warning"; }
+                                    if (st.StartTime > VietnamTime.Now) { stStatus = "Sắp chiếu"; stClass = "label-success"; }
+                                    else if (st.StartTime.AddMinutes(Model.Duration) > VietnamTime.Now) { stStatus = "Đang chiếu"; stClass = "label-warning"; }
                                     else { stStatus = "Đã chiếu"; stClass = "label-default"; }
                                     int bookedCount = st.Tickets.Count(t => t.Status == "Booked");
                                     <tr>
