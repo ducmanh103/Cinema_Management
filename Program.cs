@@ -350,10 +350,11 @@ try
     var app = builder.Build();
     // ================================
 
-    // Cấu hình ForwardedHeaders tin cậy Reverse Proxy Nginx trong mạng Docker
+    // Cấu hình ForwardedHeaders tin cậy Reverse Proxy Nginx + CDN trong mạng Docker
     var forwardedOptions = new ForwardedHeadersOptions
     {
-        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+        ForwardLimit = null
     };
     forwardedOptions.KnownNetworks.Clear();
     forwardedOptions.KnownProxies.Clear();
