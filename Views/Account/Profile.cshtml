@@ -1,0 +1,181 @@
+@model CinemaManagement.Models.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    Layout = "_Layout";
+    var avatarChar = (!string.IsNullOrWhiteSpace(Model.FullName) ? Model.FullName : Model.Username)[0].ToString().ToUpper();
+}
+
+<div class="row g-4 mt-2">
+    <!-- Cột trái: Thẻ thông tin tổng quan & Thống kê -->
+    <div class="col-lg-4">
+        <div class="card h-100" style="background:#1e1e1e; border:1px solid #333; border-radius:16px;">
+            <div class="card-body p-4 text-center d-flex flex-column justify-content-between">
+                <div>
+                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center shadow"
+                         style="width:88px; height:88px; border-radius:50%; background:linear-gradient(135deg, #e50914, #99060d); color:#fff; font-size:2.2rem; font-weight:800;">
+                        @avatarChar
+                    </div>
+
+                    <h4 class="fw-bold text-white mb-1">@(string.IsNullOrWhiteSpace(Model.FullName) ? Model.Username : Model.FullName)</h4>
+                    <p class="text-muted small mb-3">@@@Model.Username</p>
+
+                    <div class="d-flex justify-content-center gap-2 flex-wrap mb-4">
+                        <span class="badge rounded-pill px-3 py-2" style="background:rgba(229,9,20,0.15); color:#ff4d57; border:1px solid rgba(229,9,20,0.3);">
+                            <i class="bi bi-person-badge me-1"></i> @Model.RoleName
+                        </span>
+                        @if (Model.IsGoogleAccount && !Model.HasPassword)
+                        {
+                            <span class="badge rounded-pill px-3 py-2" style="background:rgba(66,133,244,0.15); color:#6ea8fe; border:1px solid rgba(66,133,244,0.3);">
+                                <i class="bi bi-google me-1"></i> Đăng nhập Google
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge rounded-pill px-3 py-2" style="background:rgba(40,167,69,0.15); color:#75b798; border:1px solid rgba(40,167,69,0.3);">
+                                <i class="bi bi-shield-check me-1"></i> Tài khoản CinemaHub
+                            </span>
+                        }
+                    </div>
+
+                    <div class="row g-2 text-center mb-4">
+                        <div class="col-6">
+                            <div class="p-3 rounded-3" style="background:#151515; border:1px solid #2b2b2b;">
+                                <div class="text-muted small mb-1">Vé đã đặt</div>
+                                <div class="fs-4 fw-bold text-white">@Model.TotalTickets</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3" style="background:#151515; border:1px solid #2b2b2b;">
+                                <div class="text-muted small mb-1">Tổng chi tiêu</div>
+                                <div class="fs-5 fw-bold" style="color:#e50914;">@Model.TotalSpent.ToString("N0") đ</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a asp-controller="Booking" asp-action="MyTickets" class="btn btn-outline-light py-2 rounded-3">
+                        <i class="bi bi-ticket-perforated me-2 text-danger"></i> Xem lịch sử đặt vé
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Cập nhật thông tin & Bảo mật -->
+    <div class="col-lg-8">
+        <!-- Form cập nhật thông tin cá nhân -->
+        <div class="card mb-4" style="background:#1e1e1e; border:1px solid #333; border-radius:16px;">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-white mb-3">
+                    <i class="bi bi-person-lines-fill text-danger me-2"></i> Thông tin cá nhân
+                </h5>
+                <hr style="border-color:#333;" />
+
+                <form asp-controller="Account" asp-action="UpdateProfile" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Tên đăng nhập</label>
+                            <input type="text" class="form-control" value="@Model.Username"
+                                   style="background:#161616; border-color:#333; color:#888;" disabled />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-white small">Họ và tên hiển thị</label>
+                            <input type="text" name="FullName" class="form-control" value="@Model.FullName"
+                                   style="background:#2a2a2a; border-color:#444; color:#fff;"
+                                   placeholder="Nhập họ và tên của bạn" required maxlength="100" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-white small">Địa chỉ Email</label>
+                            @if (Model.IsGoogleAccount)
+                            {
+                                <input type="email" class="form-control" value="@Model.Email"
+                                       style="background:#161616; border-color:#333; color:#888;" disabled />
+                                <input type="hidden" name="Email" value="@Model.Email" />
+                                <div class="form-text text-muted small mt-1">
+                                    <i class="bi bi-google text-danger me-1"></i> Email này được đồng bộ và bảo vệ bởi tài khoản Google của bạn.
+                                </div>
+                            }
+                            else
+                            {
+                                <input type="email" name="Email" class="form-control" value="@Model.Email"
+                                       style="background:#2a2a2a; border-color:#444; color:#fff;"
+                                       placeholder="example@gmail.com" required maxlength="150" />
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-end">
+                        <button type="submit" class="btn btn-danger fw-bold px-4 py-2">
+                            <i class="bi bi-save me-1"></i> Lưu thay đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Phần Bảo mật / Đổi mật khẩu -->
+        <div class="card" style="background:#1e1e1e; border:1px solid #333; border-radius:16px;">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-white mb-3">
+                    <i class="bi bi-shield-lock-fill text-danger me-2"></i> Bảo mật & Mật khẩu
+                </h5>
+                <hr style="border-color:#333;" />
+
+                @if (Model.HasPassword)
+                {
+                    <form asp-controller="Account" asp-action="ChangePassword" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label text-white small">Mật khẩu hiện tại</label>
+                                <input type="password" name="CurrentPassword" class="form-control"
+                                       style="background:#2a2a2a; border-color:#444; color:#fff;"
+                                       placeholder="Nhập mật khẩu hiện tại" required />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-white small">Mật khẩu mới</label>
+                                <input type="password" name="NewPassword" class="form-control"
+                                       style="background:#2a2a2a; border-color:#444; color:#fff;"
+                                       placeholder="Tối thiểu 8 ký tự (A-Z, a-z, 0-9)" required minlength="8" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-white small">Xác nhận mật khẩu mới</label>
+                                <input type="password" name="ConfirmPassword" class="form-control"
+                                       style="background:#2a2a2a; border-color:#444; color:#fff;"
+                                       placeholder="Nhập lại mật khẩu mới" required minlength="8" />
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-end">
+                            <button type="submit" class="btn btn-outline-danger fw-bold px-4 py-2">
+                                <i class="bi bi-key me-1"></i> Cập nhật mật khẩu
+                            </button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="p-3 rounded-3 d-flex align-items-start gap-3" style="background:rgba(66,133,244,0.08); border:1px solid rgba(66,133,244,0.25);">
+                        <i class="bi bi-google fs-3 text-info mt-1"></i>
+                        <div>
+                            <h6 class="fw-bold text-white mb-1">Tài khoản đăng nhập bằng Google</h6>
+                            <p class="text-muted small mb-0">
+                                Bạn đang đăng nhập trực tiếp thông qua xác thực <strong>Google OAuth 2.0</strong> (@Model.Email) mà không tạo mật khẩu nội bộ trên CinemaHub.
+                                Vì lý do bảo mật, tài khoản này không sử dụng mật khẩu riêng và không gửi email khôi phục mật khẩu.
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

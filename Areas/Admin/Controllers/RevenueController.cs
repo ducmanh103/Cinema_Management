@@ -20,12 +20,19 @@ namespace CinemaManagement.Areas.Admin.Controllers
             int currentYear = CinemaManagement.Helpers.VietnamTime.Now.Year;
             int selectedYear = year ?? currentYear;
 
-            var monthlyRevenue = await _context.Payments
+            var yearStart = new DateTime(selectedYear, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            var yearEnd = yearStart.AddYears(1);
+
+            var yearPayments = await _context.Payments
                 .AsNoTracking()
-                .Where(p => p.Status == "Completed" && p.PaidAt.Year == selectedYear)
+                .Where(p => p.Status == "Completed" && p.PaidAt >= yearStart && p.PaidAt < yearEnd)
+                .Select(p => new { p.PaidAt, p.Amount })
+                .ToListAsync();
+
+            var monthlyRevenue = yearPayments
                 .GroupBy(p => p.PaidAt.Month)
                 .Select(g => new { Month = g.Key, Total = g.Sum(p => p.Amount), Count = g.Count() })
-                .ToListAsync();
+                .ToList();
 
             ViewBag.TotalRevenue = await _context.Payments
                 .AsNoTracking()
@@ -36,7 +43,7 @@ namespace CinemaManagement.Areas.Admin.Controllers
 
             ViewBag.YearTickets = await _context.Tickets
                 .AsNoTracking()
-                .Where(t => t.Status == "Booked" && t.BookingTime.Year == selectedYear)
+                .Where(t => t.Status == "Booked" && t.BookingTime >= yearStart && t.BookingTime < yearEnd)
                 .CountAsync();
 
             ViewBag.TotalPaidTickets = await _context.Payments
@@ -87,14 +94,23 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 .ToListAsync();
             ViewBag.PaymentMethods = byMethod;
 
-            var availableYears = await _context.Payments
+            var minPaidAt = await _context.Payments
                 .AsNoTracking()
-                .Select(p => p.PaidAt.Year)
-                .Distinct()
-                .OrderByDescending(y => y)
-                .ToListAsync();
-            if (!availableYears.Contains(currentYear))
-                availableYears.Insert(0, currentYear);
+                .MinAsync(p => (DateTime?)p.PaidAt);
+            var maxPaidAt = await _context.Payments
+                .AsNoTracking()
+                .MaxAsync(p => (DateTime?)p.PaidAt);
+
+            var availableYears = new List<int> { currentYear };
+            if (minPaidAt.HasValue && maxPaidAt.HasValue)
+            {
+                for (int y = maxPaidAt.Value.Year; y >= minPaidAt.Value.Year; y--)
+                {
+                    if (!availableYears.Contains(y))
+                        availableYears.Add(y);
+                }
+            }
+            availableYears = availableYears.OrderByDescending(y => y).ToList();
             ViewBag.AvailableYears = availableYears;
             ViewBag.SelectedYear = selectedYear;
 

@@ -66,11 +66,15 @@ namespace CinemaManagement.Areas.Admin.Controllers
             if (movieForDuration != null)
             {
                 var endTime = startTime.AddMinutes(movieForDuration.Duration);
-                bool overlapping = await _context.Showtimes
-                    .Include(s => s.Movie)
-                    .AnyAsync(s => s.RoomId == roomId
-                        && s.StartTime < endTime
-                        && startTime < s.StartTime.AddMinutes(s.Movie.Duration));
+                var windowStart = startTime.AddHours(-6);
+                var candidates = await _context.Showtimes
+                    .AsNoTracking()
+                    .Where(s => s.RoomId == roomId && s.StartTime >= windowStart && s.StartTime < endTime)
+                    .Select(s => new { s.StartTime, Duration = s.Movie.Duration })
+                    .ToListAsync();
+
+                bool overlapping = candidates.Any(s =>
+                    s.StartTime < endTime && startTime < s.StartTime.AddMinutes(s.Duration));
                 if (overlapping)
                 {
                     TempData["Error"] = "Phòng chiếu đã có suất chiếu trùng thời gian.";
@@ -127,12 +131,18 @@ namespace CinemaManagement.Areas.Admin.Controllers
             if (movieForDuration != null)
             {
                 var endTime = startTime.AddMinutes(movieForDuration.Duration);
-                bool overlapping = await _context.Showtimes
-                    .Include(s => s.Movie)
-                    .AnyAsync(s => s.RoomId == roomId
+                var windowStart = startTime.AddHours(-6);
+                var candidates = await _context.Showtimes
+                    .AsNoTracking()
+                    .Where(s => s.RoomId == roomId
                         && s.ShowtimeId != showtimeId
-                        && s.StartTime < endTime
-                        && startTime < s.StartTime.AddMinutes(s.Movie.Duration));
+                        && s.StartTime >= windowStart
+                        && s.StartTime < endTime)
+                    .Select(s => new { s.StartTime, Duration = s.Movie.Duration })
+                    .ToListAsync();
+
+                bool overlapping = candidates.Any(s =>
+                    s.StartTime < endTime && startTime < s.StartTime.AddMinutes(s.Duration));
                 if (overlapping)
                 {
                     TempData["Error"] = "Phòng chiếu đã có suất chiếu trùng thời gian.";

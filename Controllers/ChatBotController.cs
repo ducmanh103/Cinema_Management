@@ -315,19 +315,27 @@ namespace CinemaManagement.Controllers
                     }
                 }
 
-                if (!string.IsNullOrEmpty(apiKey))
+                if (!string.IsNullOrWhiteSpace(apiKey)
+                    && !apiKey.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase))
                 {
                     // Chế độ Online: Sử dụng Gemini API
-                    var aiResponse = await CallGeminiApiAsync(request.Message, request.History, contextData, apiKey, userFullName, userTicketsContext, isLoggedIn);
-                    if (!string.IsNullOrEmpty(aiResponse))
+                    try
                     {
-                        return Ok(new ChatResponse { 
-                            Response = aiResponse, 
-                            Mode = "online",
-                            Movies = movies,
-                            Showtimes = showtimes,
-                            UserBookings = userBookings
-                        });
+                        var aiResponse = await CallGeminiApiAsync(request.Message, request.History, contextData, apiKey.Trim(), userFullName, userTicketsContext, isLoggedIn);
+                        if (!string.IsNullOrEmpty(aiResponse))
+                        {
+                            return Ok(new ChatResponse { 
+                                Response = aiResponse, 
+                                Mode = "online",
+                                Movies = movies,
+                                Showtimes = showtimes,
+                                UserBookings = userBookings
+                            });
+                        }
+                    }
+                    catch (Exception geminiEx)
+                    {
+                        Console.WriteLine($"Gemini API Fallback: {geminiEx.Message}");
                     }
                 }
 
@@ -625,8 +633,9 @@ namespace CinemaManagement.Controllers
                     return "Hôm nay rạp chưa lên lịch chiếu phim nào, hoặc các suất chiếu hôm nay đã kết thúc. Bạn vui lòng xem lịch chiếu ngày mai trên website nhé!";
                 }
 
+                var todayVn = CinemaManagement.Helpers.VietnamTime.Today;
                 var sb = new StringBuilder();
-                sb.AppendLine(isLoggedIn ? $"Chào **{userFullName}**! Dưới đây là lịch chiếu hôm nay ({DateTime.Today:dd/MM/yyyy}):" : $"**Lịch chiếu hôm nay ({DateTime.Today:dd/MM/yyyy}):**\n");
+                sb.AppendLine(isLoggedIn ? $"Chào **{userFullName}**! Dưới đây là lịch chiếu hôm nay ({todayVn:dd/MM/yyyy}):" : $"**Lịch chiếu hôm nay ({todayVn:dd/MM/yyyy}):**\n");
                 sb.AppendLine("Chọn suất chiếu phù hợp bên dưới để vào trang đặt ghế ngồi:");
                 return sb.ToString();
             }

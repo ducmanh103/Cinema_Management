@@ -17,9 +17,9 @@
                     @Html.AntiForgeryToken()
 
                     <div class="mb-3">
-                        <label asp-for="Username" class="form-label">Tên đăng nhập</label>
+                        <label asp-for="Username" class="form-label">Tên đăng nhập hoặc Email</label>
                         <input asp-for="Username" class="form-control" style="background:#2a2a2a; border-color:#444; color:#fff"
-                               placeholder="Nhập tên đăng nhập" id="username-input" />
+                               placeholder="Nhập tên đăng nhập hoặc email" id="username-input" />
                         <span asp-validation-for="Username" class="text-danger small"></span>
                     </div>
 

@@ -32,7 +32,7 @@ namespace CinemaManagement.Controllers
             // Nếu filter theo phim (từ trang Movies)
             if (movieId.HasValue)
             {
-                var selectedDate2     = date?.Date ?? DateTime.Today;
+                var selectedDate2     = date?.Date ?? CinemaManagement.Helpers.VietnamTime.Today;
                 var selectedTheaterId2 = theaterId;
 
                 var showtimes = await _showtimeService.GetShowtimesByMovieAndFiltersAsync(
@@ -61,7 +61,7 @@ namespace CinemaManagement.Controllers
             }
 
             // Chế độ lịch chiếu theo ngày + rạp
-            var selectedDate     = date?.Date ?? DateTime.Today;
+            var selectedDate     = date?.Date ?? CinemaManagement.Helpers.VietnamTime.Today;
             var selectedTheaterId = theaterId;
 
             ViewBag.SelectedDate      = selectedDate;

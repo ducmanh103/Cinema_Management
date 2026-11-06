@@ -23,7 +23,7 @@
         );
 
     // 14 ngày kể từ hôm nay
-    var today    = DateTime.Today;
+    var today    = CinemaManagement.Helpers.VietnamTime.Today;
     var dateRange = Enumerable.Range(0, 14).Select(i => today.AddDays(i)).ToList();
 
     var theaters = ViewBag.Theaters as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();

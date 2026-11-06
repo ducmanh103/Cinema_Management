@@ -13,10 +13,12 @@ using CinemaManagement.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 
 namespace CinemaManagement.Controllers
@@ -33,19 +35,22 @@ namespace CinemaManagement.Controllers
         private readonly IEmailService _emailService;
         private readonly ISecurityAlertService _securityAlert;
         private readonly IConfiguration _config;
+        private readonly IMemoryCache _cache;
 
         public AccountController(
             CinemaDbContext context,
             ILoginAttemptService loginAttemptService,
             IEmailService emailService,
             ISecurityAlertService securityAlert,
-            IConfiguration config)
+            IConfiguration config,
+            IMemoryCache cache)
         {
             _context = context;
             _loginAttemptService = loginAttemptService;
             _emailService = emailService;
             _securityAlert = securityAlert;
             _config = config;
+            _cache = cache;
         }
 
         // GET: /Account/Login
@@ -82,12 +87,14 @@ namespace CinemaManagement.Controllers
             var user = await _context.Users
                 .AsNoTracking()
                 .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Username.ToLower() == normalizedUsername && u.Status == "Active");
+                .FirstOrDefaultAsync(u =>
+                    (u.Username.ToLower() == normalizedUsername || (u.Email != null && u.Email.ToLower() == normalizedUsername))
+                    && u.Status == "Active");
 
-            // Jika tài khoản tạo bằng Google và chưa đặt mật khẩu nội bộ
+            // Nếu tài khoản tạo bằng Google (không đăng ký mật khẩu riêng)
             if (user != null && string.IsNullOrEmpty(user.PasswordHash))
             {
-                ModelState.AddModelError("", "Tài khoản này đăng nhập bằng Google. Vui lòng bấm 'Đăng nhập với Google' hoặc chọn 'Quên mật khẩu' để thiết lập mật khẩu.");
+                ModelState.AddModelError("", "Tài khoản này đăng nhập bằng Google (không sử dụng mật khẩu riêng). Vui lòng bấm 'Đăng nhập với Google' bên dưới.");
                 return View(model);
             }
 
@@ -309,11 +316,19 @@ namespace CinemaManagement.Controllers
 
             if (user != null)
             {
-                var windowStart = VietnamTime.Now.AddMinutes(-15);
-                int recentRequests = await _context.PasswordResetTokens
-                    .CountAsync(t => t.UserId == user.UserId && t.CreatedAt >= windowStart);
+                // Nếu tài khoản đăng nhập bằng Google (không đăng ký mật khẩu riêng) -> Không gửi email lấy lại mật khẩu
+                if (string.IsNullOrEmpty(user.PasswordHash))
+                {
+                    TempData["Error"] = "Email này thuộc tài khoản đăng nhập bằng Google (không tạo tài khoản mật khẩu). Vui lòng sử dụng nút 'Đăng nhập với Google'!";
+                    return RedirectToAction(nameof(Login));
+                }
 
-                if (recentRequests < 3)
+                var nowUtc = VietnamTime.UtcNow;
+                var windowStart = nowUtc.AddMinutes(-15);
+                int recentRequests = await _context.PasswordResetTokens
+                    .CountAsync(t => t.UserId == user.UserId && t.UsedAt == null && t.CreatedAt >= windowStart);
+
+                if (recentRequests < 5)
                 {
                     var rawBytes = RandomNumberGenerator.GetBytes(32);
                     var rawToken = WebEncoders.Base64UrlEncode(rawBytes);
@@ -323,8 +338,8 @@ namespace CinemaManagement.Controllers
                     {
                         UserId = user.UserId,
                         TokenHash = tokenHash,
-                        CreatedAt = VietnamTime.UtcNow,
-                        ExpiresAt = VietnamTime.UtcNow.AddMinutes(15),
+                        CreatedAt = nowUtc,
+                        ExpiresAt = nowUtc.AddMinutes(15),
                         RequestIp = ip
                     };
 
@@ -349,7 +364,7 @@ namespace CinemaManagement.Controllers
 
         // GET: /Account/ResetPassword
         [HttpGet]
-        public IActionResult ResetPassword(string? email, string? token)
+        public async Task<IActionResult> ResetPassword(string? email, string? token)
         {
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(token))
             {
@@ -357,7 +372,45 @@ namespace CinemaManagement.Controllers
                 return RedirectToAction(nameof(Login));
             }
 
-            return View(new ResetPasswordViewModel { Email = email, Token = token });
+            var emailLower = email.Trim().ToLowerInvariant();
+            var user = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == emailLower && u.Status == "Active");
+
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
+            {
+                TempData["Error"] = user != null && string.IsNullOrEmpty(user.PasswordHash)
+                    ? "Tài khoản này đăng nhập bằng Google (không sử dụng mật khẩu riêng). Vui lòng bấm 'Đăng nhập với Google'."
+                    : "Liên kết đặt lại mật khẩu không hợp lệ.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            var tokenHash = ComputeSha256Hex(token.Trim());
+            var tokenRecord = await _context.PasswordResetTokens
+                .AsNoTracking()
+                .Where(t => t.UserId == user.UserId && t.TokenHash == tokenHash)
+                .OrderByDescending(t => t.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (tokenRecord == null)
+            {
+                TempData["Error"] = "Liên kết đặt lại mật khẩu không hợp lệ.";
+                return RedirectToAction(nameof(ForgotPassword));
+            }
+
+            if (tokenRecord.UsedAt != null)
+            {
+                TempData["Error"] = "Liên kết đặt lại mật khẩu này đã được sử dụng trước đó. Vui lòng đăng nhập bằng mật khẩu mới.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            if (tokenRecord.ExpiresAt <= VietnamTime.Now)
+            {
+                TempData["Error"] = "Liên kết đặt lại mật khẩu đã hết hạn (quá 15 phút). Vui lòng yêu cầu gửi liên kết mới.";
+                return RedirectToAction(nameof(ForgotPassword));
+            }
+
+            return View(new ResetPasswordViewModel { Email = email.Trim(), Token = token.Trim() });
         }
 
         // POST: /Account/ResetPassword
@@ -372,21 +425,37 @@ namespace CinemaManagement.Controllers
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == emailLower && u.Status == "Active");
 
-            if (user == null)
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash))
             {
-                TempData["Error"] = "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.";
-                return RedirectToAction(nameof(ForgotPassword));
+                TempData["Error"] = user != null && string.IsNullOrEmpty(user.PasswordHash)
+                    ? "Tài khoản này đăng nhập bằng Google (không sử dụng mật khẩu riêng). Vui lòng bấm 'Đăng nhập với Google'."
+                    : "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.";
+                return RedirectToAction(nameof(Login));
             }
 
             var tokenHash = ComputeSha256Hex(model.Token.Trim());
-            var now = VietnamTime.Now;
+            var nowUtc = VietnamTime.UtcNow;
+            var nowVn = VietnamTime.Now;
 
-            var validToken = await _context.PasswordResetTokens
-                .Where(t => t.UserId == user.UserId && t.TokenHash == tokenHash && t.UsedAt == null && t.ExpiresAt > now)
+            var tokenRecord = await _context.PasswordResetTokens
+                .Where(t => t.UserId == user.UserId && t.TokenHash == tokenHash)
                 .OrderByDescending(t => t.CreatedAt)
                 .FirstOrDefaultAsync();
 
-            if (validToken == null)
+            if (tokenRecord != null && tokenRecord.UsedAt != null)
+            {
+                // Xử lý chống bấm đúp (double-submit trên điện thoại trong vòng 15 giây)
+                if (tokenRecord.UsedAt.Value >= nowVn.AddSeconds(-15))
+                {
+                    TempData["Success"] = "Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.";
+                    return RedirectToAction(nameof(Login));
+                }
+
+                TempData["Error"] = "Liên kết đặt lại mật khẩu này đã được sử dụng trước đó. Vui lòng đăng nhập bằng mật khẩu mới.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            if (tokenRecord == null || tokenRecord.ExpiresAt <= nowVn)
             {
                 _securityAlert.EnqueueAlert(new SecurityAlert(
                     SecurityAlertLevel.Medium,
@@ -404,9 +473,26 @@ namespace CinemaManagement.Controllers
             // Cập nhật mật khẩu + xoay SecurityStamp để thu hồi mọi phiên đăng nhập cũ
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
             user.SecurityStamp = Guid.NewGuid().ToString("N");
-            validToken.UsedAt = VietnamTime.UtcNow;
+            tokenRecord.UsedAt = nowUtc;
+
+            // Vô hiệu hóa các token chưa dùng khác của cùng user để tránh bấm nhầm link cũ trong email
+            var otherUnusedTokens = await _context.PasswordResetTokens
+                .Where(t => t.UserId == user.UserId && t.Id != tokenRecord.Id && t.UsedAt == null)
+                .ToListAsync();
+            foreach (var oldToken in otherUnusedTokens)
+            {
+                oldToken.UsedAt = nowUtc;
+            }
 
             await _context.SaveChangesAsync();
+            _cache.Remove($"auth_stamp_{user.UserId}");
+
+            // Mở khóa nếu tài khoản đang bị tạm khóa do nhập sai mật khẩu trước đó
+            _loginAttemptService.ResetAttempts($"account_{user.Username.ToLowerInvariant()}");
+            if (!string.IsNullOrEmpty(user.Email))
+            {
+                _loginAttemptService.ResetAttempts($"account_{user.Email.ToLowerInvariant()}");
+            }
 
             _securityAlert.EnqueueAlert(new SecurityAlert(
                 SecurityAlertLevel.Info,
@@ -419,6 +505,141 @@ namespace CinemaManagement.Controllers
 
             TempData["Success"] = "Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.";
             return RedirectToAction(nameof(Login));
+        }
+
+        // GET: /Account/Profile
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+                return RedirectToAction(nameof(Login));
+
+            var user = await _context.Users
+                .AsNoTracking()
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+                return RedirectToAction(nameof(Login));
+
+            var ticketStats = await _context.Tickets
+                .AsNoTracking()
+                .Where(t => t.UserId == userId && t.Status == "Booked")
+                .Select(t => t.Showtime.Price)
+                .ToListAsync();
+
+            var vm = new ProfileViewModel
+            {
+                UserId = user.UserId,
+                Username = user.Username,
+                FullName = user.FullName,
+                Email = user.Email,
+                RoleName = user.Role.RoleName,
+                IsGoogleAccount = !string.IsNullOrEmpty(user.GoogleSubjectId),
+                HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
+                TotalTickets = ticketStats.Count,
+                TotalSpent = ticketStats.Sum()
+            };
+
+            return View(vm);
+        }
+
+        // POST: /Account/UpdateProfile
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile(UpdateProfileViewModel model)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+                return RedirectToAction(nameof(Login));
+
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+                return RedirectToAction(nameof(Login));
+
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Vui lòng kiểm tra lại thông tin họ tên hoặc email.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            user.FullName = model.FullName.Trim();
+
+            // Chỉ cho phép đổi Email nếu không phải tài khoản Google liên kết
+            if (string.IsNullOrEmpty(user.GoogleSubjectId) && !string.IsNullOrWhiteSpace(model.Email))
+            {
+                var newEmail = model.Email.Trim().ToLowerInvariant();
+                if (!string.Equals(user.Email, newEmail, StringComparison.OrdinalIgnoreCase))
+                {
+                    bool emailExists = await _context.Users.AnyAsync(u => u.UserId != userId && u.Email != null && u.Email.ToLower() == newEmail);
+                    if (emailExists)
+                    {
+                        TempData["Error"] = "Địa chỉ email này đã được sử dụng bởi tài khoản khác.";
+                        return RedirectToAction(nameof(Profile));
+                    }
+                    user.Email = newEmail;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            await SignInUserAsync(user, isPersistent: true);
+
+            TempData["Success"] = "Cập nhật thông tin hồ sơ thành công!";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        // POST: /Account/ChangePassword
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+                return RedirectToAction(nameof(Login));
+
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+                return RedirectToAction(nameof(Login));
+
+            if (string.IsNullOrEmpty(user.PasswordHash))
+            {
+                TempData["Error"] = "Tài khoản đăng nhập bằng Google không sử dụng mật khẩu riêng.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var firstError = ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage
+                    ?? "Thông tin mật khẩu không hợp lệ.";
+                TempData["Error"] = firstError;
+                return RedirectToAction(nameof(Profile));
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(model.CurrentPassword, user.PasswordHash))
+            {
+                TempData["Error"] = "Mật khẩu hiện tại không chính xác.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
+            user.SecurityStamp = Guid.NewGuid().ToString("N");
+
+            await _context.SaveChangesAsync();
+            _cache.Remove($"auth_stamp_{user.UserId}");
+            await SignInUserAsync(user, isPersistent: true);
+
+            TempData["Success"] = "Đổi mật khẩu thành công!";
+            return RedirectToAction(nameof(Profile));
         }
 
         // POST: /Account/Logout

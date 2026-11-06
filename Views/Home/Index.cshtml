@@ -504,7 +504,7 @@
                         <select name="date" class="form-select select-custom">
                             @for (int i = 0; i < 14; i++)
                             {
-                                var targetDate = DateTime.Today.AddDays(i);
+                                var targetDate = CinemaManagement.Helpers.VietnamTime.Today.AddDays(i);
                                 var dateValue = targetDate.ToString("yyyy-MM-dd");
                                 var dateText = i == 0 ? "Hôm nay, " + targetDate.ToString("dd/MM") : 
                                                i == 1 ? "Ngày mai, " + targetDate.ToString("dd/MM") :
