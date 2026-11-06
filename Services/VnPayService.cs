@@ -9,16 +9,24 @@ namespace CinemaManagement.Services
 
         public VnPayService(IConfiguration config) => _config = config;
 
+        private string? GetConfigValue(string key, string? envName = null)
+        {
+            var val = _config[key];
+            if (string.IsNullOrWhiteSpace(val) && !string.IsNullOrEmpty(envName))
+                val = Environment.GetEnvironmentVariable(envName);
+            return string.IsNullOrWhiteSpace(val) ? null : val.Trim();
+        }
+
         public string CreatePaymentUrl(HttpContext context, VnPaymentRequestModel model)
         {
-            var tmnCode    = _config["VnPay:TmnCode"]    ?? throw new InvalidOperationException("VnPay:TmnCode chưa cấu hình.");
-            var hashSecret = _config["VnPay:HashSecret"] ?? throw new InvalidOperationException("VnPay:HashSecret chưa cấu hình.");
-            var baseUrl    = _config["VnPay:BaseUrl"]    ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-            var version    = _config["VnPay:Version"]    ?? VnPayLibrary.VERSION;
-            var command    = _config["VnPay:Command"]    ?? "pay";
-            var currCode   = _config["VnPay:CurrCode"]   ?? "VND";
-            var locale     = _config["VnPay:Locale"]     ?? "vn";
-            var bankCode   = _config["VnPay:BankCode"]   ?? string.Empty;
+            var tmnCode    = GetConfigValue("VnPay:TmnCode", "VNPAY_TMN_CODE") ?? throw new InvalidOperationException("VnPay:TmnCode chưa cấu hình.");
+            var hashSecret = GetConfigValue("VnPay:HashSecret", "VNPAY_HASH_SECRET") ?? throw new InvalidOperationException("VnPay:HashSecret chưa cấu hình.");
+            var baseUrl    = GetConfigValue("VnPay:BaseUrl")    ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+            var version    = GetConfigValue("VnPay:Version")    ?? VnPayLibrary.VERSION;
+            var command    = GetConfigValue("VnPay:Command")    ?? "pay";
+            var currCode   = GetConfigValue("VnPay:CurrCode")   ?? "VND";
+            var locale     = GetConfigValue("VnPay:Locale")     ?? "vn";
+            var bankCode   = GetConfigValue("VnPay:BankCode")   ?? string.Empty;
 
             var returnUrl  = _config["VnPay:ReturnUrl"];
             if (string.IsNullOrWhiteSpace(returnUrl))
@@ -59,7 +67,7 @@ namespace CinemaManagement.Services
 
         public VnPaymentResponseModel PaymentExecute(IQueryCollection collections)
         {
-            var hashSecret = _config["VnPay:HashSecret"]
+            var hashSecret = GetConfigValue("VnPay:HashSecret", "VNPAY_HASH_SECRET")
                              ?? throw new InvalidOperationException("VnPay:HashSecret chưa cấu hình.");
 
             var pay = new VnPayLibrary();

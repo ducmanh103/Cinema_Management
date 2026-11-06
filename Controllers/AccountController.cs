@@ -131,8 +131,11 @@ namespace CinemaManagement.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult GoogleLogin(string? returnUrl = null)
         {
-            var clientId = _config["Authentication:Google:ClientId"] ?? Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+            var clientId = _config["Authentication:Google:ClientId"];
             if (string.IsNullOrWhiteSpace(clientId))
+                clientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+
+            if (string.IsNullOrWhiteSpace(clientId) || clientId.StartsWith("unconfigured-", StringComparison.OrdinalIgnoreCase))
             {
                 TempData["Error"] = "Đăng nhập Google chưa được cấu hình (thiếu GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET).";
                 return RedirectToAction(nameof(Login), new { returnUrl });

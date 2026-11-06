@@ -18,13 +18,21 @@ namespace CinemaManagement.Services
             _logger = logger;
         }
 
+        private string? GetConfigValue(string key, string envName)
+        {
+            var val = _config[key];
+            if (string.IsNullOrWhiteSpace(val))
+                val = Environment.GetEnvironmentVariable(envName);
+            return string.IsNullOrWhiteSpace(val) ? null : val.Trim();
+        }
+
         public async Task SendPasswordResetEmailAsync(string toEmail, string fullName, string resetUrl)
         {
-            var smtpHost = _config["Smtp:Host"] ?? Environment.GetEnvironmentVariable("SMTP_HOST");
-            var smtpPortStr = _config["Smtp:Port"] ?? Environment.GetEnvironmentVariable("SMTP_PORT") ?? "587";
-            var smtpUser = _config["Smtp:Username"] ?? Environment.GetEnvironmentVariable("SMTP_USER");
-            var smtpPass = _config["Smtp:Password"] ?? Environment.GetEnvironmentVariable("SMTP_PASS");
-            var fromEmail = _config["Smtp:FromEmail"] ?? Environment.GetEnvironmentVariable("SMTP_FROM") ?? smtpUser ?? "noreply@cinemahub.vn";
+            var smtpHost = GetConfigValue("Smtp:Host", "SMTP_HOST");
+            var smtpPortStr = GetConfigValue("Smtp:Port", "SMTP_PORT") ?? "587";
+            var smtpUser = GetConfigValue("Smtp:Username", "SMTP_USER");
+            var smtpPass = GetConfigValue("Smtp:Password", "SMTP_PASS");
+            var fromEmail = GetConfigValue("Smtp:FromEmail", "SMTP_FROM") ?? smtpUser ?? "noreply@cinemahub.vn";
 
             if (string.IsNullOrWhiteSpace(smtpHost) || string.IsNullOrWhiteSpace(smtpUser) || string.IsNullOrWhiteSpace(smtpPass))
             {

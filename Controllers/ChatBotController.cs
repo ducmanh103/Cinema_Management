@@ -403,8 +403,12 @@ namespace CinemaManagement.Controllers
 
         private async Task<string> CallGeminiApiAsync(string message, List<ChatMessageDto> history, CinemaContextData context, string apiKey, string userFullName, string userTicketsContext, bool isLoggedIn)
         {
-            var modelName = _configuration["Gemini:Model"] ?? "gemini-2.5-flash";
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{modelName}:generateContent";
+            var modelName = _configuration["Gemini:Model"];
+            if (string.IsNullOrWhiteSpace(modelName))
+                modelName = Environment.GetEnvironmentVariable("GEMINI_MODEL");
+            if (string.IsNullOrWhiteSpace(modelName))
+                modelName = "gemini-2.5-flash";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{modelName.Trim()}:generateContent";
 
             // Xây dựng System Instruction chứa ngữ cảnh rạp phim và người dùng
             var systemInstruction = new StringBuilder();

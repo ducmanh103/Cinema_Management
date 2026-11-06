@@ -297,12 +297,19 @@ try
         options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
     });
 
-    var googleClientId = builder.Configuration["Authentication:Google:ClientId"]
-                         ?? Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")
-                         ?? "unconfigured-google-client-id";
-    var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]
-                             ?? Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET")
-                             ?? "unconfigured-google-client-secret";
+    var rawGoogleClientId = builder.Configuration["Authentication:Google:ClientId"];
+    if (string.IsNullOrWhiteSpace(rawGoogleClientId))
+        rawGoogleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+    var googleClientId = string.IsNullOrWhiteSpace(rawGoogleClientId)
+        ? "unconfigured-google-client-id"
+        : rawGoogleClientId.Trim();
+
+    var rawGoogleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    if (string.IsNullOrWhiteSpace(rawGoogleClientSecret))
+        rawGoogleClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
+    var googleClientSecret = string.IsNullOrWhiteSpace(rawGoogleClientSecret)
+        ? "unconfigured-google-client-secret"
+        : rawGoogleClientSecret.Trim();
 
     authBuilder.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
     {

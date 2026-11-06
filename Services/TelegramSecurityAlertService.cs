@@ -136,8 +136,13 @@ namespace CinemaManagement.Services
                 "🚨 [SECURITY ALERT - {Level}] [{Category}] {Title} | IP: {IP} | User: {User} | Path: {Path} | {Details}",
                 alert.Level, alert.Category, alert.Title, alert.IpAddress ?? "N/A", alert.Username ?? "Anonymous", alert.Path ?? "N/A", alert.Details);
 
-            var botToken = _configuration["Telegram:BotToken"] ?? Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN");
-            var chatId = _configuration["Telegram:ChatId"] ?? Environment.GetEnvironmentVariable("TELEGRAM_ALERT_CHAT_ID");
+            var botToken = _configuration["Telegram:BotToken"];
+            if (string.IsNullOrWhiteSpace(botToken))
+                botToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN");
+
+            var chatId = _configuration["Telegram:ChatId"];
+            if (string.IsNullOrWhiteSpace(chatId))
+                chatId = Environment.GetEnvironmentVariable("TELEGRAM_ALERT_CHAT_ID");
 
             if (string.IsNullOrWhiteSpace(botToken) || string.IsNullOrWhiteSpace(chatId))
                 return;
