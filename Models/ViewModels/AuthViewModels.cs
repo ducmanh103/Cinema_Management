@@ -37,9 +37,21 @@ namespace CinemaManagement.Models.ViewModels
         [StringLength(100)]
         public string? FullName { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng nhập email để hỗ trợ khôi phục mật khẩu")]
-        [EmailAddress(ErrorMessage = "Địa chỉ email không hợp lệ")]
-        public string? Email { get; set; }
+        [Required(ErrorMessage = "Vui lòng nhập địa chỉ Gmail để xác thực tài khoản")]
+        [EmailAddress(ErrorMessage = "Địa chỉ Gmail không hợp lệ")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+\-]+@gmail\.com$", ErrorMessage = "Bắt buộc sử dụng địa chỉ Gmail hợp lệ (ví dụ: tenban@gmail.com)")]
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class VerifyRegistrationEmailViewModel
+    {
+        [Required(ErrorMessage = "Thiếu thông tin Gmail xác thực")]
+        [EmailAddress(ErrorMessage = "Địa chỉ Gmail không hợp lệ")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Vui lòng nhập mã xác thực 6 chữ số")]
+        [RegularExpression(@"^\d{6}$", ErrorMessage = "Mã xác thực gồm đúng 6 chữ số")]
+        public string OtpCode { get; set; } = string.Empty;
     }
 
     public class ForgotPasswordViewModel

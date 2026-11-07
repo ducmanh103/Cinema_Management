@@ -55,6 +55,7 @@ namespace CinemaManagement.Services
     public interface IEmailService
     {
         Task SendPasswordResetEmailAsync(string toEmail, string fullName, string resetUrl);
+        Task<bool> SendRegistrationVerificationEmailAsync(string toEmail, string fullName, string otpCode, string verifyUrl);
     }
 
     public enum SecurityAlertLevel

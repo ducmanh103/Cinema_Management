@@ -6,9 +6,14 @@
 
 <div class="row justify-content-center mt-5">
     <div class="col-md-5">
-        <div class="card" style="background:#1e1e1e; border:1px solid #333">
+        <div class="card" style="background:#1e1e1e; border:1px solid #333; border-radius:14px;">
             <div class="card-body p-4">
-                <h3 class="text-center mb-4" style="color:#e50914"><i class="bi bi-person-plus"></i> Tạo tài khoản</h3>
+                <h3 class="text-center mb-2" style="color:#e50914"><i class="bi bi-person-plus"></i> Tạo tài khoản</h3>
+                <p class="text-center text-muted small mb-4">
+                    Vui lòng sử dụng địa chỉ Gmail thật. Hệ thống sẽ gửi mã xác thực tới Gmail của bạn trước khi tạo tài khoản.
+                </p>
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:none"></div>
 
                 <form asp-action="Register" method="post">
                     @Html.AntiForgeryToken()
@@ -27,16 +32,16 @@
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Email" class="form-label">Email</label>
+                        <label asp-for="Email" class="form-label">Địa chỉ Gmail *</label>
                         <input asp-for="Email" class="form-control" type="email" style="background:#2a2a2a; border-color:#444; color:#fff"
-                               placeholder="example@email.com" id="reg-email" />
+                               placeholder="example@gmail.com" id="reg-email" required />
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Password" class="form-label">Mật khẩu *</label>
                         <input asp-for="Password" class="form-control" type="password" style="background:#2a2a2a; border-color:#444; color:#fff"
-                               placeholder="Tối thiểu 6 ký tự" id="reg-password" />
+                               placeholder="Ít nhất 8 ký tự (chữ hoa, chữ thường, số)" id="reg-password" />
                         <span asp-validation-for="Password" class="text-danger small"></span>
                     </div>
 
@@ -48,16 +53,32 @@
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-danger" id="register-btn">
-                            <i class="bi bi-check-circle"></i> Đăng ký
+                        <button type="submit" class="btn btn-danger fw-bold py-2" id="register-btn">
+                            <i class="bi bi-envelope-check me-1"></i> Gửi mã xác thực Gmail
                         </button>
                     </div>
-
-                    <hr style="border-color:#444" />
-                    <p class="text-center text-muted small">
-                        Đã có tài khoản? <a asp-controller="Account" asp-action="Login" class="text-danger">Đăng nhập</a>
-                    </p>
                 </form>
+
+                <div class="d-flex align-items-center my-3">
+                    <hr class="flex-grow-1" style="border-color:#444" />
+                    <span class="px-2 text-muted small">HOẶC</span>
+                    <hr class="flex-grow-1" style="border-color:#444" />
+                </div>
+
+                <form asp-controller="Account" asp-action="GoogleLogin" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-outline-light d-flex align-items-center justify-content-center gap-2 py-2" id="google-register-btn">
+                            <i class="bi bi-google text-danger"></i>
+                            <span>Đăng ký / Đăng nhập với Google</span>
+                        </button>
+                    </div>
+                </form>
+
+                <hr style="border-color:#444" class="mt-4" />
+                <p class="text-center text-muted small mb-0">
+                    Đã có tài khoản? <a asp-controller="Account" asp-action="Login" class="text-danger fw-semibold">Đăng nhập</a>
+                </p>
             </div>
         </div>
     </div>
@@ -65,4 +86,12 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const vs = document.querySelector('[data-valmsg-summary]');
+            if (vs && vs.querySelector('li') && vs.querySelector('li').textContent.trim() !== '') {
+                vs.style.display = 'block';
+            }
+        });
+    </script>
 }

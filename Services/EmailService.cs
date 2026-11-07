@@ -90,6 +90,75 @@ namespace CinemaManagement.Services
             }
         }
 
+        public async Task<bool> SendRegistrationVerificationEmailAsync(string toEmail, string fullName, string otpCode, string verifyUrl)
+        {
+            var smtpHost = GetConfigValue("Smtp:Host", "SMTP_HOST");
+            var smtpPortStr = GetConfigValue("Smtp:Port", "SMTP_PORT") ?? "587";
+            var smtpUser = GetConfigValue("Smtp:Username", "SMTP_USER");
+            var smtpPass = GetConfigValue("Smtp:Password", "SMTP_PASS");
+            var fromEmail = GetConfigValue("Smtp:FromEmail", "SMTP_FROM") ?? smtpUser ?? "noreply@cinemahubvn.io.vn";
+
+            if (fromEmail.Contains('<') && fromEmail.Contains('>'))
+            {
+                var start = fromEmail.IndexOf('<') + 1;
+                var end = fromEmail.IndexOf('>', start);
+                if (end > start)
+                    fromEmail = fromEmail[start..end].Trim();
+            }
+            fromEmail = fromEmail.Trim('"').Trim();
+
+            if (string.IsNullOrWhiteSpace(smtpHost) || string.IsNullOrWhiteSpace(smtpUser) || string.IsNullOrWhiteSpace(smtpPass))
+            {
+                _logger.LogWarning("📧 [SMTP chưa cấu hình] Mã OTP xác thực đăng ký cho {Email}: {OtpCode} | Link: {VerifyUrl}", toEmail, otpCode, verifyUrl);
+                return false;
+            }
+
+            int smtpPort = int.TryParse(smtpPortStr, out var p) ? p : 587;
+            var safeName = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(fullName) ? toEmail : fullName);
+            var safeOtp = WebUtility.HtmlEncode(otpCode);
+
+            string htmlBody = $@"
+<div style='font-family:Segoe UI,Arial,sans-serif;max-width:560px;margin:0 auto;background:#141414;color:#f5f5f5;padding:28px;border-radius:12px;border:1px solid #333;'>
+    <h2 style='color:#e50914;margin-top:0;'>🎬 CinemaHub — Xác thực Gmail đăng ký tài khoản</h2>
+    <p>Xin chào <strong>{safeName}</strong>,</p>
+    <p>Cảm ơn bạn đã đăng ký tài khoản tại <strong>CinemaHub</strong>. Để hoàn tất việc tạo tài khoản mới, vui lòng nhập mã xác thực (OTP) dưới đây trên trang xác thực:</p>
+    <div style='margin:24px 0;text-align:center;'>
+        <div style='display:inline-block;background:#1f1f1f;border:2px dashed #e50914;border-radius:10px;padding:14px 32px;font-size:28px;font-weight:bold;letter-spacing:8px;color:#ffffff;'>
+            {safeOtp}
+        </div>
+    </div>
+    <p style='text-align:center;color:#ccc;font-size:14px;'>Hoặc bấm trực tiếp vào nút bên dưới để xác thực và kích hoạt tài khoản ngay:</p>
+    <p style='margin:20px 0;text-align:center;'>
+        <a href='{verifyUrl}' style='background:#e50914;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:bold;display:inline-block;'>
+            Xác thực Gmail &amp; Tạo tài khoản
+        </a>
+    </p>
+    <p style='font-size:13px;color:#aaa;'>Mã xác thực và liên kết này có hiệu lực trong vòng <strong>15 phút</strong>. Tài khoản của bạn chỉ được khởi tạo sau khi xác thực thành công.</p>
+    <p style='font-size:13px;color:#aaa;'>Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email này.</p>
+</div>";
+
+            try
+            {
+                await SendSmtpAuthPlainAsync(
+                    smtpHost,
+                    smtpPort,
+                    smtpUser,
+                    smtpPass,
+                    fromEmail,
+                    toEmail.Trim(),
+                    "[CinemaHub] Mã xác thực Gmail đăng ký tài khoản",
+                    htmlBody);
+
+                _logger.LogInformation("📧 Đã gửi email xác thực đăng ký thành công tới {Email} qua {Host}:{Port}", toEmail, smtpHost, smtpPort);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Lỗi khi gửi email xác thực đăng ký tới {Email} qua {Host}:{Port}", toEmail, smtpHost, smtpPort);
+                return false;
+            }
+        }
+
         /// <summary>
         /// Gửi email qua giao thức SMTP (hỗ trợ cả STARTTLS cổng 587 và Implicit SSL cổng 465)
         /// với cơ chế xác thực chuẩn RFC 4616 AUTH PLAIN & fallback AUTH LOGIN 2 bước

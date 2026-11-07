@@ -259,8 +259,15 @@ namespace CinemaManagement.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var usernameLower = model.Username.Trim().ToLowerInvariant();
-            var emailLower = model.Email?.Trim().ToLowerInvariant();
+            var usernameTrimmed = model.Username.Trim();
+            var usernameLower = usernameTrimmed.ToLowerInvariant();
+            var emailLower = model.Email?.Trim().ToLowerInvariant() ?? string.Empty;
+
+            if (string.IsNullOrEmpty(emailLower) || !emailLower.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("Email", "Bắt buộc sử dụng địa chỉ Gmail hợp lệ (@gmail.com) để đăng ký tài khoản.");
+                return View(model);
+            }
 
             if (await _context.Users.AnyAsync(u => u.Username.ToLower() == usernameLower))
             {
@@ -268,9 +275,18 @@ namespace CinemaManagement.Controllers
                 return View(model);
             }
 
-            if (!string.IsNullOrEmpty(emailLower) && await _context.Users.AnyAsync(u => u.Email != null && u.Email.ToLower() == emailLower))
+            if (await _context.Users.AnyAsync(u => u.Email != null && u.Email.ToLower() == emailLower))
             {
-                ModelState.AddModelError("Email", "Email đã được sử dụng.");
+                ModelState.AddModelError("Email", "Địa chỉ Gmail này đã được sử dụng.");
+                return View(model);
+            }
+
+            var userReservationKey = $"pending_reg_user_{usernameLower}";
+            if (_cache.TryGetValue<string>(userReservationKey, out var reservedByEmail)
+                && !string.IsNullOrEmpty(reservedByEmail)
+                && !string.Equals(reservedByEmail, emailLower, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("Username", "Tên đăng nhập này đang chờ xác thực bởi một người dùng khác. Vui lòng chọn tên khác.");
                 return View(model);
             }
 
@@ -279,22 +295,297 @@ namespace CinemaManagement.Controllers
                 .FirstOrDefaultAsync(r => r.RoleName == "Customer");
             if (customerRole == null) return BadRequest("Lỗi hệ thống: vai trò Customer chưa được khởi tạo.");
 
-            var user = new User
+            var pendingCacheKey = $"pending_reg_email_{emailLower}";
+            var nowUtc = VietnamTime.UtcNow;
+
+            if (_cache.TryGetValue<PendingRegistrationEntry>(pendingCacheKey, out var existingPending) && existingPending != null)
             {
-                Username = model.Username.Trim(),
+                if (existingPending.ResendCount >= 5 && existingPending.ExpiresAt > nowUtc)
+                {
+                    ModelState.AddModelError("", "Bạn đã yêu cầu gửi mã xác thực quá nhiều lần. Vui lòng thử lại sau 15 phút.");
+                    return View(model);
+                }
+            }
+
+            var otpCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString("D6");
+            var rawToken = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
+            var otpHash = ComputeSha256Hex(otpCode);
+            var tokenHash = ComputeSha256Hex(rawToken);
+
+            var verifyUrl = Url.Action(
+                nameof(ConfirmRegistrationEmail),
+                "Account",
+                new { email = emailLower, token = rawToken },
+                Request.Scheme) ?? string.Empty;
+
+            bool emailSent = await _emailService.SendRegistrationVerificationEmailAsync(
+                emailLower,
+                model.FullName?.Trim() ?? usernameTrimmed,
+                otpCode,
+                verifyUrl);
+
+            if (!emailSent)
+            {
+                ModelState.AddModelError("", "Không thể gửi email xác thực tới địa chỉ Gmail này. Vui lòng kiểm tra lại địa chỉ Gmail hoặc cấu hình SMTP của hệ thống.");
+                return View(model);
+            }
+
+            var pendingEntry = new PendingRegistrationEntry
+            {
+                Username = usernameTrimmed,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
                 FullName = model.FullName?.Trim(),
                 Email = emailLower,
+                RoleId = customerRole.RoleId,
+                OtpHash = otpHash,
+                TokenHash = tokenHash,
+                ExpiresAt = nowUtc.AddMinutes(15),
+                LastSentAt = nowUtc,
+                ResendCount = (existingPending?.ResendCount ?? 0) + 1,
+                FailedAttempts = 0
+            };
+
+            _cache.Set(pendingCacheKey, pendingEntry, TimeSpan.FromMinutes(15));
+            _cache.Set(userReservationKey, emailLower, TimeSpan.FromMinutes(15));
+
+            TempData["Success"] = $"Đã gửi mã xác thực 6 chữ số tới Gmail {emailLower}. Vui lòng xác thực để hoàn tất tạo tài khoản!";
+            return RedirectToAction(nameof(VerifyRegistrationEmail), new { email = emailLower });
+        }
+
+        // GET: /Account/VerifyRegistrationEmail
+        [HttpGet]
+        public async Task<IActionResult> VerifyRegistrationEmail(string? email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return RedirectToAction(nameof(Register));
+
+            var emailLower = email.Trim().ToLowerInvariant();
+
+            if (await _context.Users.AsNoTracking().AnyAsync(u => u.Email != null && u.Email.ToLower() == emailLower))
+            {
+                TempData["Success"] = "Tài khoản Gmail này đã được xác thực và tạo thành công! Vui lòng đăng nhập.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            var pendingCacheKey = $"pending_reg_email_{emailLower}";
+            if (!_cache.TryGetValue<PendingRegistrationEntry>(pendingCacheKey, out var pending)
+                || pending == null
+                || pending.ExpiresAt <= VietnamTime.UtcNow)
+            {
+                TempData["Error"] = "Phiên xác thực Gmail đã hết hạn (quá 15 phút) hoặc không tồn tại. Vui lòng đăng ký lại.";
+                return RedirectToAction(nameof(Register));
+            }
+
+            return View(new VerifyRegistrationEmailViewModel { Email = emailLower });
+        }
+
+        // POST: /Account/VerifyRegistrationEmail
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyRegistrationEmail(VerifyRegistrationEmailViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var emailLower = model.Email.Trim().ToLowerInvariant();
+            var pendingCacheKey = $"pending_reg_email_{emailLower}";
+
+            if (!_cache.TryGetValue<PendingRegistrationEntry>(pendingCacheKey, out var pending)
+                || pending == null
+                || pending.ExpiresAt <= VietnamTime.UtcNow)
+            {
+                TempData["Error"] = "Mã xác thực đã hết hạn (quá 15 phút). Vui lòng thực hiện đăng ký lại.";
+                return RedirectToAction(nameof(Register));
+            }
+
+            if (pending.FailedAttempts >= 5)
+            {
+                _cache.Remove(pendingCacheKey);
+                _cache.Remove($"pending_reg_user_{pending.Username.ToLowerInvariant()}");
+                TempData["Error"] = "Bạn đã nhập sai mã xác thực quá 5 lần. Vui lòng đăng ký lại.";
+                return RedirectToAction(nameof(Register));
+            }
+
+            var inputOtpHash = ComputeSha256Hex(model.OtpCode.Trim());
+            bool otpMatches = CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(inputOtpHash),
+                Encoding.UTF8.GetBytes(pending.OtpHash));
+
+            if (!otpMatches)
+            {
+                pending.FailedAttempts++;
+                _cache.Set(pendingCacheKey, pending, TimeSpan.FromMinutes(15));
+                int remaining = Math.Max(0, 5 - pending.FailedAttempts);
+                ModelState.AddModelError("OtpCode", $"Mã xác thực không chính xác. Bạn còn {remaining} lần thử.");
+                return View(model);
+            }
+
+            var (created, errorMsg) = await CompletePendingRegistrationAsync(pending);
+            if (!created)
+            {
+                TempData["Error"] = errorMsg ?? "Không thể hoàn tất tạo tài khoản. Vui lòng thử lại.";
+                return RedirectToAction(nameof(Register));
+            }
+
+            TempData["Success"] = "Xác thực Gmail thành công! Tài khoản đã được tạo, vui lòng đăng nhập.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        // GET: /Account/ConfirmRegistrationEmail
+        [HttpGet]
+        public async Task<IActionResult> ConfirmRegistrationEmail(string? email, string? token)
+        {
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(token))
+            {
+                TempData["Error"] = "Liên kết xác thực Gmail không hợp lệ.";
+                return RedirectToAction(nameof(Register));
+            }
+
+            var emailLower = email.Trim().ToLowerInvariant();
+
+            if (await _context.Users.AsNoTracking().AnyAsync(u => u.Email != null && u.Email.ToLower() == emailLower))
+            {
+                TempData["Success"] = "Tài khoản của bạn đã được xác thực và khởi tạo thành công! Vui lòng đăng nhập.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            var pendingCacheKey = $"pending_reg_email_{emailLower}";
+            if (!_cache.TryGetValue<PendingRegistrationEntry>(pendingCacheKey, out var pending)
+                || pending == null
+                || pending.ExpiresAt <= VietnamTime.UtcNow)
+            {
+                TempData["Error"] = "Liên kết xác thực Gmail đã hết hạn (quá 15 phút) hoặc không tồn tại. Vui lòng đăng ký lại.";
+                return RedirectToAction(nameof(Register));
+            }
+
+            var inputTokenHash = ComputeSha256Hex(token.Trim());
+            bool tokenMatches = CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(inputTokenHash),
+                Encoding.UTF8.GetBytes(pending.TokenHash));
+
+            if (!tokenMatches)
+            {
+                TempData["Error"] = "Liên kết xác thực Gmail không hợp lệ hoặc đã được thay thế bởi mã mới.";
+                return RedirectToAction(nameof(VerifyRegistrationEmail), new { email = emailLower });
+            }
+
+            var (created, errorMsg) = await CompletePendingRegistrationAsync(pending);
+            if (!created)
+            {
+                TempData["Error"] = errorMsg ?? "Không thể hoàn tất tạo tài khoản. Vui lòng thử lại.";
+                return RedirectToAction(nameof(Register));
+            }
+
+            TempData["Success"] = "Xác thực Gmail thành công! Tài khoản đã được tạo, vui lòng đăng nhập.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        // POST: /Account/ResendRegistrationOtp
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendRegistrationOtp(string? email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return RedirectToAction(nameof(Register));
+
+            var emailLower = email.Trim().ToLowerInvariant();
+            var pendingCacheKey = $"pending_reg_email_{emailLower}";
+            var nowUtc = VietnamTime.UtcNow;
+
+            if (!_cache.TryGetValue<PendingRegistrationEntry>(pendingCacheKey, out var pending)
+                || pending == null
+                || pending.ExpiresAt <= nowUtc)
+            {
+                TempData["Error"] = "Phiên xác thực đã hết hạn. Vui lòng điền lại thông tin đăng ký.";
+                return RedirectToAction(nameof(Register));
+            }
+
+            if (pending.ResendCount >= 5)
+            {
+                TempData["Error"] = "Bạn đã yêu cầu gửi lại mã quá 5 lần. Vui lòng chờ 15 phút rồi thử lại.";
+                return RedirectToAction(nameof(VerifyRegistrationEmail), new { email = emailLower });
+            }
+
+            var secondsSinceLast = (nowUtc - pending.LastSentAt).TotalSeconds;
+            if (secondsSinceLast < 45)
+            {
+                int waitSec = Math.Max(1, (int)Math.Ceiling(45 - secondsSinceLast));
+                TempData["Error"] = $"Vui lòng đợi {waitSec} giây trước khi yêu cầu gửi lại mã xác thực.";
+                return RedirectToAction(nameof(VerifyRegistrationEmail), new { email = emailLower });
+            }
+
+            var otpCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString("D6");
+            var rawToken = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
+
+            var verifyUrl = Url.Action(
+                nameof(ConfirmRegistrationEmail),
+                "Account",
+                new { email = emailLower, token = rawToken },
+                Request.Scheme) ?? string.Empty;
+
+            bool emailSent = await _emailService.SendRegistrationVerificationEmailAsync(
+                emailLower,
+                pending.FullName ?? pending.Username,
+                otpCode,
+                verifyUrl);
+
+            if (!emailSent)
+            {
+                TempData["Error"] = "Không thể gửi lại email xác thực lúc này. Vui lòng thử lại sau.";
+                return RedirectToAction(nameof(VerifyRegistrationEmail), new { email = emailLower });
+            }
+
+            pending.OtpHash = ComputeSha256Hex(otpCode);
+            pending.TokenHash = ComputeSha256Hex(rawToken);
+            pending.ExpiresAt = nowUtc.AddMinutes(15);
+            pending.LastSentAt = nowUtc;
+            pending.ResendCount++;
+            pending.FailedAttempts = 0;
+
+            _cache.Set(pendingCacheKey, pending, TimeSpan.FromMinutes(15));
+            _cache.Set($"pending_reg_user_{pending.Username.ToLowerInvariant()}", emailLower, TimeSpan.FromMinutes(15));
+
+            TempData["Success"] = $"Đã gửi mã xác thực mới tới Gmail {emailLower}.";
+            return RedirectToAction(nameof(VerifyRegistrationEmail), new { email = emailLower });
+        }
+
+        private async Task<(bool Created, string? ErrorMessage)> CompletePendingRegistrationAsync(PendingRegistrationEntry pending)
+        {
+            var usernameLower = pending.Username.ToLowerInvariant();
+            var emailLower = pending.Email.ToLowerInvariant();
+
+            if (await _context.Users.AnyAsync(u => u.Username.ToLower() == usernameLower))
+            {
+                _cache.Remove($"pending_reg_email_{emailLower}");
+                _cache.Remove($"pending_reg_user_{usernameLower}");
+                return (false, "Tên đăng nhập đã được sử dụng. Vui lòng đăng ký lại.");
+            }
+
+            if (await _context.Users.AnyAsync(u => u.Email != null && u.Email.ToLower() == emailLower))
+            {
+                _cache.Remove($"pending_reg_email_{emailLower}");
+                _cache.Remove($"pending_reg_user_{usernameLower}");
+                return (false, "Địa chỉ Gmail này đã được kích hoạt trước đó. Vui lòng đăng nhập.");
+            }
+
+            var user = new User
+            {
+                Username = pending.Username,
+                PasswordHash = pending.PasswordHash,
+                FullName = pending.FullName,
+                Email = emailLower,
+                EmailConfirmed = true,
                 SecurityStamp = Guid.NewGuid().ToString("N"),
                 Status = "Active",
-                RoleId = customerRole.RoleId
+                RoleId = pending.RoleId
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Đăng ký thành công! Vui lòng đăng nhập.";
-            return RedirectToAction(nameof(Login));
+            _cache.Remove($"pending_reg_email_{emailLower}");
+            _cache.Remove($"pending_reg_user_{usernameLower}");
+
+            return (true, null);
         }
 
         // GET: /Account/ForgotPassword
@@ -678,6 +969,21 @@ namespace CinemaManagement.Controllers
         {
             var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
             return Convert.ToHexString(bytes).ToLowerInvariant();
+        }
+
+        private sealed class PendingRegistrationEntry
+        {
+            public string Username { get; set; } = string.Empty;
+            public string PasswordHash { get; set; } = string.Empty;
+            public string? FullName { get; set; }
+            public string Email { get; set; } = string.Empty;
+            public int RoleId { get; set; }
+            public string OtpHash { get; set; } = string.Empty;
+            public string TokenHash { get; set; } = string.Empty;
+            public DateTime ExpiresAt { get; set; }
+            public DateTime LastSentAt { get; set; }
+            public int ResendCount { get; set; }
+            public int FailedAttempts { get; set; }
         }
     }
 }
