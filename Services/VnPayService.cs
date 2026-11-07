@@ -9,6 +9,9 @@ namespace CinemaManagement.Services
 
         public VnPayService(IConfiguration config) => _config = config;
 
+        private const string DefaultSandboxTmnCode = "CGXZLS0Z";
+        private const string DefaultSandboxHashSecret = "XNBCJFAKAZQSGTARRLGCHVZWCIOIGSHN";
+
         private string? GetConfigValue(string key, string? envName = null)
         {
             var val = _config[key];
@@ -17,10 +20,26 @@ namespace CinemaManagement.Services
             return string.IsNullOrWhiteSpace(val) ? null : val.Trim();
         }
 
+        private (string TmnCode, string HashSecret) ResolveCredentials()
+        {
+            var tmnCode = GetConfigValue("VnPay:TmnCode", "VNPAY_TMN_CODE");
+            var hashSecret = GetConfigValue("VnPay:HashSecret", "VNPAY_HASH_SECRET");
+
+            // Fallback sang mã Sandbox hợp lệ nếu chưa cấu hình hoặc đang dùng mã FI1FU3SC đã hết hạn/chưa phê duyệt (code=71)
+            if (string.IsNullOrWhiteSpace(tmnCode)
+                || string.IsNullOrWhiteSpace(hashSecret)
+                || tmnCode.Equals("YOUR_VNPAY_TMN_CODE", StringComparison.OrdinalIgnoreCase)
+                || tmnCode.Equals("FI1FU3SC", StringComparison.OrdinalIgnoreCase))
+            {
+                return (DefaultSandboxTmnCode, DefaultSandboxHashSecret);
+            }
+
+            return (tmnCode, hashSecret);
+        }
+
         public string CreatePaymentUrl(HttpContext context, VnPaymentRequestModel model)
         {
-            var tmnCode    = GetConfigValue("VnPay:TmnCode", "VNPAY_TMN_CODE") ?? throw new InvalidOperationException("VnPay:TmnCode chưa cấu hình.");
-            var hashSecret = GetConfigValue("VnPay:HashSecret", "VNPAY_HASH_SECRET") ?? throw new InvalidOperationException("VnPay:HashSecret chưa cấu hình.");
+            var (tmnCode, hashSecret) = ResolveCredentials();
             var baseUrl    = GetConfigValue("VnPay:BaseUrl")    ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
             var version    = GetConfigValue("VnPay:Version")    ?? VnPayLibrary.VERSION;
             var command    = GetConfigValue("VnPay:Command")    ?? "pay";
@@ -67,8 +86,7 @@ namespace CinemaManagement.Services
 
         public VnPaymentResponseModel PaymentExecute(IQueryCollection collections)
         {
-            var hashSecret = GetConfigValue("VnPay:HashSecret", "VNPAY_HASH_SECRET")
-                             ?? throw new InvalidOperationException("VnPay:HashSecret chưa cấu hình.");
+            var (_, hashSecret) = ResolveCredentials();
 
             var pay = new VnPayLibrary();
             foreach (var (key, value) in collections)

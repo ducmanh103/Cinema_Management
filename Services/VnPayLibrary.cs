@@ -100,13 +100,22 @@ namespace CinemaManagement.Services
         }
 
         /// <summary>
-        /// Lấy IP của client để gửi sang VNPay (vnp_IpAddr).
+        /// Lấy IP của client để gửi sang VNPay (vnp_IpAddr chỉ chấp nhận chuẩn IPv4).
         /// </summary>
         public static string GetIpAddress(HttpContext context)
         {
             try
             {
-                var remoteIp = context.Connection.RemoteIpAddress?.ToString();
+                var ipAddr = context.Connection.RemoteIpAddress;
+                if (ipAddr == null) return "127.0.0.1";
+
+                if (ipAddr.IsIPv4MappedToIPv6)
+                    ipAddr = ipAddr.MapToIPv4();
+
+                if (ipAddr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                    return "127.0.0.1";
+
+                var remoteIp = ipAddr.ToString();
                 if (string.IsNullOrEmpty(remoteIp) || remoteIp == "::1") return "127.0.0.1";
                 return remoteIp;
             }
