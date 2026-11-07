@@ -44,6 +44,7 @@ namespace CinemaManagement.Models.ViewModels
         public int MovieDuration { get; set; }
         public int RoomId { get; set; }
         public string RoomName { get; set; } = string.Empty;
+        public int TheaterId { get; set; }
         public string TheaterName { get; set; } = string.Empty;
         public int AvailableSeats { get; set; }
     }

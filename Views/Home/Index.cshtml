@@ -1,785 +1,1087 @@
-@inject CinemaManagement.Data.CinemaDbContext DbContext
+@using System.Globalization
+@using CinemaManagement.Helpers
+@using CinemaManagement.Models.ViewModels
+@model HomeLandingViewModel
 @{
     ViewData["Title"] = "Trang Chủ";
     Layout = "_Layout";
-    var nowShowing = ViewBag.NowShowing as List<CinemaManagement.Models.ViewModels.MovieDto> ?? new();
-    var comingSoon = ViewBag.ComingSoon as List<CinemaManagement.Models.ViewModels.MovieDto> ?? new();
-    var featuredMovies = nowShowing.Where(m => !string.IsNullOrEmpty(m.BannerUrl)).Take(5).ToList();
-    if (featuredMovies.Count < 2)
+    ViewBag.FullWidth = true;
+
+    var vm = Model ?? new HomeLandingViewModel();
+    var featured = vm.FeaturedMovies;
+    var nowShowing = vm.NowShowing;
+    var comingSoon = vm.ComingSoon;
+    var topBoxOffice = vm.TopBoxOffice;
+    var theaters = vm.Theaters;
+    var upcoming = vm.UpcomingShowtimes;
+    var genres = vm.Genres;
+
+    var theaterCovers = new[]
     {
-        featuredMovies = nowShowing.Take(3).ToList();
-    }
-    var theaters = DbContext.Theaters.OrderBy(t => t.TheaterName).ToList();
+        "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=900&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=900&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1595769816263-9b910be24d5f?q=80&w=900&auto=format&fit=crop"
+    };
+    var techLabels = new[] { "IMAX LASER", "DOLBY ATMOS", "4DX SCREENX" };
+
+    bool isLoggedIn = User.Identity?.IsAuthenticated == true;
+    string memberName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Bạn";
 }
 
-<style>
-/* Hero Section Styles */
-.hero-carousel-wrapper {
-    position: relative;
-    margin-top: -100px; /* Pull banner under transparent header */
-    margin-bottom: 2rem;
-    overflow: hidden;
-}
-.hero-carousel-item {
-    height: 70vh;
-    min-height: 550px;
-    position: relative;
-    overflow: hidden;
-}
-.hero-bg-image {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center top;
-    transition: transform 12s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.carousel-item.active .hero-bg-image {
-    transform: scale(1.05);
-}
-.hero-gradient {
-    position: absolute;
-    inset: 0;
-    background: 
-        linear-gradient(to right, rgba(15, 15, 15, 0.95) 0%, rgba(15, 15, 15, 0.6) 40%, rgba(15, 15, 15, 0.1) 100%),
-        linear-gradient(to top, rgba(15, 15, 15, 1) 0%, rgba(15, 15, 15, 0.3) 25%, transparent 100%);
-    z-index: 1;
-}
-.hero-content {
-    position: relative;
-    z-index: 2;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    padding-top: 60px;
-}
-.hero-poster-float-container {
-    perspective: 1000px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.hero-poster-float {
-    max-height: 380px;
-    aspect-ratio: 2/3;
-    object-fit: cover;
-    border-radius: 16px;
-    box-shadow: 
-        0 20px 45px rgba(0, 0, 0, 0.8), 
-        0 0 35px rgba(229, 9, 20, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.12);
-    transform: rotateY(-12deg) rotateX(4deg);
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.hero-poster-float-container:hover .hero-poster-float {
-    transform: rotateY(0deg) rotateX(0deg) translateY(-8px) scale(1.02);
-    box-shadow: 
-        0 25px 50px rgba(0, 0, 0, 0.9), 
-        0 0 45px rgba(229, 9, 20, 0.25);
-    border-color: var(--primary);
-}
-.carousel-indicators [data-bs-target] {
-    width: 32px;
-    height: 4px;
-    border-radius: 2px;
-    background-color: rgba(255, 255, 255, 0.3);
-    border: none;
-    transition: all 0.3s ease;
-}
-.carousel-indicators .active {
-    width: 60px;
-    background-color: var(--primary);
-    box-shadow: 0 0 10px var(--primary);
-}
-.carousel-control-prev-icon, .carousel-control-next-icon {
-    width: 3rem;
-    height: 3rem;
-    background-color: rgba(0, 0, 0, 0.4);
-    border-radius: 50%;
-    background-size: 45%;
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-}
-.carousel-control-prev:hover .carousel-control-prev-icon,
-.carousel-control-next:hover .carousel-control-next-icon {
-    background-color: var(--primary);
-    border-color: var(--primary);
-    box-shadow: 0 0 15px var(--primary);
-    transform: scale(1.08);
+@section Styles {
+    <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
 }
 
-/* Quick Booking Widget */
-.quick-booking-panel {
-    background: rgba(20, 20, 20, 0.65);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 18px;
-    box-shadow: 
-        0 20px 45px -10px rgba(0, 0, 0, 0.7),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
-    margin-top: -65px;
-    position: relative;
-    z-index: 20;
-}
-.quick-booking-panel:hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 25px 50px rgba(0,0,0,0.8);
-}
-.select-custom {
-    background-color: rgba(10, 10, 10, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: #fff !important;
-    padding: 11px 15px !important;
-    font-size: 0.92rem !important;
-    border-radius: 10px !important;
-    transition: all 0.3s ease !important;
-}
-.select-custom:focus {
-    border-color: var(--primary) !important;
-    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.25) !important;
-}
+<div class="lp-root pb-5">
 
-/* Section Header Styles */
-.section-title {
-    position: relative;
-    display: inline-block;
-    padding-bottom: 12px;
-    margin-bottom: 30px;
-    font-weight: 800;
-    font-size: 2.1rem;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: #fff;
-}
-.section-title::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 60px;
-    height: 4px;
-    background-color: var(--primary);
-    border-radius: 2px;
-    box-shadow: 0 0 10px var(--primary);
-}
+    @* =====================================================================
+       1. WIDESCREEN IMMERSIVE HERO STAGE
+       ===================================================================== *@
+    <section class="lp-hero" aria-label="Phim tâm điểm tại CinemaHub">
+        @if (featured.Any())
+        {
+            <div id="lpHeroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    @for (int i = 0; i < featured.Count; i++)
+                    {
+                        var movie = featured[i];
+                        var bgUrl = !string.IsNullOrWhiteSpace(movie.BannerUrl) ? movie.BannerUrl : movie.PosterUrl;
+                        var bgStyle = !string.IsNullOrWhiteSpace(bgUrl) ? $"background-image: url('{bgUrl}');" : "";
+                        var rating = GetMovieRating(movie.MovieId).ToString("F1");
+                        var format = GetMovieFormat(movie.Title);
+                        var ageCls = GetAgeBadgeClass(movie.Title);
+                        var ageTxt = GetAgeBadgeText(movie.Title);
+                        var ageDesc = GetAgeBadgeDesc(movie.Title);
+                        var synopsis = string.IsNullOrWhiteSpace(movie.Description)
+                            ? "Trải nghiệm siêu phẩm điện ảnh với chất lượng hình ảnh sắc nét chuẩn IMAX và âm thanh vòm sống động tại hệ thống rạp CinemaHub."
+                            : (movie.Description.Length > 195 ? movie.Description.Substring(0, 195) + "..." : movie.Description);
 
-/* Movie Card System */
-.movie-grid-card {
-    background: rgba(25, 25, 25, 0.45);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 20px;
-    overflow: hidden;
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-}
-.movie-grid-card:hover {
-    transform: translateY(-8px);
-    border-color: rgba(229, 9, 20, 0.35);
-    box-shadow: 0 20px 40px rgba(229, 9, 20, 0.15), 0 8px 24px rgba(0,0,0,0.5);
-}
-.poster-container {
-    position: relative;
-    aspect-ratio: 2/3;
-    overflow: hidden;
-    background: #151515;
-}
-.poster-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.movie-grid-card:hover .poster-img {
-    transform: scale(1.06);
-}
-.card-badge-row {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 4;
-}
-.rating-badge {
-    background: rgba(10, 10, 10, 0.8);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--gold);
-    font-weight: 700;
-    font-size: 0.8rem;
-    padding: 5px 9px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-}
-.age-badge {
-    font-weight: 800;
-    font-size: 0.75rem;
-    padding: 4px 8px;
-    border-radius: 6px;
-    text-transform: uppercase;
-    color: #fff;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-}
-.age-p { background: #28a745; }
-.age-k { background: #007bff; }
-.age-t13 { background: #ffc107; color: #000; }
-.age-t16 { background: #fd7e14; }
-.age-t18 { background: #dc3545; }
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            <div class="lp-hero-slide">
+                                <div class="lp-hero-backdrop" style="@bgStyle"></div>
+                                <div class="lp-hero-vignette"></div>
 
-.format-badge {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    background: rgba(229, 9, 20, 0.85);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: #fff;
-    font-weight: 800;
-    font-size: 0.72rem;
-    padding: 4px 8px;
-    border-radius: 6px;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-    z-index: 4;
-}
-.movie-overlay-actions {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 100%);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 10px;
-    padding: 1.5rem;
-    opacity: 0;
-    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 3;
-}
-.movie-grid-card:hover .movie-overlay-actions {
-    opacity: 1;
-}
+                                <div class="lp-hero-inner">
+                                    <div class="container">
+                                        <div class="row align-items-center g-4 g-lg-5">
+                                            <div class="col-lg-7 col-xl-8">
+                                                <div class="lp-eyebrow-group">
+                                                    <span class="lp-pill-live">
+                                                        <span class="lp-live-dot" aria-hidden="true"></span>
+                                                        @(movie.IsHot ? "Top Phòng Vé • Đang Chiếu" : "Tâm Điểm Điện Ảnh")
+                                                    </span>
+                                                    @if (movie.HasShowtimes)
+                                                    {
+                                                        <span class="lp-pill-available">
+                                                            <i class="bi bi-check2-circle" aria-hidden="true"></i> Đang mở bán vé
+                                                        </span>
+                                                    }
+                                                </div>
 
-.movie-info-block {
-    padding: 1.25rem;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-.card-genre-text {
-    font-size: 0.72rem;
-    color: var(--primary);
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    margin-bottom: 6px;
-}
-.card-movie-title {
-    font-size: 1.08rem;
-    font-weight: 700;
-    line-height: 1.4;
-    margin-bottom: 8px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    height: 2.8em;
-}
-.card-movie-title a {
-    color: #fff;
-    text-decoration: none;
-    transition: color 0.2s;
-}
-.card-movie-title a:hover {
-    color: var(--primary);
-}
-.card-footer-info {
-    margin-top: auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding-top: 10px;
-    font-size: 0.82rem;
-    color: #8e8e93;
-}
+                                                <h1 class="lp-hero-title">@movie.Title</h1>
 
-/* Advantage Card Grid */
-.advantage-card {
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-.advantage-card:hover {
-    transform: translateY(-8px);
-    border-color: rgba(229, 9, 20, 0.3);
-    box-shadow: 
-        0 15px 30px rgba(0,0,0,0.4),
-        0 0 20px rgba(229, 9, 20, 0.1);
-}
-.advantage-icon-wrapper {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: rgba(229, 9, 20, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(229, 9, 20, 0.2);
-    transition: all 0.3s ease;
-}
-.advantage-card:hover .advantage-icon-wrapper {
-    background: var(--primary);
-    border-color: var(--primary);
-    box-shadow: 0 0 15px var(--primary);
-}
-.advantage-card:hover .advantage-icon-wrapper i {
-    color: #fff !important;
-    transform: scale(1.1);
-}
-.advantage-icon-wrapper i {
-    transition: all 0.3s ease;
-}
+                                                <div class="lp-hero-meta">
+                                                    <span class="lp-meta-rating">
+                                                        <i class="bi bi-star-fill" aria-hidden="true"></i> @rating<span class="opacity-75 fw-normal">/10</span>
+                                                    </span>
+                                                    <span class="lp-age-badge @ageCls" title="@ageDesc">@ageTxt</span>
+                                                    <span class="lp-meta-format">@format</span>
+                                                    <span class="lp-meta-divider" aria-hidden="true"></span>
+                                                    <span><i class="bi bi-clock me-1" aria-hidden="true"></i>@movie.Duration phút</span>
+                                                    @if (movie.ReleaseDate.HasValue)
+                                                    {
+                                                        <span class="lp-meta-divider" aria-hidden="true"></span>
+                                                        <span><i class="bi bi-calendar3 me-1" aria-hidden="true"></i>@movie.ReleaseDate.Value.ToString("dd/MM/yyyy")</span>
+                                                    }
+                                                </div>
 
-/* Promo Card Styling */
-.promo-card {
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.promo-card:hover {
-    transform: translateY(-8px);
-    border-color: rgba(229, 9, 20, 0.3);
-    box-shadow: 
-        0 15px 30px rgba(0,0,0,0.5),
-        0 0 20px rgba(229, 9, 20, 0.1);
-}
-.promo-image-wrapper {
-    position: relative;
-    height: 180px;
-    overflow: hidden;
-}
-.promo-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
-}
-.promo-card:hover .promo-img {
-    transform: scale(1.05);
-}
-.promo-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-</style>
+                                                @if (movie.Genres.Any())
+                                                {
+                                                    <div class="lp-hero-genres">
+                                                        @foreach (var g in movie.Genres.Take(4))
+                                                        {
+                                                            <span class="lp-genre-chip-hero">@g</span>
+                                                        }
+                                                    </div>
+                                                }
 
-<!-- WIDESCREEN HERO CAROUSEL -->
-<div class="hero-carousel-wrapper">
-    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="6000">
-        <div class="carousel-indicators">
-            @for (int i = 0; i < featuredMovies.Count; i++)
-            {
-                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : "")" aria-current="@(i == 0 ? "true" : "false")" aria-label="Slide @(i + 1)"></button>
-            }
-        </div>
-        <div class="carousel-inner">
-            @for (int i = 0; i < featuredMovies.Count; i++)
-            {
-                var movie = featuredMovies[i];
-                <div class="carousel-item @(i == 0 ? "active" : "")">
-                    <div class="hero-carousel-item">
-                        <div class="hero-bg-image" style="background-image: url('@movie.BannerUrl');"></div>
-                        <div class="hero-gradient"></div>
-                        <div class="hero-content">
-                            <div class="container">
-                                <div class="row align-items-center g-5">
-                                    <div class="col-lg-8 text-start">
-                                        <span class="badge bg-danger mb-3 px-3 py-2 text-uppercase fw-bold shadow-lg" style="letter-spacing: 1px; font-size: 0.78rem;">
-                                            <i class="bi bi-fire me-1"></i> SIÊU PHẨM NỔI BẬT
-                                        </span>
-                                        <h1 class="display-3 fw-extrabold text-white mb-3 text-uppercase" style="text-shadow: 2px 2px 12px rgba(0,0,0,0.8); font-weight: 850;">
-                                            @movie.Title
-                                        </h1>
-                                        <p class="text-light mb-4 d-none d-md-block" style="font-size: 1.05rem; line-height: 1.7; max-width: 650px; text-shadow: 1px 1px 6px rgba(0,0,0,0.9); color: rgba(255,255,255,0.88) !important;">
-                                            @(movie.Description?.Length > 180 ? movie.Description.Substring(0, 180) + "..." : movie.Description)
-                                        </p>
-                                        <div class="d-flex flex-wrap align-items-center gap-3 mb-4 text-light text-shadow" style="font-size: 0.95rem;">
-                                            <span class="d-flex align-items-center gap-1">
-                                                <i class="bi bi-star-fill text-warning"></i> 
-                                                <strong class="text-white">@GetMovieRating(movie.MovieId).ToString("F1")</strong>/10
-                                            </span>
-                                            <span class="text-muted">|</span>
-                                            <span><i class="bi bi-clock me-1"></i> @movie.Duration phút</span>
-                                            <span class="text-muted">|</span>
-                                            <span class="badge bg-secondary" style="border: 1px solid rgba(255,255,255,0.1);">@GetMovieFormat(movie.Title)</span>
-                                            <span class="text-muted">|</span>
-                                            <span class="badge @GetAgeBadgeClass(movie.Title) age-badge">@GetAgeBadgeText(movie.Title)</span>
+                                                <p class="lp-hero-desc d-none d-sm-block">@synopsis</p>
+
+                                                <div class="lp-hero-actions">
+                                                    <button type="button"
+                                                            class="lp-btn-primary js-quick-book-movie"
+                                                            data-movie-id="@movie.MovieId"
+                                                            data-movie-title="@movie.Title">
+                                                        <i class="bi bi-ticket-perforated-fill" aria-hidden="true"></i>
+                                                        <span>Mua Vé Nhanh</span>
+                                                    </button>
+                                                    <a asp-controller="Showtimes"
+                                                       asp-action="Index"
+                                                       asp-route-movieId="@movie.MovieId"
+                                                       class="lp-btn-glass">
+                                                        <i class="bi bi-calendar2-week" aria-hidden="true"></i>
+                                                        <span>Xem Lịch Chiếu</span>
+                                                    </a>
+                                                    <a asp-controller="Movies"
+                                                       asp-action="Details"
+                                                       asp-route-id="@movie.MovieId"
+                                                       class="lp-btn-glass">
+                                                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                        <span>Chi Tiết</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-lg-5 col-xl-4 d-none d-lg-block">
+                                                <div class="lp-hero-poster-stage">
+                                                    <div class="lp-hero-poster-card">
+                                                        @if (!string.IsNullOrWhiteSpace(movie.PosterUrl))
+                                                        {
+                                                            <img src="@movie.PosterUrl" alt="Poster phim @movie.Title" />
+                                                        }
+                                                        <div class="lp-hero-poster-ribbon">
+                                                            <span class="fw-bold text-white">
+                                                                <i class="bi bi-badge-hd-fill text-danger me-1" aria-hidden="true"></i>@format
+                                                            </span>
+                                                            <span class="text-warning fw-bold">
+                                                                <i class="bi bi-star-fill me-1" aria-hidden="true"></i>@rating
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="d-flex gap-3">
-                                            <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@movie.MovieId" 
-                                               class="btn btn-primary-custom btn-lg px-4 py-3 rounded-pill fw-bold text-uppercase shadow-lg" style="font-size: 0.9rem; letter-spacing: 0.5px;">
-                                                <i class="bi bi-ticket-fill me-2"></i> Đặt Vé Ngay
-                                            </a>
-                                            <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId" 
-                                               class="btn btn-outline-light btn-lg px-4 py-3 rounded-pill fw-bold text-uppercase" style="font-size: 0.9rem; letter-spacing: 0.5px; border-width: 2px;">
-                                                Chi tiết phim
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-4 d-none d-lg-block text-end hero-poster-float-container">
-                                        <img src="@movie.PosterUrl" class="hero-poster-float img-fluid" alt="@movie.Title Poster" />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    }
                 </div>
-            }
-        </div>
-        
-        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev" style="z-index: 10; width: 6%;">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next" style="z-index: 10; width: 6%;">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </button>
-        
-        <!-- Bottom Shadow Blend to match background -->
-        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to top, #0b0c10 0%, transparent 100%); z-index: 5; pointer-events: none;"></div>
-    </div>
-</div>
 
-<div class="container">
-    <!-- FLOATING QUICK BOOKING WIDGET -->
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="quick-booking-panel p-4">
-                <form asp-controller="Showtimes" asp-action="Index" method="get" class="row g-3 align-items-center">
-                    <div class="col-lg-3 col-md-6">
-                        <label class="form-label text-muted small fw-bold text-uppercase"><i class="bi bi-film text-primary me-1"></i> Chọn Phim</label>
-                        <select name="movieId" class="form-select select-custom">
-                            <option value="">-- Tất cả phim đang chiếu --</option>
-                            @foreach (var m in nowShowing)
-                            {
-                                <option value="@m.MovieId">@m.Title</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <label class="form-label text-muted small fw-bold text-uppercase"><i class="bi bi-geo-alt-fill text-primary me-1"></i> Chọn Rạp</label>
-                        <select name="theaterId" class="form-select select-custom">
-                            <option value="">-- Tất cả các rạp --</option>
-                            @foreach (var t in theaters)
-                            {
-                                <option value="@t.TheaterId">@t.TheaterName</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <label class="form-label text-muted small fw-bold text-uppercase"><i class="bi bi-calendar-week text-primary me-1"></i> Chọn Ngày</label>
-                        <select name="date" class="form-select select-custom">
-                            @for (int i = 0; i < 14; i++)
-                            {
-                                var targetDate = CinemaManagement.Helpers.VietnamTime.Today.AddDays(i);
-                                var dateValue = targetDate.ToString("yyyy-MM-dd");
-                                var dateText = i == 0 ? "Hôm nay, " + targetDate.ToString("dd/MM") : 
-                                               i == 1 ? "Ngày mai, " + targetDate.ToString("dd/MM") :
-                                               targetDate.ToString("dddd, dd/MM", new System.Globalization.CultureInfo("vi-VN"));
-                                <option value="@dateValue">@dateText</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-lg-3 col-md-6 pt-md-2 mt-lg-4">
-                        <button type="submit" class="btn btn-primary-custom w-100 py-3 rounded-3 fw-bold text-uppercase shadow-lg d-flex align-items-center justify-content-center gap-2">
-                            <i class="bi bi-lightning-charge-fill text-warning"></i> Đặt Vé Nhanh
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- PHIM ĐANG CHIẾU GRID -->
-    <div class="mt-5 pt-4">
-        <div class="d-flex justify-content-between align-items-end mb-4">
-            <h2 class="section-title mb-0">Phim Đang Chiếu</h2>
-            <a asp-controller="Movies" asp-action="Index" class="btn btn-outline-light rounded-pill px-4">Xem tất cả <i class="bi bi-arrow-right"></i></a>
-        </div>
-        
-        <div class="row g-4">
-            @foreach (var movie in nowShowing.Take(8))
-            {
-                var genresStr = movie.Genres.Any() 
-                    ? string.Join(" • ", movie.Genres) 
-                    : "Phim điện ảnh";
-                
-                <div class="col-6 col-md-4 col-lg-3">
-                    <div class="movie-grid-card">
-                        <div class="poster-container">
-                            @if (!string.IsNullOrEmpty(movie.PosterUrl))
-                            {
-                                <img src="@movie.PosterUrl" class="poster-img" alt="@movie.Title" loading="lazy" />
-                            }
-                            else
-                            {
-                                <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-dark text-muted">
-                                    <i class="bi bi-camera-reels-fill fs-2"></i>
-                                    <span class="small mt-2" style="font-size:0.75rem">Chưa có Poster</span>
-                                </div>
-                            }
-
-                            <!-- Badge Top Row -->
-                            <div class="card-badge-row">
-                                <span class="rating-badge">
-                                    <i class="bi bi-star-fill text-warning"></i> @GetMovieRating(movie.MovieId).ToString("F1")
-                                </span>
-                                <span class="age-badge @GetAgeBadgeClass(movie.Title)" title="@GetAgeBadgeDesc(movie.Title)">
-                                    @GetAgeBadgeText(movie.Title)
-                                </span>
-                            </div>
-
-                            <!-- Format Badge Bottom-Right -->
-                            <div class="format-badge">
-                                @GetMovieFormat(movie.Title)
-                            </div>
-
-                            <!-- Hover Overlay Actions -->
-                            <div class="movie-overlay-actions">
-                                <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@movie.MovieId" 
-                                   class="btn btn-primary-custom w-100 py-2.5 rounded-pill fw-bold text-uppercase shadow">
-                                    <i class="bi bi-ticket-perforated-fill me-2"></i> Đặt Vé
-                                </a>
-                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId" 
-                                   class="btn btn-outline-light w-100 py-2.5 rounded-pill fw-bold text-uppercase">
-                                    <i class="bi bi-info-circle me-2"></i> Chi Tiết
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- Info Area -->
-                        <div class="movie-info-block">
-                            <div class="card-genre-text">@genresStr</div>
-                            <h5 class="card-movie-title" title="@movie.Title">
-                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId">
-                                    @movie.Title
-                                </a>
-                            </h5>
-                            <div class="card-footer-info">
-                                <span><i class="bi bi-clock me-1"></i> @movie.Duration phút</span>
-                                <span class="text-success"><i class="bi bi-play-circle me-1"></i> Đang chiếu</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-
-    <!-- PHIM SẮP CHIẾU GRID -->
-    @if (comingSoon.Any())
-    {
-        <div class="mt-5 pt-5 mb-4">
-            <h2 class="section-title mb-4">Phim Sắp Chiếu</h2>
-            <div class="row g-4">
-                @foreach (var movie in comingSoon.Take(4))
+                @if (featured.Count > 1)
                 {
-                    var genresStr = movie.Genres.Any() 
-                        ? string.Join(" • ", movie.Genres) 
-                        : "Phim điện ảnh";
-                    
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="movie-grid-card" style="opacity: 0.95;">
-                            <div class="poster-container">
-                                @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                    <div class="lp-hero-dock-wrap">
+                        <div class="container d-flex justify-content-lg-end justify-content-center">
+                            <div class="lp-hero-dock" role="group" aria-label="Điều khiển banner phim nổi bật">
+                                @for (int i = 0; i < featured.Count; i++)
                                 {
-                                    <img src="@movie.PosterUrl" class="poster-img" alt="@movie.Title" loading="lazy" />
-                                }
-                                else
-                                {
-                                    <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-dark text-muted">
-                                        <i class="bi bi-camera-reels-fill fs-2"></i>
-                                        <span class="small mt-2" style="font-size:0.75rem">Chưa có Poster</span>
-                                    </div>
-                                }
-
-                                <!-- Badge Top Row -->
-                                <div class="card-badge-row">
-                                    <span class="rating-badge">
-                                        <i class="bi bi-star-fill text-warning"></i> @GetMovieRating(movie.MovieId).ToString("F1")
-                                    </span>
-                                    <span class="age-badge @GetAgeBadgeClass(movie.Title)" title="@GetAgeBadgeDesc(movie.Title)">
-                                        @GetAgeBadgeText(movie.Title)
-                                    </span>
-                                </div>
-
-                                <!-- Format Badge Bottom-Right -->
-                                <div class="format-badge">
-                                    @GetMovieFormat(movie.Title)
-                                </div>
-
-                                <!-- Hover Overlay Actions -->
-                                <div class="movie-overlay-actions">
-                                    <button class="btn btn-secondary w-100 py-2.5 rounded-pill fw-bold text-uppercase" disabled>
-                                        <i class="bi bi-calendar-x me-2"></i> Chưa Chiếu
+                                    var f = featured[i];
+                                    var thumbSrc = !string.IsNullOrWhiteSpace(f.PosterUrl) ? f.PosterUrl : f.BannerUrl;
+                                    <button type="button"
+                                            class="lp-dock-thumb js-hero-thumb @(i == 0 ? "active" : "")"
+                                            data-slide-to="@i"
+                                            aria-label="Xem phim @f.Title"
+                                            aria-current="@(i == 0 ? "true" : "false")"
+                                            title="@f.Title">
+                                        @if (!string.IsNullOrWhiteSpace(thumbSrc))
+                                        {
+                                            <img src="@thumbSrc" alt="" />
+                                        }
                                     </button>
-                                    <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId" 
-                                       class="btn btn-outline-light w-100 py-2.5 rounded-pill fw-bold text-uppercase">
-                                        <i class="bi bi-info-circle me-2"></i> Chi Tiết
-                                    </a>
-                                </div>
-                            </div>
-
-                            <!-- Info Area -->
-                            <div class="movie-info-block">
-                                <div class="card-genre-text">@genresStr</div>
-                                <h5 class="card-movie-title" title="@movie.Title">
-                                    <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId">
-                                        @movie.Title
-                                    </a>
-                                </h5>
-                                <div class="card-footer-info">
-                                    <span><i class="bi bi-calendar-event me-1"></i> Khởi chiếu: @movie.ReleaseDate?.ToString("dd/MM/yyyy")</span>
-                                    <span class="text-warning"><i class="bi bi-clock-history me-1"></i> Sắp chiếu</span>
-                                </div>
+                                }
+                                <button type="button"
+                                        id="lpHeroPauseBtn"
+                                        class="lp-dock-control ms-1"
+                                        aria-pressed="false"
+                                        aria-label="Tạm dừng chuyển cảnh tự động"
+                                        title="Tạm dừng">
+                                    <i class="bi bi-pause-fill" aria-hidden="true"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
                 }
             </div>
-        </div>
-    }
-</div>
-
-<!-- ADVANTAGES SHOWCASE SECTION -->
-<div class="py-5 mt-5" style="background: linear-gradient(180deg, transparent 0%, rgba(20,20,20,0.5) 50%, transparent 100%);">
-    <div class="container text-center">
-        <h2 class="section-title text-center mx-auto mb-5 d-block" style="width: fit-content;">TRẢI NGHIỆM ĐIỆN ẢNH ĐỈNH CAO</h2>
-        
-        <div class="row g-4 mt-2">
-            <div class="col-md-6 col-lg-3">
-                <div class="advantage-card glass p-4 text-center rounded-4 h-100">
-                    <div class="advantage-icon-wrapper mb-3 mx-auto">
-                        <i class="bi bi-display fs-1 text-primary"></i>
+        }
+        else
+        {
+            <div class="lp-hero-slide">
+                <div class="lp-hero-vignette"></div>
+                <div class="lp-hero-inner">
+                    <div class="container text-center">
+                        <span class="lp-pill-live mb-3">
+                            <span class="lp-live-dot" aria-hidden="true"></span> CinemaHub Vietnam
+                        </span>
+                        <h1 class="lp-hero-title">Định Chuẩn Trải Nghiệm Điện Ảnh Hiện Đại</h1>
+                        <p class="lp-hero-desc mx-auto">Đặt vé siêu tốc, chọn ghế 3D trực quan, giữ chỗ tự động 15 phút và thanh toán trực tuyến an toàn qua cổng VNPay.</p>
+                        <div class="lp-hero-actions justify-content-center">
+                            <a asp-controller="Movies" asp-action="Index" class="lp-btn-primary">
+                                <i class="bi bi-film" aria-hidden="true"></i> Khám Phá Phim
+                            </a>
+                            <a asp-controller="Showtimes" asp-action="Index" class="lp-btn-glass">
+                                <i class="bi bi-calendar2-week" aria-hidden="true"></i> Xem Lịch Chiếu
+                            </a>
+                        </div>
                     </div>
-                    <h5 class="fw-bold text-white mb-2">MÀN HÌNH IMAX 3D</h5>
-                    <p class="text-muted small mb-0">Trải nghiệm rạp chiếu kích thước khổng lồ với độ tương phản sắc nét tuyệt đối, bao phủ trọn tầm nhìn.</p>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="advantage-card glass p-4 text-center rounded-4 h-100">
-                    <div class="advantage-icon-wrapper mb-3 mx-auto">
-                        <i class="bi bi-music-note-beamed fs-1 text-primary"></i>
-                    </div>
-                    <h5 class="fw-bold text-white mb-2">ÂM THANH DOLBY ATMOS</h5>
-                    <p class="text-muted small mb-0">Hệ thống âm thanh vòm 3D sống động, tái tạo từng chi tiết chân thực nhất bao trùm cả phòng chiếu.</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="advantage-card glass p-4 text-center rounded-4 h-100">
-                    <div class="advantage-icon-wrapper mb-3 mx-auto">
-                        <i class="bi bi-cup-straw fs-1 text-primary"></i>
-                    </div>
-                    <h5 class="fw-bold text-white mb-2">QUẦY BẮP NƯỚC VIP</h5>
-                    <p class="text-muted small mb-0">Bắp rang bơ nóng hổi với hương vị caramel, phô mai độc quyền đi kèm thức uống phong phú giải nhiệt cực đã.</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="advantage-card glass p-4 text-center rounded-4 h-100">
-                    <div class="advantage-icon-wrapper mb-3 mx-auto">
-                        <i class="bi bi-phone-vibrate fs-1 text-primary"></i>
-                    </div>
-                    <h5 class="fw-bold text-white mb-2">ĐẶT VÉ TIỆN LỢI</h5>
-                    <p class="text-muted small mb-0">Hệ thống đặt vé và thanh toán trực tuyến siêu tốc, giữ chỗ VIP chỉ trong 30 giây mọi lúc mọi nơi.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+        }
+    </section>
 
-<!-- NEWS & PROMOTIONS SECTION -->
-<div class="container py-5 mb-5">
-    <div class="d-flex justify-content-between align-items-end mb-4">
-        <h2 class="section-title mb-0">TIN TỨC & KHUYẾN MÃI</h2>
-        <a asp-controller="Home" asp-action="News" class="btn btn-outline-light rounded-pill px-4">Xem tất cả <i class="bi bi-arrow-right"></i></a>
-    </div>
+    @* =====================================================================
+       2. 4-STEP SMART LIVE BOOKING COMMAND BAR (CONNECTED TO /api/ShowtimesApi)
+       ===================================================================== *@
+    <section class="lp-booking-wrap" aria-label="Công cụ đặt vé nhanh">
+        <div class="container">
+            <div class="lp-booking-bar">
+                <div class="lp-booking-head">
+                    <div class="lp-booking-title">
+                        <i class="bi bi-lightning-charge-fill text-warning fs-5" aria-hidden="true"></i>
+                        <span>Đặt Vé Nhanh 30 Giây</span>
+                        <span class="badge rounded-pill ms-1" style="background: rgba(16,185,129,0.14); color:#34d399; font-size:0.7rem;">
+                            Live API
+                        </span>
+                    </div>
+                    <div class="lp-booking-badge">
+                        <span id="lpBookingLiveHint">Chọn phim để tải suất chiếu thời gian thực</span>
+                        <span class="d-none d-md-inline text-secondary">•</span>
+                        <span class="d-none d-md-inline">
+                            <i class="bi bi-shield-lock-fill text-danger me-1" aria-hidden="true"></i>Giữ ghế 15 phút &amp; Thanh toán VNPay
+                        </span>
+                    </div>
+                </div>
 
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="promo-card glass rounded-4 overflow-hidden h-100">
-                <div class="promo-image-wrapper">
-                    <img src="/img/movies/mai-banner.jpg" class="promo-img" alt="Promo Monday" onerror="this.src='/img/movies/mai-banner.jpg'" />
-                    <div class="promo-badge bg-danger text-white">Khuyến Mãi</div>
-                </div>
-                <div class="p-4">
-                    <h5 class="fw-bold text-white mb-2">Thứ Hai Cuối Tháng — Đồng Giá 45K Toàn Hệ Thống</h5>
-                    <p class="text-muted small mb-3">Tận hưởng ngày hội điện ảnh đặc biệt vào ngày thứ Hai cuối cùng của mỗi tháng với mức giá siêu ưu đãi chỉ 45,000đ cho mọi suất chiếu 2D.</p>
-                    <span class="text-primary fw-bold text-uppercase small" style="cursor: pointer;">Chi tiết ưu đãi <i class="bi bi-chevron-right small"></i></span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="promo-card glass rounded-4 overflow-hidden h-100">
-                <div class="promo-image-wrapper">
-                    <img src="/img/movies/dune2-banner.jpg" class="promo-img" alt="Promo IMAX" onerror="this.src='/img/movies/dune2-banner.jpg'" />
-                    <div class="promo-badge bg-warning text-dark">Ưu Đãi VIP</div>
-                </div>
-                <div class="p-4">
-                    <h5 class="fw-bold text-white mb-2">Trải Nghiệm IMAX Cực Đỉnh Giảm Ngay 30% Cho VIP</h5>
-                    <p class="text-muted small mb-3">Đắm chìm trong không gian vũ trụ điện ảnh với vé IMAX được giảm ngay 30% dành riêng cho khách hàng sở hữu thẻ thành viên Diamond.</p>
-                    <span class="text-primary fw-bold text-uppercase small" style="cursor: pointer;">Chi tiết ưu đãi <i class="bi bi-chevron-right small"></i></span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="promo-card glass rounded-4 overflow-hidden h-100">
-                <div class="promo-image-wrapper">
-                    <img src="/img/movies/kungfupanda4-banner.jpg" class="promo-img" alt="Promo Combo" onerror="this.src='/img/movies/kungfupanda4-banner.jpg'" />
-                    <div class="promo-badge bg-success text-white">Tin Tức</div>
-                </div>
-                <div class="p-4">
-                    <h5 class="fw-bold text-white mb-2">DUNE: PART TWO Phá Vỡ Mọi Kỷ Lục Phòng Vé Toàn Cầu</h5>
-                    <p class="text-muted small mb-3">Siêu phẩm điện ảnh khoa học viễn tưởng của Denis Villeneuve chính thức cán mốc doanh thu 1 tỷ USD toàn cầu, lập kỷ lục vô tiền khoáng hậu.</p>
-                    <span class="text-primary fw-bold text-uppercase small" style="cursor: pointer;">Đọc bài viết <i class="bi bi-chevron-right small"></i></span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                <form id="lpQuickBookingForm" asp-controller="Showtimes" asp-action="Index" method="get" class="row g-3 align-items-end">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="lp-step-field">
+                            <label for="lpSelectMovie" class="lp-step-label">
+                                <span class="lp-step-num">01</span> Chọn Phim
+                            </label>
+                            <select id="lpSelectMovie" name="movieId" class="form-select lp-select">
+                                <option value="">-- Tất cả phim đang chiếu --</option>
+                                @foreach (var m in nowShowing)
+                                {
+                                    <option value="@m.MovieId">@m.Title @(m.IsHot ? "(Hot)" : "")</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
 
-@functions {
-    // Delegate sang shared helper (Home dùng CSS class prefix 'age-' thay vì 'badge-age-')
-    public string GetAgeBadgeClass(string title)
+                    <div class="col-lg-3 col-md-6">
+                        <div class="lp-step-field">
+                            <label for="lpSelectTheater" class="lp-step-label">
+                                <span class="lp-step-num">02</span> Cụm Rạp
+                            </label>
+                            <select id="lpSelectTheater" name="theaterId" class="form-select lp-select">
+                                <option value="">-- Tất cả các rạp (@theaters.Count) --</option>
+                                @foreach (var t in theaters)
+                                {
+                                    <option value="@t.TheaterId">@t.TheaterName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-4">
+                        <div class="lp-step-field">
+                            <label for="lpSelectDate" class="lp-step-label">
+                                <span class="lp-step-num">03</span> Ngày Chiếu
+                            </label>
+                            <select id="lpSelectDate" name="date" class="form-select lp-select">
+                                @for (int i = 0; i < 14; i++)
+                                {
+                                    var targetDate = VietnamTime.Today.AddDays(i);
+                                    var dateVal = targetDate.ToString("yyyy-MM-dd");
+                                    var dateLbl = i == 0 ? "Hôm nay, " + targetDate.ToString("dd/MM")
+                                                : i == 1 ? "Ngày mai, " + targetDate.ToString("dd/MM")
+                                                : targetDate.ToString("ddd, dd/MM", new CultureInfo("vi-VN"));
+                                    <option value="@dateVal">@dateLbl</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-4">
+                        <div class="lp-step-field">
+                            <label for="lpSelectShowtime" class="lp-step-label">
+                                <span class="lp-step-num">04</span> Giờ Chiếu
+                            </label>
+                            <select id="lpSelectShowtime" class="form-select lp-select" disabled aria-label="Chọn suất chiếu cụ thể">
+                                <option value="">-- Chọn phim trước --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-4">
+                        <button type="submit" id="lpBookingSubmitBtn" class="lp-booking-submit">
+                            <i class="bi bi-arrow-right-circle-fill" aria-hidden="true"></i>
+                            <span id="lpBookingSubmitText">Tìm Suất Chiếu</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    @* =====================================================================
+       3. LIVE SYSTEM METRICS & NEXT-UP SHOWTIMES STRIP
+       ===================================================================== *@
+    <section class="container pt-5 lp-reveal" aria-label="Thống kê hệ thống và suất chiếu sắp diễn ra">
+        <div class="lp-metrics-grid">
+            <div class="lp-metric-card">
+                <div class="lp-metric-icon"><i class="bi bi-buildings-fill" aria-hidden="true"></i></div>
+                <div>
+                    <div class="lp-metric-value">@(vm.TotalTheaters > 0 ? vm.TotalTheaters.ToString() : "7+")</div>
+                    <div class="lp-metric-label">Cụm Rạp Hiện Đại Toàn Quốc</div>
+                </div>
+            </div>
+            <div class="lp-metric-card">
+                <div class="lp-metric-icon"><i class="bi bi-easel2-fill" aria-hidden="true"></i></div>
+                <div>
+                    <div class="lp-metric-value">@(vm.TotalRooms > 0 ? vm.TotalRooms.ToString() : "24+")</div>
+                    <div class="lp-metric-label">Phòng Chiếu Chuẩn Quốc Tế</div>
+                </div>
+            </div>
+            <div class="lp-metric-card">
+                <div class="lp-metric-icon"><i class="bi bi-grid-3x3-gap-fill" aria-hidden="true"></i></div>
+                <div>
+                    <div class="lp-metric-value">@(vm.TotalSeats > 0 ? vm.TotalSeats.ToString("N0") : "2.400+")</div>
+                    <div class="lp-metric-label">Ghế Standard • VIP • Couple</div>
+                </div>
+            </div>
+            <div class="lp-metric-card">
+                <div class="lp-metric-icon"><i class="bi bi-film" aria-hidden="true"></i></div>
+                <div>
+                    <div class="lp-metric-value">@vm.NowShowingCount Phim</div>
+                    <div class="lp-metric-label">
+                        @(vm.ShowtimesToday > 0 ? $"{vm.ShowtimesToday} suất chiếu trong hôm nay" : "Đang công chiếu trên toàn hệ thống")
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (upcoming.Any())
+        {
+            <div class="lp-upcoming-box mt-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="lp-live-dot" aria-hidden="true"></span>
+                        <span class="fw-bold text-white small text-uppercase" style="letter-spacing: 0.8px;">
+                            Suất Chiếu Sắp Bắt Đầu — Chọn Ghế 1 Chạm
+                        </span>
+                    </div>
+                    <a asp-controller="Showtimes" asp-action="Index" class="text-decoration-none small fw-semibold" style="color: #ff6b74;">
+                        Xem toàn bộ lịch chiếu <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </a>
+                </div>
+
+                <div class="lp-upcoming-scroll">
+                    @foreach (var st in upcoming)
+                    {
+                        var isToday = st.StartTime.Date == VietnamTime.Today;
+                        var timeBadge = isToday
+                            ? st.StartTime.ToString("HH:mm")
+                            : st.StartTime.ToString("HH:mm • dd/MM");
+
+                        <a asp-controller="Booking"
+                           asp-action="SelectSeat"
+                           asp-route-id="@st.ShowtimeId"
+                           class="lp-ticket-stub"
+                           title="Đặt ghế @st.MovieTitle lúc @st.StartTime.ToString("HH:mm dd/MM")">
+                            @if (!string.IsNullOrWhiteSpace(st.MoviePosterUrl))
+                            {
+                                <img src="@st.MoviePosterUrl" alt="" class="lp-stub-poster" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="lp-stub-poster d-flex align-items-center justify-content-center text-secondary">
+                                    <i class="bi bi-film" aria-hidden="true"></i>
+                                </div>
+                            }
+                            <div class="lp-stub-body">
+                                <div class="lp-stub-time-row">
+                                    <span class="lp-stub-time">@timeBadge</span>
+                                    <span class="lp-stub-seats">Còn @st.AvailableSeats ghế</span>
+                                </div>
+                                <div class="lp-stub-movie">@st.MovieTitle</div>
+                                <div class="lp-stub-venue">
+                                    @st.TheaterName • @st.RoomName • <span style="color: var(--lp-gold); font-weight:600;">@st.Price.ToString("N0")₫</span>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+
+    @* =====================================================================
+       4. INTERACTIVE MOVIE CATALOG & BOX OFFICE RANKING
+       ===================================================================== *@
+    <section id="movies-showcase" class="lp-section container lp-reveal" aria-labelledby="lpMoviesHeading">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+            <div>
+                <div class="lp-eyebrow">
+                    <i class="bi bi-camera-reels-fill" aria-hidden="true"></i> Kho Phim Điện Ảnh
+                </div>
+                <h2 id="lpMoviesHeading" class="lp-section-heading">Khám Phá Danh Mục Phim Tại Rạp</h2>
+                <p class="lp-section-sub mb-0">Lọc tức thì theo trạng thái công chiếu, bảng xếp hạng vé đặt thực tế và thể loại yêu thích.</p>
+            </div>
+            <a asp-controller="Movies" asp-action="Index" class="lp-btn-glass py-2 px-4">
+                <span>Tất cả phim</span>
+                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+        </div>
+
+        <div class="lp-catalog-controls">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div class="lp-tab-group" role="tablist" aria-label="Chọn danh mục phim">
+                    <button type="button" class="lp-tab-btn js-movie-tab active" role="tab" aria-selected="true" data-tab="now">
+                        <i class="bi bi-play-circle-fill" aria-hidden="true"></i>
+                        <span>Đang Chiếu</span>
+                        <span class="lp-tab-count">@nowShowing.Count</span>
+                    </button>
+                    <button type="button" class="lp-tab-btn js-movie-tab" role="tab" aria-selected="false" data-tab="soon">
+                        <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                        <span>Sắp Chiếu</span>
+                        <span class="lp-tab-count">@comingSoon.Count</span>
+                    </button>
+                    <button type="button" class="lp-tab-btn js-movie-tab" role="tab" aria-selected="false" data-tab="hot">
+                        <i class="bi bi-trophy-fill" aria-hidden="true"></i>
+                        <span>Top Thịnh Hành</span>
+                        <span class="lp-tab-count">@topBoxOffice.Count</span>
+                    </button>
+                </div>
+
+                <div class="lp-search-box">
+                    <i class="bi bi-search lp-search-icon" aria-hidden="true"></i>
+                    <input type="search"
+                           id="lpMovieSearch"
+                           class="form-control lp-search-input"
+                           placeholder="Tìm nhanh tên phim..."
+                           aria-label="Tìm nhanh tên phim" />
+                </div>
+            </div>
+
+            @if (genres.Any())
+            {
+                <div class="lp-genre-scroll" role="group" aria-label="Lọc theo thể loại">
+                    <button type="button" class="lp-genre-pill js-genre-pill active" data-genre="all">Tất cả thể loại</button>
+                    @foreach (var g in genres)
+                    {
+                        <button type="button" class="lp-genre-pill js-genre-pill" data-genre="@g">@g</button>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="row g-4" id="lpMoviesGrid">
+            @* --- Tab 1: Now Showing (up to 8) --- *@
+            @foreach (var movie in nowShowing.Take(8))
+            {
+                var genresPipe = string.Join("|", movie.Genres);
+                var genresDisplay = movie.Genres.Any() ? string.Join(" • ", movie.Genres.Take(3)) : "Phim điện ảnh";
+                var rating = GetMovieRating(movie.MovieId).ToString("F1");
+
+                <div class="col-6 col-md-4 col-lg-3 js-movie-item"
+                     data-tab-group="now"
+                     data-genres="@genresPipe"
+                     data-title="@movie.Title">
+                    <article class="lp-movie-card">
+                        <div class="lp-poster-wrap">
+                            @if (!string.IsNullOrWhiteSpace(movie.PosterUrl))
+                            {
+                                <img src="@movie.PosterUrl" class="lp-poster-img" alt="@movie.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-secondary">
+                                    <i class="bi bi-film fs-1" aria-hidden="true"></i>
+                                </div>
+                            }
+
+                            <div class="lp-poster-top">
+                                <span class="lp-rating-chip">
+                                    <i class="bi bi-star-fill" aria-hidden="true"></i> @rating
+                                </span>
+                                <span class="lp-age-badge @GetAgeBadgeClass(movie.Title)" title="@GetAgeBadgeDesc(movie.Title)">
+                                    @GetAgeBadgeText(movie.Title)
+                                </span>
+                            </div>
+
+                            <div class="lp-poster-bottom">
+                                @if (movie.IsHot)
+                                {
+                                    <span class="lp-hot-chip">
+                                        <i class="bi bi-fire" aria-hidden="true"></i> Hot
+                                    </span>
+                                }
+                                <span class="lp-format-chip">@GetMovieFormat(movie.Title)</span>
+                            </div>
+
+                            <div class="lp-poster-scrim">
+                                <button type="button"
+                                        class="lp-btn-primary w-100 py-2 js-quick-book-movie"
+                                        data-movie-id="@movie.MovieId"
+                                        data-movie-title="@movie.Title">
+                                    <i class="bi bi-ticket-perforated-fill" aria-hidden="true"></i>
+                                    <span>Mua Vé Nhanh</span>
+                                </button>
+                                <a asp-controller="Movies"
+                                   asp-action="Details"
+                                   asp-route-id="@movie.MovieId"
+                                   class="lp-btn-glass w-100 py-2">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    <span>Chi Tiết Phim</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="lp-card-body">
+                            <div class="lp-card-genres">@genresDisplay</div>
+                            <h3 class="lp-card-title" title="@movie.Title">
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId">@movie.Title</a>
+                            </h3>
+                            <div class="lp-card-meta-foot">
+                                <span><i class="bi bi-clock me-1" aria-hidden="true"></i>@movie.Duration phút</span>
+                                <button type="button"
+                                        class="lp-card-quick-btn js-quick-book-movie"
+                                        data-movie-id="@movie.MovieId"
+                                        data-movie-title="@movie.Title">
+                                    Đặt vé
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            }
+
+            @* --- Tab 2: Coming Soon (up to 8) --- *@
+            @foreach (var movie in comingSoon.Take(8))
+            {
+                var genresPipe = string.Join("|", movie.Genres);
+                var genresDisplay = movie.Genres.Any() ? string.Join(" • ", movie.Genres.Take(3)) : "Phim sắp khởi chiếu";
+                var rating = GetMovieRating(movie.MovieId).ToString("F1");
+
+                <div class="col-6 col-md-4 col-lg-3 js-movie-item d-none"
+                     data-tab-group="soon"
+                     data-genres="@genresPipe"
+                     data-title="@movie.Title">
+                    <article class="lp-movie-card">
+                        <div class="lp-poster-wrap">
+                            @if (!string.IsNullOrWhiteSpace(movie.PosterUrl))
+                            {
+                                <img src="@movie.PosterUrl" class="lp-poster-img" alt="@movie.Title" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-secondary">
+                                    <i class="bi bi-film fs-1" aria-hidden="true"></i>
+                                </div>
+                            }
+
+                            <div class="lp-poster-top">
+                                <span class="lp-rating-chip">
+                                    <i class="bi bi-star-fill" aria-hidden="true"></i> @rating
+                                </span>
+                                <span class="lp-age-badge @GetAgeBadgeClass(movie.Title)" title="@GetAgeBadgeDesc(movie.Title)">
+                                    @GetAgeBadgeText(movie.Title)
+                                </span>
+                            </div>
+
+                            <div class="lp-poster-bottom">
+                                <span class="lp-format-chip">@GetMovieFormat(movie.Title)</span>
+                            </div>
+
+                            <div class="lp-poster-scrim">
+                                <a asp-controller="Movies"
+                                   asp-action="Details"
+                                   asp-route-id="@movie.MovieId"
+                                   class="lp-btn-primary w-100 py-2">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    <span>Xem Thông Tin</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="lp-card-body">
+                            <div class="lp-card-genres">@genresDisplay</div>
+                            <h3 class="lp-card-title" title="@movie.Title">
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId">@movie.Title</a>
+                            </h3>
+                            <div class="lp-card-meta-foot">
+                                <span>
+                                    <i class="bi bi-calendar-event me-1" aria-hidden="true"></i>
+                                    @(movie.ReleaseDate?.ToString("dd/MM/yyyy") ?? "Sắp công bố")
+                                </span>
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId" class="lp-card-quick-btn">
+                                    Chi tiết
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            }
+
+            @* --- Tab 3: Top Box Office / Trending (up to 6) --- *@
+            @for (int r = 0; r < topBoxOffice.Count; r++)
+            {
+                var movie = topBoxOffice[r];
+                var genresPipe = string.Join("|", movie.Genres);
+                var genresDisplay = movie.Genres.Any() ? string.Join(" • ", movie.Genres.Take(3)) : "Phim điện ảnh";
+                var rating = GetMovieRating(movie.MovieId).ToString("F1");
+
+                <div class="col-6 col-md-4 col-lg-4 col-xl-2 js-movie-item d-none"
+                     data-tab-group="hot"
+                     data-genres="@genresPipe"
+                     data-title="@movie.Title">
+                    <article class="lp-movie-card">
+                        <div class="lp-poster-wrap">
+                            @if (!string.IsNullOrWhiteSpace(movie.PosterUrl))
+                            {
+                                <img src="@movie.PosterUrl" class="lp-poster-img" alt="@movie.Title" loading="lazy" />
+                            }
+                            <div class="lp-poster-top">
+                                <span class="lp-rating-chip">
+                                    <i class="bi bi-star-fill" aria-hidden="true"></i> @rating
+                                </span>
+                                <span class="lp-age-badge @GetAgeBadgeClass(movie.Title)">@GetAgeBadgeText(movie.Title)</span>
+                            </div>
+                            <div class="lp-rank-badge" aria-label="Hạng @(r + 1)">@((r + 1).ToString("D2"))</div>
+
+                            <div class="lp-poster-scrim">
+                                @if (movie.Status == "Now Showing")
+                                {
+                                    <button type="button"
+                                            class="lp-btn-primary w-100 py-2 px-2 js-quick-book-movie"
+                                            style="font-size:0.8rem;"
+                                            data-movie-id="@movie.MovieId"
+                                            data-movie-title="@movie.Title">
+                                        Mua Vé
+                                    </button>
+                                }
+                                <a asp-controller="Movies"
+                                   asp-action="Details"
+                                   asp-route-id="@movie.MovieId"
+                                   class="lp-btn-glass w-100 py-2 px-2"
+                                   style="font-size:0.8rem;">
+                                    Chi Tiết
+                                </a>
+                            </div>
+                        </div>
+                        <div class="lp-card-body p-3">
+                            <div class="lp-card-genres">@genresDisplay</div>
+                            <h3 class="lp-card-title mb-2" style="font-size:0.94rem;">
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId">@movie.Title</a>
+                            </h3>
+                            <div class="lp-card-meta-foot pt-2" style="font-size:0.74rem;">
+                                <span>@movie.Duration phút</span>
+                                <span class="text-warning fw-semibold">Top #@(r + 1)</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+
+        <div id="lpMovieEmptyState" class="text-center py-5 d-none">
+            <i class="bi bi-search text-secondary fs-1" aria-hidden="true"></i>
+            <h5 class="text-white fw-bold mt-3 mb-2">Không tìm thấy bộ phim phù hợp</h5>
+            <p class="text-muted small mb-3">Hãy thử chọn thể loại khác hoặc xoá từ khoá tìm kiếm.</p>
+            <button type="button" id="lpResetMovieFilter" class="lp-btn-glass py-2 px-4">Xoá bộ lọc</button>
+        </div>
+    </section>
+
+    @* =====================================================================
+       5. BENTO ECOSYSTEM GRID — ALIGNED 100% TO BACKEND CAPABILITIES
+       ===================================================================== *@
+    <section id="lp-ecosystem" class="lp-section container lp-reveal" aria-labelledby="lpEcosystemHeading">
+        <div class="text-center mx-auto mb-5" style="max-width: 680px;">
+            <div class="lp-eyebrow justify-content-center">
+                <i class="bi bi-cpu-fill" aria-hidden="true"></i> Nền Tảng Công Nghệ CinemaHub
+            </div>
+            <h2 id="lpEcosystemHeading" class="lp-section-heading">Trải Nghiệm Đặt Vé Thế Hệ Mới</h2>
+            <p class="lp-section-sub mx-auto">
+                Từ cơ chế khoá ghế chống trùng thời gian thực, cổng thanh toán điện tử VNPay đến trợ lý AI tư vấn lịch chiếu 24/7.
+            </p>
+        </div>
+
+        <div class="lp-bento-grid">
+            @* Bento 1: Interactive 3D Seat Selection & 15-Min Hold *@
+            <div class="lp-bento-card lp-bento-span-7">
+                <div>
+                    <span class="lp-bento-tag" style="background: rgba(229,9,20,0.14); color:#ff7b82; border:1px solid rgba(229,9,20,0.3);">
+                        <i class="bi bi-grid-3x3-gap-fill" aria-hidden="true"></i> Real-Time Seat Lock • 15 Phút
+                    </span>
+                    <h3 class="lp-bento-title">Sơ Đồ Ghế 3D Trực Quan &amp; Giữ Chỗ Tự Động</h3>
+                    <p class="lp-bento-desc">
+                        Hệ thống tự động khoá ghế độc quyền trong 15 phút ngay khi bạn chuyển sang bước thanh toán, ngăn chặn tuyệt đối tình trạng trùng ghế giờ cao điểm.
+                    </p>
+                </div>
+
+                <div class="lp-mini-auditorium">
+                    <div class="lp-mini-screen" aria-hidden="true"></div>
+                    <div class="lp-mini-screen-lbl">Màn Hình Cong IMAX Laser</div>
+
+                    <div class="lp-mini-seat-rows" role="group" aria-label="Mô phỏng chọn ghế tương tác">
+                        <div class="lp-mini-row">
+                            <button type="button" class="lp-mini-seat js-demo-seat" data-seat="D3" data-price="75000" aria-pressed="false">D3</button>
+                            <button type="button" class="lp-mini-seat js-demo-seat" data-seat="D4" data-price="75000" aria-pressed="false">D4</button>
+                            <button type="button" class="lp-mini-seat js-demo-seat" data-seat="D5" data-price="75000" aria-pressed="false">D5</button>
+                            <button type="button" class="lp-mini-seat is-held" disabled title="Đang được giữ chỗ">D6</button>
+                            <button type="button" class="lp-mini-seat js-demo-seat" data-seat="D7" data-price="75000" aria-pressed="false">D7</button>
+                            <button type="button" class="lp-mini-seat js-demo-seat" data-seat="D8" data-price="75000" aria-pressed="false">D8</button>
+                        </div>
+                        <div class="lp-mini-row">
+                            <button type="button" class="lp-mini-seat is-vip js-demo-seat" data-seat="E3" data-price="95000" aria-pressed="false">E3</button>
+                            <button type="button" class="lp-mini-seat is-vip js-demo-seat is-selected" data-seat="E4" data-price="95000" aria-pressed="true">E4</button>
+                            <button type="button" class="lp-mini-seat is-vip js-demo-seat is-selected" data-seat="E5" data-price="95000" aria-pressed="true">E5</button>
+                            <button type="button" class="lp-mini-seat is-vip js-demo-seat" data-seat="E6" data-price="95000" aria-pressed="false">E6</button>
+                            <button type="button" class="lp-mini-seat is-vip is-held" disabled title="Đã đặt">E7</button>
+                            <button type="button" class="lp-mini-seat is-vip js-demo-seat" data-seat="E8" data-price="95000" aria-pressed="false">E8</button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.07);">
+                        <span id="lpDemoSeatSummary" class="small text-secondary"></span>
+                        <a asp-controller="Showtimes" asp-action="Index" class="lp-card-quick-btn">
+                            Chọn suất thực tế <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            @* Bento 2: CinemaHub AI Assistant (Connected to /api/chatbot/message) *@
+            <div class="lp-bento-card lp-bento-span-5">
+                <div>
+                    <span class="lp-bento-tag" style="background: rgba(99,102,241,0.16); color:#a5b4fc; border:1px solid rgba(99,102,241,0.35);">
+                        <i class="bi bi-stars" aria-hidden="true"></i> Gemini AI Assistant • 24/7
+                    </span>
+                    <h3 class="lp-bento-title">Trợ Lý Điện Ảnh Thông Minh</h3>
+                    <p class="lp-bento-desc">
+                        Tra cứu phim đang chiếu, suất chiếu theo thời gian thực và kiểm tra vé đã đặt ngay trong khung trò chuyện. Chạm thử một câu hỏi bên dưới:
+                    </p>
+                </div>
+
+                <div class="lp-ai-prompts">
+                    <button type="button" class="lp-ai-chip js-chatbot-prompt" data-prompt="phim đang chiếu">
+                        <span><i class="bi bi-chat-dots me-2 text-info" aria-hidden="true"></i>Gợi ý các phim đang chiếu nổi bật</span>
+                        <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="lp-ai-chip js-chatbot-prompt" data-prompt="lịch chiếu hôm nay">
+                        <span><i class="bi bi-calendar2-check me-2 text-info" aria-hidden="true"></i>Xem lịch chiếu các rạp hôm nay</span>
+                        <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="lp-ai-chip js-chatbot-prompt" data-prompt="giá vé">
+                        <span><i class="bi bi-credit-card me-2 text-info" aria-hidden="true"></i>Bảng giá vé &amp; hướng dẫn thanh toán</span>
+                        <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+
+            @* Bento 3: VNPay Secure Online Payment & Digital Tickets *@
+            <div class="lp-bento-card lp-bento-span-6">
+                <div>
+                    <span class="lp-bento-tag" style="background: rgba(16,185,129,0.14); color:#6ee7b7; border:1px solid rgba(16,185,129,0.32);">
+                        <i class="bi bi-shield-check" aria-hidden="true"></i> Cổng Thanh Toán VNPay
+                    </span>
+                    <h3 class="lp-bento-title">Thanh Toán Một Chạm &amp; Quản Lý Vé Điện Tử</h3>
+                    <p class="lp-bento-desc">
+                        Tích hợp cổng thanh toán trực tuyến VNPay xác thực chữ ký số an toàn. Vé điện tử được xuất tức thì vào tài khoản cá nhân, hỗ trợ tra cứu và huỷ vé linh hoạt trước giờ chiếu.
+                    </p>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="lp-pay-badges">
+                        <span class="lp-pay-pill"><i class="bi bi-qr-code-scan text-info" aria-hidden="true"></i> VNPay QR</span>
+                        <span class="lp-pay-pill"><i class="bi bi-bank text-success" aria-hidden="true"></i> Thẻ ATM Nội Địa</span>
+                        <span class="lp-pay-pill"><i class="bi bi-credit-card-2-front text-warning" aria-hidden="true"></i> Quốc Tế</span>
+                    </div>
+                    <a asp-controller="Booking" asp-action="MyTickets" class="lp-card-quick-btn">
+                        Vé của tôi <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+
+            @* Bento 4: Google OAuth 2.0, OTP Email & Enterprise Security *@
+            <div class="lp-bento-card lp-bento-span-6">
+                <div>
+                    <span class="lp-bento-tag" style="background: rgba(245,197,24,0.14); color:var(--lp-gold); border:1px solid rgba(245,197,24,0.32);">
+                        <i class="bi bi-person-check-fill" aria-hidden="true"></i> Google OAuth 2.0 • Bảo Mật OTP
+                    </span>
+                    <h3 class="lp-bento-title">Đăng Nhập Nhanh &amp; An Toàn Tuyệt Đối</h3>
+                    <p class="lp-bento-desc">
+                        Đăng nhập một chạm bằng tài khoản Google hoặc xác thực mã OTP qua Email. Dữ liệu phiên đăng nhập được bảo vệ bởi cơ chế chống giả mạo và kiểm soát truy cập đa tầng.
+                    </p>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="lp-pay-badges">
+                        <span class="lp-pay-pill"><i class="bi bi-google text-danger" aria-hidden="true"></i> Google Sign-In</span>
+                        <span class="lp-pay-pill"><i class="bi bi-envelope-check text-primary" aria-hidden="true"></i> Xác Thực Email OTP</span>
+                    </div>
+                    @if (isLoggedIn)
+                    {
+                        <a asp-controller="Account" asp-action="Profile" class="lp-card-quick-btn">
+                            Hồ sơ của bạn <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="lp-card-quick-btn">
+                            Đăng nhập ngay <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* =====================================================================
+       6. THEATER NETWORK SPOTLIGHT (LIVE FROM POSTGRESQL)
+       ===================================================================== *@
+    @if (theaters.Any())
     {
-        var cls = CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeClass(title);
-        return cls.Replace("badge-age-", "age-");
+        <section class="lp-section container lp-reveal" aria-labelledby="lpTheatersHeading">
+            <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+                <div>
+                    <div class="lp-eyebrow">
+                        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Không Gian Trình Chiếu
+                    </div>
+                    <h2 id="lpTheatersHeading" class="lp-section-heading">Hệ Thống Cụm Rạp Tiêu Biểu</h2>
+                    <p class="lp-section-sub mb-0">Xem nhanh số phòng chiếu, sức chứa ghế ngồi và mở lịch chiếu từng cụm rạp ngay tại chỗ.</p>
+                </div>
+                <a asp-controller="Home" asp-action="Theaters" class="lp-btn-glass py-2 px-4">
+                    <span>Xem tất cả @vm.TotalTheaters rạp</span>
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </a>
+            </div>
+
+            <div class="row g-4">
+                @for (int i = 0; i < Math.Min(3, theaters.Count); i++)
+                {
+                    var t = theaters[i];
+                    var cover = theaterCovers[i % theaterCovers.Length];
+                    var tech = techLabels[i % techLabels.Length];
+
+                    <div class="col-lg-4 col-md-6">
+                        <article class="lp-theater-card">
+                            <div class="lp-theater-cover">
+                                <img src="@cover" alt="@t.TheaterName" loading="lazy" />
+                                <span class="lp-theater-tech">@tech</span>
+                                @if (t.NextShowtime.HasValue)
+                                {
+                                    <span class="lp-theater-status">
+                                        <span class="lp-live-dot" style="background:#34d399;box-shadow:0 0 8px #34d399;" aria-hidden="true"></span>
+                                        Suất kế: @t.NextShowtime.Value.ToString("HH:mm")
+                                    </span>
+                                }
+                            </div>
+                            <div class="lp-theater-body">
+                                <h3 class="h5 fw-bold text-white mb-2">@t.TheaterName</h3>
+                                <p class="small text-muted mb-0">
+                                    <i class="bi bi-geo-alt-fill text-danger me-1" aria-hidden="true"></i>
+                                    @(string.IsNullOrWhiteSpace(t.Address) ? "Hệ thống rạp CinemaHub Việt Nam" : t.Address)
+                                </p>
+
+                                <div class="lp-theater-specs">
+                                    <span class="lp-spec-pill">
+                                        <i class="bi bi-easel2 me-1 text-danger" aria-hidden="true"></i>@t.RoomCount phòng
+                                    </span>
+                                    <span class="lp-spec-pill">
+                                        <i class="bi bi-person-workspace me-1 text-info" aria-hidden="true"></i>@t.SeatCount.ToString("N0") ghế
+                                    </span>
+                                    @if (t.ShowtimesToday > 0)
+                                    {
+                                        <span class="lp-spec-pill">
+                                            <i class="bi bi-play-btn me-1 text-warning" aria-hidden="true"></i>@t.ShowtimesToday suất hôm nay
+                                        </span>
+                                    }
+                                </div>
+
+                                <div class="mt-auto d-flex gap-2">
+                                    <button type="button"
+                                            class="lp-btn-primary py-2 px-3 flex-grow-1 js-quick-view-theater"
+                                            style="font-size: 0.86rem;"
+                                            data-theater-id="@t.TheaterId"
+                                            data-theater-name="@t.TheaterName"
+                                            data-theater-address="@t.Address">
+                                        <i class="bi bi-calendar2-week" aria-hidden="true"></i>
+                                        <span>Lịch Chiếu Nhanh</span>
+                                    </button>
+                                    <a href="https://maps.google.com/?q=@Uri.EscapeDataString(t.Address ?? t.TheaterName)"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="lp-btn-glass py-2 px-3"
+                                       aria-label="Mở bản đồ @t.TheaterName"
+                                       title="Xem bản đồ">
+                                        <i class="bi bi-map" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                }
+            </div>
+        </section>
     }
-    public string GetAgeBadgeText(string title) => CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeText(title);
-    public string GetAgeBadgeDesc(string title) => CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeDesc(title);
-    public string GetMovieFormat(string title) => CinemaManagement.Helpers.MovieDisplayHelper.GetMovieFormat(title);
-    public double GetMovieRating(int id) => CinemaManagement.Helpers.MovieDisplayHelper.GetMovieRating(id);
+
+    @* =====================================================================
+       7. PROMOTIONS, CINEMA NEWS & PERSONALIZED CONVERSION CTA
+       ===================================================================== *@
+    <section class="lp-section container lp-reveal" aria-labelledby="lpNewsHeading">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+            <div>
+                <div class="lp-eyebrow">
+                    <i class="bi bi-megaphone-fill" aria-hidden="true"></i> Ưu Đãi &amp; Điện Ảnh
+                </div>
+                <h2 id="lpNewsHeading" class="lp-section-heading">Khuyến Mãi &amp; Tin Tức Nổi Bật</h2>
+            </div>
+            <a asp-controller="Home" asp-action="News" class="lp-btn-glass py-2 px-4">
+                <span>Xem chuyên trang tin tức</span>
+                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <a asp-controller="Home" asp-action="News" class="lp-promo-card">
+                    <div class="lp-promo-thumb">
+                        <img src="/img/movies/cinemaxmomo.jpg" alt="Ưu đãi thanh toán vé xem phim" loading="lazy" />
+                    </div>
+                    <div class="p-4 d-flex flex-column flex-grow-1">
+                        <span class="badge bg-danger align-self-start mb-2">Ưu Đãi Đặt Vé Online</span>
+                        <h3 class="h5 fw-bold text-white mb-2">Thứ Hai Cuối Tháng — Đồng Giá Vé 2D Chỉ Từ 45.000₫</h3>
+                        <p class="small text-muted mb-3">Áp dụng khi đặt ghế trực tuyến trên CinemaHub và thanh toán nhanh qua cổng điện tử.</p>
+                        <span class="mt-auto small fw-bold" style="color:#ff6b74;">
+                            Xem chi tiết ưu đãi <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a asp-controller="Home" asp-action="News" class="lp-promo-card">
+                    <div class="lp-promo-thumb">
+                        <img src="/img/movies/dune2-banner.jpg" alt="Trải nghiệm phòng chiếu IMAX" loading="lazy" />
+                    </div>
+                    <div class="p-4 d-flex flex-column flex-grow-1">
+                        <span class="badge bg-warning text-dark align-self-start mb-2">Đặc Quyền Thành Viên</span>
+                        <h3 class="h5 fw-bold text-white mb-2">Trải Nghiệm Phòng Chiếu IMAX Laser &amp; Ghế VIP Hạng Thương Gia</h3>
+                        <p class="small text-muted mb-3">Đắm chìm trong đại cảnh điện ảnh sắc nét gấp 4 lần cùng hệ thống âm thanh vòm 64 kênh độc lập.</p>
+                        <span class="mt-auto small fw-bold" style="color:#ff6b74;">
+                            Khám phá công nghệ <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-4">
+                <a asp-controller="Home" asp-action="News" class="lp-promo-card">
+                    <div class="lp-promo-thumb">
+                        <img src="/img/movies/marvel-phase-6.jpg" alt="Tin tức bom tấn điện ảnh" loading="lazy" />
+                    </div>
+                    <div class="p-4 d-flex flex-column flex-grow-1">
+                        <span class="badge bg-info text-dark align-self-start mb-2">Tiêu Điểm Phòng Vé</span>
+                        <h3 class="h5 fw-bold text-white mb-2">Loạt Bom Tấn Quốc Tế &amp; Phim Việt Đổ Bộ Mùa Lễ Hội</h3>
+                        <p class="small text-muted mb-3">Cập nhật sớm nhất lịch khởi chiếu, đánh giá chuyên sâu và các suất chiếu sớm đặc biệt tại CinemaHub.</p>
+                        <span class="mt-auto small fw-bold" style="color:#ff6b74;">
+                            Đọc tin điện ảnh <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    @* =====================================================================
+       8. FINAL MEMBER CONVERSION BANNER
+       ===================================================================== *@
+    <section class="lp-section container pb-4 lp-reveal" aria-label="Bắt đầu trải nghiệm CinemaHub">
+        <div class="lp-cta-banner">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-7">
+                    @if (isLoggedIn)
+                    {
+                        <div class="lp-eyebrow">
+                            <i class="bi bi-stars" aria-hidden="true"></i> Chào mừng trở lại, @memberName
+                        </div>
+                        <h2 class="lp-section-heading mb-2">Sẵn Sàng Cho Suất Chiếu Tiếp Theo?</h2>
+                        <p class="lp-section-sub mb-0">
+                            Chọn bộ phim yêu thích, giữ ghế đẹp nhất trong phòng chiếu hoặc kiểm tra ngay vé điện tử đã đặt của bạn.
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="lp-eyebrow">
+                            <i class="bi bi-ticket-detailed-fill" aria-hidden="true"></i> Thành Viên CinemaHub
+                        </div>
+                        <h2 class="lp-section-heading mb-2">Đặt Ghế Đẹp Nhất Chỉ Trong 30 Giây</h2>
+                        <p class="lp-section-sub mb-0">
+                            Tạo tài khoản miễn phí hoặc đăng nhập nhanh bằng Google để giữ chỗ trực tuyến, thanh toán VNPay an toàn và lưu trữ toàn bộ vé điện tử.
+                        </p>
+                    }
+                </div>
+                <div class="col-lg-5 d-flex flex-wrap gap-3 justify-content-lg-end">
+                    @if (isLoggedIn)
+                    {
+                        <a asp-controller="Showtimes" asp-action="Index" class="lp-btn-primary">
+                            <i class="bi bi-ticket-perforated-fill" aria-hidden="true"></i>
+                            <span>Đặt Vé Ngay</span>
+                        </a>
+                        <a asp-controller="Booking" asp-action="MyTickets" class="lp-btn-glass">
+                            <i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i>
+                            <span>Vé Đã Đặt</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Register" class="lp-btn-primary">
+                            <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
+                            <span>Đăng Ký Miễn Phí</span>
+                        </a>
+                        <a asp-controller="Account" asp-action="Login" class="lp-btn-glass">
+                            <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                            <span>Đăng Nhập / Google</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@* =========================================================================
+   UNIFIED INSTANT SHOWTIMES MODAL (FETCHES /api/ShowtimesApi/...)
+   ========================================================================= *@
+<div class="modal fade" id="lpQuickShowtimesModal" tabindex="-1" aria-labelledby="lpModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content lp-modal-content shadow-lg">
+            <div class="modal-header border-secondary border-opacity-25 px-4 py-3">
+                <div>
+                    <h4 class="modal-title fw-bold text-white mb-1" id="lpModalTitle">Lịch Chiếu Nhanh</h4>
+                    <div class="small text-muted" id="lpModalSub"></div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Đóng hộp thoại"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <div id="lpModalDates" class="lp-modal-dates mb-3"></div>
+                <div id="lpModalBody"></div>
+            </div>
+            <div class="modal-footer border-secondary border-opacity-25 px-4 py-3 justify-content-between">
+                <span class="small text-muted">
+                    <i class="bi bi-shield-check text-success me-1" aria-hidden="true"></i>Giữ ghế tự động 15 phút khi thanh toán
+                </span>
+                <a id="lpModalFullLink" href="/Showtimes" class="lp-card-quick-btn">
+                    Mở trang lịch chiếu đầy đủ <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/landing.js" asp-append-version="true"></script>
 }
 
+@functions {
+    public string GetAgeBadgeClass(string title)
+    {
+        var cls = MovieDisplayHelper.GetAgeBadgeClass(title);
+        return cls.Replace("badge-age-", "lp-age-");
+    }
+    public string GetAgeBadgeText(string title) => MovieDisplayHelper.GetAgeBadgeText(title);
+    public string GetAgeBadgeDesc(string title) => MovieDisplayHelper.GetAgeBadgeDesc(title);
+    public string GetMovieFormat(string title) => MovieDisplayHelper.GetMovieFormat(title);
+    public double GetMovieRating(int id) => MovieDisplayHelper.GetMovieRating(id);
+}

@@ -11,6 +11,7 @@
           crossorigin="anonymous" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/chatbot.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
     <style>
         .navbar-custom {
             background: rgba(15, 15, 15, 0.85) !important;
@@ -75,7 +76,7 @@
                 <div class="collapse navbar-collapse" id="navCollapse">
                     <ul class="navbar-nav me-auto align-items-lg-center">
                         <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")" 
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")" 
                                asp-controller="Home" asp-action="Index">Trang chủ</a>
                         </li>
                         <li class="nav-item">
@@ -209,17 +210,17 @@
                 </div>
                 <div class="col-lg-2 col-md-6">
                     <h5 class="footer-heading">Khám Phá</h5>
-                    <a href="#" class="footer-link">Phim Đang Chiếu</a>
-                    <a href="#" class="footer-link">Phim Sắp Chiếu</a>
-                    <a href="#" class="footer-link">Lịch Chiếu</a>
-                    <a href="#" class="footer-link">Khuyến Mãi</a>
+                    <a asp-controller="Movies" asp-action="Index" class="footer-link">Danh Sách Phim</a>
+                    <a asp-controller="Showtimes" asp-action="Index" class="footer-link">Lịch Chiếu Rạp</a>
+                    <a asp-controller="Home" asp-action="Theaters" class="footer-link">Hệ Thống Rạp</a>
+                    <a asp-controller="Home" asp-action="News" class="footer-link">Tin Tức &amp; Ưu Đãi</a>
                 </div>
                 <div class="col-lg-3 col-md-6">
-                    <h5 class="footer-heading">Hỗ Trợ</h5>
-                    <a href="#" class="footer-link">Điều Khoản Sử Dụng</a>
-                    <a href="#" class="footer-link">Chính Sách Bảo Mật</a>
-                    <a href="#" class="footer-link">Câu Hỏi Thường Gặp</a>
-                    <a href="#" class="footer-link">Trung Tâm Trợ Giúp</a>
+                    <h5 class="footer-heading">Hỗ Trợ &amp; Tiện Ích</h5>
+                    <a asp-controller="Home" asp-action="About" class="footer-link">Về CinemaHub</a>
+                    <a asp-controller="Booking" asp-action="MyTickets" class="footer-link">Tra Cứu Vé Đã Đặt</a>
+                    <a asp-controller="Account" asp-action="Profile" class="footer-link">Tài Khoản Thành Viên</a>
+                    <a href="#lp-ecosystem" class="footer-link">Hướng Dẫn Đặt Vé Online</a>
                 </div>
                 <div class="col-lg-3 col-md-6">
                     <h5 class="footer-heading">Liên Hệ</h5>

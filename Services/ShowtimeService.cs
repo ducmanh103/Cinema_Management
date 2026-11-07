@@ -29,6 +29,7 @@ namespace CinemaManagement.Services
                     MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
+                    TheaterId    = s.Room.TheaterId,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
                                    - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
@@ -66,6 +67,7 @@ namespace CinemaManagement.Services
                     MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
+                    TheaterId    = s.Room.TheaterId,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
                                    - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
@@ -92,6 +94,7 @@ namespace CinemaManagement.Services
                     MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
+                    TheaterId    = s.Room.TheaterId,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
                                    - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
@@ -117,6 +120,7 @@ namespace CinemaManagement.Services
                     MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
+                    TheaterId    = s.Room.TheaterId,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
                                    - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
@@ -149,6 +153,7 @@ namespace CinemaManagement.Services
                     MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
+                    TheaterId    = s.Room.TheaterId,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
                                    - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
@@ -173,6 +178,7 @@ namespace CinemaManagement.Services
                     MovieDuration = s.Movie.Duration,
                     RoomId       = s.RoomId,
                     RoomName     = s.Room.RoomName,
+                    TheaterId    = s.Room.TheaterId,
                     TheaterName  = s.Room.Theater.TheaterName,
                     AvailableSeats = s.Room.SeatCount
                                    - s.Tickets.Count(t => t.Status == "Booked" || (t.Status == "Pending" && (t.HeldUntil == null || t.HeldUntil > now)))
