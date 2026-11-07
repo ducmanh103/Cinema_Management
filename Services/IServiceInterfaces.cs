@@ -41,6 +41,12 @@ namespace CinemaManagement.Services
         /// Đối chiếu số tiền thực trả (paidAmount) nếu được cung cấp.
         /// </summary>
         Task<(bool Handled, string? ErrorReason)> ConfirmPaymentAsync(int paymentId, string transactionId, bool success, decimal? paidAmount = null);
+
+        /// <summary>
+        /// Giải phóng ngay các vé đang ở trạng thái Pending của chính user (khi bấm Back từ VNPay về trang chọn ghế)
+        /// đồng thời dọn các vé Pending đã quá hạn HeldUntil.
+        /// </summary>
+        Task<int> ReleaseUserPendingTicketsAsync(int userId, int? showtimeId = null);
     }
 
     /// <summary>

@@ -28,6 +28,13 @@ namespace CinemaManagement.Controllers
         // GET: /Booking/SelectSeat/5  (showtimeId)
         public async Task<IActionResult> SelectSeat(int id)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out int userId))
+            {
+                // Khi người dùng bấm Back từ cổng VNPay quay lại trang chọn ghế, giải phóng ngay ghế Pending chưa thanh toán của họ
+                await _ticketService.ReleaseUserPendingTicketsAsync(userId, id);
+            }
+
             var showtime = await _showtimeService.GetShowtimeByIdAsync(id);
             if (showtime == null) return NotFound();
 

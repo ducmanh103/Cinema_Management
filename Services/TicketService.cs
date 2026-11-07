@@ -39,6 +39,26 @@ namespace CinemaManagement.Services
                 if (seat.RoomId != showtime.RoomId)
                     throw new InvalidOperationException("Ghế không thuộc phòng chiếu này.");
 
+                // Giải phóng vé Pending cũ của chính user này hoặc vé Pending đã hết hạn trước khi kiểm tra ghế
+                var staleTickets = await _context.Tickets
+                    .Include(t => t.Payment)
+                    .Where(t => t.ShowtimeId == dto.ShowtimeId
+                             && t.Status == "Pending"
+                             && (t.UserId == userId || (t.HeldUntil != null && t.HeldUntil <= now)))
+                    .ToListAsync();
+
+                if (staleTickets.Count > 0)
+                {
+                    foreach (var st in staleTickets)
+                    {
+                        st.Status = "Cancelled";
+                        st.HeldUntil = null;
+                        if (st.Payment != null && st.Payment.Status == "Pending")
+                            st.Payment.Status = "Failed";
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
                 bool alreadyBooked = await _context.Tickets
                     .AnyAsync(t => t.ShowtimeId == dto.ShowtimeId
                                && t.SeatId == dto.SeatId
@@ -164,6 +184,26 @@ namespace CinemaManagement.Services
                 if (seat.RoomId != showtime.RoomId)
                     throw new InvalidOperationException("Ghế không thuộc phòng chiếu này.");
 
+                // Giải phóng vé Pending cũ của chính user này hoặc vé Pending đã hết hạn trước khi tạo giao dịch mới
+                var staleTickets = await _context.Tickets
+                    .Include(t => t.Payment)
+                    .Where(t => t.ShowtimeId == dto.ShowtimeId
+                             && t.Status == "Pending"
+                             && (t.UserId == userId || (t.HeldUntil != null && t.HeldUntil <= now)))
+                    .ToListAsync();
+
+                if (staleTickets.Count > 0)
+                {
+                    foreach (var st in staleTickets)
+                    {
+                        st.Status = "Cancelled";
+                        st.HeldUntil = null;
+                        if (st.Payment != null && st.Payment.Status == "Pending")
+                            st.Payment.Status = "Failed";
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
                 bool alreadyBooked = await _context.Tickets
                     .AnyAsync(t => t.ShowtimeId == dto.ShowtimeId
                                 && t.SeatId == dto.SeatId
@@ -277,6 +317,41 @@ namespace CinemaManagement.Services
 
             await _context.SaveChangesAsync();
             return (success, success ? null : "Giao dịch không thành công.");
+        }
+
+        public async Task<int> ReleaseUserPendingTicketsAsync(int userId, int? showtimeId = null)
+        {
+            var now = VietnamTime.Now;
+            var query = _context.Tickets
+                .Include(t => t.Payment)
+                .Where(t => t.Status == "Pending");
+
+            if (showtimeId.HasValue)
+            {
+                int sid = showtimeId.Value;
+                query = query.Where(t => (t.UserId == userId && t.ShowtimeId == sid)
+                                      || (t.ShowtimeId == sid && t.HeldUntil != null && t.HeldUntil <= now));
+            }
+            else
+            {
+                query = query.Where(t => t.UserId == userId || (t.HeldUntil != null && t.HeldUntil <= now));
+            }
+
+            var pendingTickets = await query.ToListAsync();
+            if (pendingTickets.Count == 0) return 0;
+
+            foreach (var ticket in pendingTickets)
+            {
+                ticket.Status = "Cancelled";
+                ticket.HeldUntil = null;
+                if (ticket.Payment != null && ticket.Payment.Status == "Pending")
+                {
+                    ticket.Payment.Status = "Failed";
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return pendingTickets.Count;
         }
     }
 }

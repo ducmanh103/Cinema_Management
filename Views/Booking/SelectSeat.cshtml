@@ -384,7 +384,17 @@ body {
 
 @section Scripts {
 <script>
+    // Khi người dùng bấm nút Back từ cổng VNPay quay về, trình duyệt có thể khôi phục từ bfcache.
+    // Tự động reload để gọi GET /Booking/SelectSeat/{id} giải phóng ngay ghế Pending chưa thanh toán.
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted || sessionStorage.getItem('vnpay_redirecting') === '1') {
+            sessionStorage.removeItem('vnpay_redirecting');
+            window.location.reload();
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
+        sessionStorage.removeItem('vnpay_redirecting');
         let selectedSeat = null;
         let selectedSeatId = null;
         const showtimeId = @(showtime?.ShowtimeId ?? 0);
@@ -443,6 +453,7 @@ body {
 
                 // ===== Nhánh VNPay: submit form ẩn để redirect sang cổng VNPay =====
                 if ((paymentMethod?.value || '') === 'VnPay') {
+                    sessionStorage.setItem('vnpay_redirecting', '1');
                     document.getElementById('vnpay-showtime').value = showtimeId;
                     document.getElementById('vnpay-seat').value = selectedSeatId;
                     document.getElementById('vnpay-form').submit();
