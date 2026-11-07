@@ -48,7 +48,10 @@
     background-position: center 22%;
     filter: blur(28px) saturate(1.4) brightness(0.32);
     transform: scale(1.06);
-    transition: background-image 0.9s var(--lp-ease), transform 6s ease-out;
+    transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 6s ease-out;
+    will-change: opacity, transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 .lp-hero-vignette {
@@ -353,6 +356,20 @@
     box-shadow:
         0 30px 70px rgba(0, 0, 0, 0.75),
         0 0 60px rgba(255, 46, 85, 0.18);
+    transform: translate3d(0, 0, 0);
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s ease;
+    will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.lp-poster-stage:hover {
+    transform: translate3d(0, -8px, 0) scale(1.02);
+    box-shadow:
+        0 35px 85px rgba(0, 0, 0, 0.85),
+        0 0 70px rgba(255, 46, 85, 0.28);
 }
 
 .lp-poster-stage img {
@@ -361,7 +378,15 @@
     object-fit: cover;
     border-radius: 20px;
     display: block;
-    transition: opacity 0.4s ease, transform 0.6s var(--lp-ease);
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: opacity, transform, filter;
+    transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease;
+}
+
+.lp-poster-stage:hover img {
+    filter: brightness(1.04) contrast(1.02);
 }
 
 .lp-poster-floating-badge {
@@ -427,25 +452,37 @@
     cursor: pointer;
     flex-shrink: 0;
     opacity: 0.55;
-    transition: all 0.28s var(--lp-ease);
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform, opacity, border-color;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .lp-thumb-btn img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .lp-thumb-btn:hover {
-    opacity: 0.85;
-    transform: translateY(-2px);
+    opacity: 0.9;
+    transform: translate3d(0, -3px, 0) scale(1.02);
+}
+
+.lp-thumb-btn:hover img {
+    transform: scale(1.08);
 }
 
 .lp-thumb-btn.active {
     opacity: 1;
     border-color: var(--lp-red);
-    box-shadow: 0 0 18px rgba(255, 46, 85, 0.45);
-    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 0 22px rgba(255, 46, 85, 0.55);
+    transform: translate3d(0, -5px, 0) scale(1.06);
 }
 
 /*Slide progress bar*/
@@ -786,13 +823,17 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: transform 0.35s var(--lp-ease), border-color 0.35s ease, box-shadow 0.35s ease;
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform, border-color, box-shadow;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .lp-movie-card:hover {
-    transform: translateY(-8px);
-    border-color: var(--lp-border-glow);
-    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(255, 46, 85, 0.14);
+    transform: translate3d(0, -10px, 0) scale(1.012);
+    border-color: rgba(255, 46, 85, 0.45);
+    box-shadow: 0 24px 55px rgba(0, 0, 0, 0.72), 0 0 35px rgba(255, 46, 85, 0.18);
 }
 
 .lp-card-poster {
@@ -800,17 +841,25 @@
     aspect-ratio: 2 / 3;
     overflow: hidden;
     background: #090d1a;
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 .lp-card-poster img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.65s var(--lp-ease);
+    transform: translate3d(0, 0, 0) scale(1);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform, filter;
+    transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), filter 0.65s ease;
 }
 
 .lp-movie-card:hover .lp-card-poster img {
-    transform: scale(1.07);
+    transform: translate3d(0, 0, 0) scale(1.08);
+    filter: brightness(1.06) contrast(1.03);
 }
 
 .lp-card-badges-top {
@@ -1544,26 +1593,26 @@
 
 /* Native High-Performance Movie Card Hover */
 .lp-movie-card {
-    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.24s ease, border-color 0.24s ease;
+    transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.38s ease, border-color 0.35s ease;
     will-change: transform;
 }
 
 .lp-movie-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(255, 46, 85, 0.15);
-    border-color: rgba(255, 46, 85, 0.35);
+    transform: translate3d(0, -10px, 0) scale(1.012);
+    box-shadow: 0 24px 55px rgba(0, 0, 0, 0.72), 0 0 35px rgba(255, 46, 85, 0.18);
+    border-color: rgba(255, 46, 85, 0.45);
 }
 
 /* Rank Cards Hover */
 .rank-card {
-    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.24s ease, box-shadow 0.24s ease;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.35s ease;
     will-change: transform;
 }
 
 .rank-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(245, 185, 66, 0.4);
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 185, 66, 0.15);
+    transform: translate3d(0, -6px, 0) scale(1.015);
+    border-color: rgba(245, 185, 66, 0.5);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7), 0 0 25px rgba(245, 185, 66, 0.2);
 }
 
 /* Live Dot Pulse */

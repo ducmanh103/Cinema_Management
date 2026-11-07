@@ -55,14 +55,48 @@
             if (!m) return;
             currentIndex = idx;
 
-            if (backdrop) backdrop.style.backgroundImage = "url('" + (m.bannerUrl || m.posterUrl) + "')";
             if (posterImg) {
-                posterImg.style.opacity = '0.4';
-                setTimeout(function () {
-                    posterImg.src = m.posterUrl;
+                posterImg.style.transition = 'opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+                posterImg.style.opacity = '0.15';
+                posterImg.style.transform = 'scale(0.97) translateY(4px)';
+
+                var nextPoster = m.posterUrl;
+                var preImg = new Image();
+                var applied = false;
+                var applyNext = function () {
+                    if (applied) return;
+                    applied = true;
+                    posterImg.src = nextPoster;
                     posterImg.alt = m.title;
-                    posterImg.style.opacity = '1';
-                }, 120);
+                    requestAnimationFrame(function () {
+                        posterImg.style.opacity = '1';
+                        posterImg.style.transform = 'scale(1) translateY(0)';
+                    });
+                };
+                preImg.onload = applyNext;
+                preImg.onerror = applyNext;
+                preImg.src = nextPoster;
+                setTimeout(applyNext, 200);
+            }
+
+            if (backdrop) {
+                var nextBg = m.bannerUrl || m.posterUrl;
+                backdrop.style.transition = 'opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+                backdrop.style.opacity = '0.35';
+                var preBg = new Image();
+                var bgApplied = false;
+                var applyBg = function () {
+                    if (bgApplied) return;
+                    bgApplied = true;
+                    backdrop.style.backgroundImage = "url('" + nextBg + "')";
+                    requestAnimationFrame(function () {
+                        backdrop.style.opacity = '1';
+                    });
+                };
+                preBg.onload = applyBg;
+                preBg.onerror = applyBg;
+                preBg.src = nextBg;
+                setTimeout(applyBg, 220);
             }
 
             if (titleEl) titleEl.textContent = m.title;
