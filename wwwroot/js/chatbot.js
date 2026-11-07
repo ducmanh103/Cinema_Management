@@ -23,6 +23,14 @@ document.addEventListener("DOMContentLoaded", function () {
     triggerBtn.addEventListener("click", toggleChatPanel);
     closeBtn.addEventListener("click", toggleChatPanel);
 
+    const mobileDockChatBtn = document.getElementById("mobileDockChatBtn");
+    if (mobileDockChatBtn) {
+        mobileDockChatBtn.addEventListener("click", function(e) {
+            e.preventDefault();
+            toggleChatPanel();
+        });
+    }
+
     // Sự kiện xóa lịch sử chat
     if (clearBtn) {
         clearBtn.addEventListener("click", function () {
@@ -112,11 +120,13 @@ document.addEventListener("DOMContentLoaded", function () {
         if (panel.classList.contains("active")) {
             triggerBtn.innerText = "Đóng";
             triggerBtn.classList.add("active");
+            if (mobileDockChatBtn) mobileDockChatBtn.classList.add("active");
             chatInput.focus();
             setTimeout(scrollToBottom, 100);
         } else {
             triggerBtn.innerText = "Hỗ trợ";
             triggerBtn.classList.remove("active");
+            if (mobileDockChatBtn) mobileDockChatBtn.classList.remove("active");
         }
     }
 

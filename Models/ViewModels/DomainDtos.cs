@@ -1,7 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
+
 namespace CinemaManagement.Models.ViewModels
 {
-    using System;
-    using System.Collections.Generic;
 
     // ─────────── Movie DTOs ───────────
     public class MovieDto
@@ -22,6 +25,7 @@ namespace CinemaManagement.Models.ViewModels
 
     public class CreateMovieDto
     {
+        [Required(ErrorMessage = "Tên phim không được để trống")]
         public string Title { get; set; } = string.Empty;
         public int Duration { get; set; }
         public string? Description { get; set; }
@@ -30,6 +34,28 @@ namespace CinemaManagement.Models.ViewModels
         public string? BannerUrl { get; set; }
         public string Status { get; set; } = "Now Showing";
         public List<int> GenreIds { get; set; } = new();
+        public bool DownloadRemoteImages { get; set; } = false;
+    }
+
+    public class CreateMovieFormDto
+    {
+        [Required(ErrorMessage = "Tên phim không được để trống")]
+        [StringLength(200)]
+        public string Title { get; set; } = string.Empty;
+        public int Duration { get; set; }
+        public string? Description { get; set; }
+        public DateTime? ReleaseDate { get; set; }
+        public string Status { get; set; } = "Now Showing";
+        public List<int> GenreIds { get; set; } = new();
+
+        public string? PosterUrl { get; set; }
+        public string? BannerUrl { get; set; }
+
+        public IFormFile? PosterFile { get; set; }
+        public IFormFile? BannerFile { get; set; }
+
+        public bool DownloadRemotePoster { get; set; } = false;
+        public bool DownloadRemoteBanner { get; set; } = false;
     }
 
     // ─────────── Showtime DTOs ───────────

@@ -1,114 +1,245 @@
 @{
-    ViewData["Title"] = "Tin tức điện ảnh";
+    ViewData["Title"] = "Tin Điện Ảnh & Ưu Đãi Độc Quyền";
+    ViewBag.FullWidth = true;
 }
 
 <style>
-    .news-card {
-        background: rgba(20, 20, 20, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
+    .nw-hero {
+        padding: 56px 0 42px;
+        background:
+            radial-gradient(circle at 80% 20%, rgba(245, 185, 66, 0.16), transparent 48%),
+            radial-gradient(circle at 20% 80%, rgba(255, 46, 85, 0.16), transparent 50%),
+            #050711;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .nw-container {
+        max-width: 1360px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+    .nw-voucher-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+        margin: 32px 0 48px;
+    }
+    .nw-voucher-card {
+        padding: 20px;
+        border-radius: 22px;
+        background: rgba(15, 22, 41, 0.85);
+        border: 1px dashed rgba(245, 185, 66, 0.45);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .nw-article-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+        padding-bottom: 72px;
+    }
+    .nw-article-card {
+        border-radius: 24px;
+        background: rgba(15, 22, 41, 0.76);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         overflow: hidden;
-        transition: transform 0.2s, background 0.3s;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s ease, border-color 0.3s ease;
     }
-    .news-card:hover {
-        transform: translateY(-5px);
-        background: rgba(30, 30, 30, 0.9);
-        border-color: rgba(229, 9, 20, 0.4);
+    .nw-article-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(255, 46, 85, 0.45);
     }
-    .news-img {
+    .nw-article-img {
         width: 100%;
-        height: 220px;
+        height: 210px;
         object-fit: cover;
     }
-    .news-badge {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        z-index: 2;
+    @@media (max-width: 1199.98px) {
+        .nw-voucher-grid { grid-template-columns: repeat(2, 1fr); }
+        .nw-article-grid { grid-template-columns: repeat(2, 1fr); }
     }
-    .news-date {
-        color: #888;
-        font-size: 0.85rem;
-    }
-    .news-title {
-        color: #fff;
-        font-weight: 700;
-        text-decoration: none;
-        transition: color 0.2s;
-    }
-    .news-title:hover {
-        color: var(--primary);
+    @@media (max-width: 767.98px) {
+        .nw-hero { padding: 32px 0 24px; }
+        .nw-container { padding: 0 14px; }
+        .nw-voucher-grid, .nw-article-grid { grid-template-columns: 1fr; gap: 14px; margin: 20px 0 32px; }
+        .nw-voucher-card { padding: 16px 14px; border-radius: 18px; }
+        .nw-article-card { border-radius: 18px; }
+        .nw-article-img { height: 180px; }
     }
 </style>
 
-<div class="mb-5 text-center">
-    <h1 class="fw-bolder" style="text-transform: uppercase; font-size: 3rem; letter-spacing: 2px;">
-        <span style="color:var(--primary)">Tin tức</span> Điển Ảnh
-    </h1>
-    <p class="text-muted fs-5 mt-3">Cập nhật những thông tin nóng hổi nhất từ Hollywood và phòng vé Việt Nam.</p>
-</div>
+<section class="nw-hero">
+    <div class="nw-container" data-animate="fade-up">
+        <span class="ch-eyebrow mb-2"><i class="bi bi-newspaper"></i> Tạp Chí Điện Ảnh &amp; Khuyến Mãi</span>
+        <h1 class="text-white fw-bolder mb-2" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(2rem,3.6vw,3rem);">
+            Tin Tức Bom Tấn &amp; Kho Voucher CinemaHub
+        </h1>
+        <p class="text-white-50 mb-0">Cập nhật hậu trường các siêu phẩm điện ảnh và săn mã ưu đãi bỏng nước, vé IMAX mỗi tuần.</p>
+    </div>
+</section>
 
-<div class="row g-4 mb-5">
-    <!-- Hot News Item 1 -->
-    <div class="col-12">
-        <div class="news-card d-flex flex-column flex-md-row">
-            <div class="position-relative" style="flex: 0 0 50%;">
-                <span class="badge bg-danger news-badge px-3 py-2 fs-6">🔥 TIÊU ĐIỂM</span>
-                <img src="/img/movies/dune2-banner.jpg" style="width: 100%; height: 100%; min-height: 350px; object-fit: cover;" alt="Hot News" />
+<section class="nw-container">
+    <!-- Interactive Voucher Strip -->
+    <div class="nw-voucher-grid" data-animate="fade-up" data-delay="60">
+        <div class="nw-voucher-card cinema-spotlight">
+            <div>
+                <span class="badge bg-danger rounded-pill mb-2">GIẢM 50K</span>
+                <h5 class="text-white fw-bold mb-1">Ưu Đãi Thành Viên Mới</h5>
+                <p class="text-white-50 small mb-0">Áp dụng cho đơn đặt vé đầu tiên qua cổng VNPAY-QR.</p>
             </div>
-            <div class="p-4 p-md-5 d-flex flex-column justify-content-center">
-                <span class="news-date mb-2"><i class="bi bi-clock"></i> 12/04/2026 - Bởi Admin</span>
-                <a href="#" class="news-title mb-3" style="font-size: 2.2rem; line-height: 1.2;">DUNE: PART TWO Phá Vỡ Mọi Kỷ Lục Phòng Vé Toàn Cầu, Đạt Mốc Tỷ Đô</a>
-                <p class="text-muted fs-5">Siêu tác phẩm khoa học viễn tưởng của đạo diễn Denis Villeneuve đã chính thức xác lập kỷ lục mới, trở thành bộ phim có thành tích mở màn xuất sắc nhất năm 2026...</p>
-                <div class="mt-4">
-                    <a href="#" class="btn btn-outline-light rounded-pill px-4">Đọc tiếp <i class="bi bi-arrow-right"></i></a>
-                </div>
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary border-opacity-25">
+                <code class="text-warning fw-bold fs-6">CINEMA50</code>
+                <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold text-white js-copy-code"
+                        data-code="CINEMA50"
+                        style="background:rgba(245,185,66,0.2);border:1px solid #F5B942;">
+                    Sao chép
+                </button>
+            </div>
+        </div>
+
+        <div class="nw-voucher-card cinema-spotlight">
+            <div>
+                <span class="badge bg-info text-dark rounded-pill mb-2">MIỄN PHÍ UPGRADE</span>
+                <h5 class="text-white fw-bold mb-1">Nâng Hạng Ghế VIP</h5>
+                <p class="text-white-50 small mb-0">Miễn phụ thu +15.000đ ghế VIP cho các suất chiếu trước 12:00 trưa.</p>
+            </div>
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary border-opacity-25">
+                <code class="text-warning fw-bold fs-6">IMAXVIP</code>
+                <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold text-white js-copy-code"
+                        data-code="IMAXVIP"
+                        style="background:rgba(245,185,66,0.2);border:1px solid #F5B942;">
+                    Sao chép
+                </button>
+            </div>
+        </div>
+
+        <div class="nw-voucher-card cinema-spotlight">
+            <div>
+                <span class="badge bg-success rounded-pill mb-2">ĐỒNG GIÁ 45K</span>
+                <h5 class="text-white fw-bold mb-1">Thứ 3 Vui Vẻ U22</h5>
+                <p class="text-white-50 small mb-0">Ưu đãi vé 2D Digital dành cho học sinh, sinh viên toàn hệ thống.</p>
+            </div>
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary border-opacity-25">
+                <code class="text-warning fw-bold fs-6">STUDENT45</code>
+                <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold text-white js-copy-code"
+                        data-code="STUDENT45"
+                        style="background:rgba(245,185,66,0.2);border:1px solid #F5B942;">
+                    Sao chép
+                </button>
+            </div>
+        </div>
+
+        <div class="nw-voucher-card cinema-spotlight">
+            <div>
+                <span class="badge bg-warning text-dark rounded-pill mb-2">COMBO ĐÔI</span>
+                <h5 class="text-white fw-bold mb-1">Combo Bỏng Nước 99K</h5>
+                <p class="text-white-50 small mb-0">Tặng kèm 2 nước ngọt cỡ lớn khi đặt 2 vé suất tối cuối tuần.</p>
+            </div>
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-secondary border-opacity-25">
+                <code class="text-warning fw-bold fs-6">COUPLE99</code>
+                <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold text-white js-copy-code"
+                        data-code="COUPLE99"
+                        style="background:rgba(245,185,66,0.2);border:1px solid #F5B942;">
+                    Sao chép
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- News Grid Item 2 -->
-    <div class="col-md-6 col-lg-4">
-        <div class="news-card h-100">
-            <div class="position-relative">
-                <span class="badge bg-warning text-dark news-badge">REVIEW PHIM</span>
-                <img src="/img/movies/mai-banner.jpg" class="news-img" alt="News 2" />
-            </div>
-            <div class="p-3">
-                <span class="news-date mt-2 mb-2 d-block"><i class="bi bi-clock"></i> 10/04/2026</span>
-                <a href="#" class="news-title h5 d-block mb-3">Review "MAI": Bản giao hưởng giàu cảm xúc của Trấn Thành</a>
-                <p class="text-muted small">Cùng phân tích những góc máy đắt giá và diễn xuất đỉnh cao trong tác phẩm trăm tỷ mới nhất từ điện ảnh Việt Nam...</p>
-            </div>
-        </div>
+    <!-- Category Filter Pills -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <button type="button" class="btn rounded-pill px-4 py-2 fw-bold text-white js-news-filter active" data-cat="all"
+                style="background:linear-gradient(135deg,#FF2E55,#FF6B35);">
+            Tất Cả Bài Viết
+        </button>
+        <button type="button" class="btn rounded-pill px-4 py-2 fw-semibold text-white-50 js-news-filter" data-cat="review"
+                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
+            Góc Bình Phim
+        </button>
+        <button type="button" class="btn rounded-pill px-4 py-2 fw-semibold text-white-50 js-news-filter" data-cat="tech"
+                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
+            Công Nghệ IMAX &amp; Atmos
+        </button>
+        <button type="button" class="btn rounded-pill px-4 py-2 fw-semibold text-white-50 js-news-filter" data-cat="promo"
+                style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
+            Sự Kiện &amp; Ưu Đãi
+        </button>
     </div>
 
-    <!-- News Grid Item 3 -->
-    <div class="col-md-6 col-lg-4">
-        <div class="news-card h-100">
-            <div class="position-relative">
-                <span class="badge bg-success news-badge">KHUYẾN MÃI</span>
-                <img src="/img/movies/cinemaxmomo.jpg" class="news-img" alt="News 3" />
+    <!-- Editorial Cards -->
+    <div class="nw-article-grid" id="newsArticleGrid">
+        <article class="nw-article-card cinema-spotlight" data-cat="tech">
+            <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800" alt="IMAX Laser" class="nw-article-img" />
+            <div class="p-4 d-flex flex-column flex-grow-1">
+                <span class="text-info small fw-bold mb-2"><i class="bi bi-badge-4k me-1"></i>CÔNG NGHỆ TRÌNH CHIẾU</span>
+                <h4 class="text-white fw-bold mb-2" style="font-size:1.15rem;">Vì Sao Hàng Ghế Trung Tâm Phòng IMAX Luôn Cháy Vé Sớm?</h4>
+                <p class="text-white-50 small mb-4">Khám phá nguyên lý âm học và góc nhìn 70 độ vàng giúp các hàng ghế VIP C, D mang lại trải nghiệm điện ảnh hoàn hảo nhất.</p>
+                <a asp-controller="Showtimes" asp-action="Index" class="mt-auto text-danger fw-bold text-decoration-none small">
+                    Trải nghiệm đặt ghế VIP ngay <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
-            <div class="p-3">
-                <span class="news-date mt-2 mb-2 d-block"><i class="bi bi-clock"></i> 05/04/2026</span>
-                <a href="#" class="news-title h5 d-block mb-3">CinemaHub x MoMo: Giảm 50% Vé Chạm Đỉnh Mùa Hè</a>
-                <p class="text-muted small">Chỉ cần thanh toán qua Ví MoMo, bạn sẽ được giảm ngay 50% (Tối đa 100K) cho mọi suất chiếu nội địa và bom tấn 3D...</p>
-            </div>
-        </div>
-    </div>
+        </article>
 
-    <!-- News Grid Item 4 -->
-    <div class="col-md-6 col-lg-4">
-        <div class="news-card h-100">
-            <div class="position-relative">
-                <span class="badge bg-info text-dark news-badge">TIN VẮN</span>
-                <img src="/img/movies/marvel-phase-6.jpg" class="news-img" alt="News 4" />
+        <article class="nw-article-card cinema-spotlight" data-cat="review">
+            <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800" alt="Blockbuster Season" class="nw-article-img" />
+            <div class="p-4 d-flex flex-column flex-grow-1">
+                <span class="text-warning small fw-bold mb-2"><i class="bi bi-star-fill me-1"></i>GÓC BÌNH PHIM</span>
+                <h4 class="text-white fw-bold mb-2" style="font-size:1.15rem;">Top Siêu Phẩm Điện Ảnh Không Thể Bỏ Lỡ Trong Tháng Này</h4>
+                <p class="text-white-50 small mb-4">Từ hành động nghẹt thở đến hoạt hình giả tưởng mãn nhãn, điểm danh ngay những bộ phim đang dẫn đầu doanh thu phòng vé.</p>
+                <a asp-controller="Movies" asp-action="Index" class="mt-auto text-warning fw-bold text-decoration-none small">
+                    Xem danh sách phim <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
-            <div class="p-3">
-                <span class="news-date mt-2 mb-2 d-block"><i class="bi bi-clock"></i> 02/04/2026</span>
-                <a href="#" class="news-title h5 d-block mb-3">Kịch tính Phase 6 của Vũ trụ Điện Ảnh Marvel (MCU)</a>
-                <p class="text-muted small">Kevin Feige chính thức tiết lộ lịch trình 3 bộ phim mới chuẩn bị bước vào giai đoạn bấm máy năm 2026...</p>
+        </article>
+
+        <article class="nw-article-card cinema-spotlight" data-cat="promo">
+            <img src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=800" alt="VIP Lounge" class="nw-article-img" />
+            <div class="p-4 d-flex flex-column flex-grow-1">
+                <span class="text-success small fw-bold mb-2"><i class="bi bi-gift-fill me-1"></i>ƯU ĐÃI ĐỘC QUYỀN</span>
+                <h4 class="text-white fw-bold mb-2" style="font-size:1.15rem;">Hướng Dẫn Săn Vé Nhanh Trong 15 Giây Cùng Trợ Lý AI</h4>
+                <p class="text-white-50 small mb-4">Chỉ cần mở cửa sổ chat AI góc phải màn hình, bạn có thể tra cứu ngay suất chiếu gần nhất mà không cần tìm kiếm thủ công.</p>
+                <a asp-controller="Home" asp-action="Index" class="mt-auto text-info fw-bold text-decoration-none small">
+                    Thử đặt vé nhanh <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
-        </div>
+        </article>
     </div>
-</div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.js-copy-code').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var code = btn.getAttribute('data-code');
+                    if (navigator.clipboard && code) {
+                        navigator.clipboard.writeText(code);
+                    }
+                    var orig = btn.textContent;
+                    btn.textContent = 'Đã chép!';
+                    setTimeout(function () { btn.textContent = orig; }, 1800);
+                });
+            });
+
+            var filterBtns = document.querySelectorAll('.js-news-filter');
+            var cards = document.querySelectorAll('#newsArticleGrid .nw-article-card');
+            filterBtns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var cat = btn.getAttribute('data-cat');
+                    filterBtns.forEach(function (b) {
+                        var active = b === btn;
+                        b.style.background = active ? 'linear-gradient(135deg,#FF2E55,#FF6B35)' : 'rgba(255,255,255,0.05)';
+                        b.classList.toggle('text-white', active);
+                        b.classList.toggle('text-white-50', !active);
+                    });
+                    cards.forEach(function (c) {
+                        c.style.display = (cat === 'all' || c.getAttribute('data-cat') === cat) ? '' : 'none';
+                    });
+                });
+            });
+        });
+    </script>
+}

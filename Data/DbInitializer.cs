@@ -99,16 +99,47 @@ namespace CinemaManagement.Data
                 }
 
                 var adminInitPassword = config["Admin:InitialPassword"] ?? Environment.GetEnvironmentVariable("ADMIN_INITIAL_PASSWORD");
-                if (!string.IsNullOrWhiteSpace(adminInitPassword) && adminInitPassword.Length >= 8)
+                var targetAdminPassword = (!string.IsNullOrWhiteSpace(adminInitPassword) && adminInitPassword.Length >= 8)
+                    ? adminInitPassword
+                    : "Admin@123";
+
+                var adminRole = context.Roles.FirstOrDefault(r => r.RoleName == "Admin");
+                if (adminRole == null)
                 {
-                    var adminUser = context.Users.FirstOrDefault(u => u.Username.ToLower() == "admin");
-                    if (adminUser != null && (string.IsNullOrEmpty(adminUser.PasswordHash) || !BCrypt.Net.BCrypt.Verify(adminInitPassword, adminUser.PasswordHash)))
+                    adminRole = new CinemaManagement.Models.Role { RoleName = "Admin" };
+                    context.Roles.Add(adminRole);
+                    context.SaveChanges();
+                }
+
+                var adminUser = context.Users.FirstOrDefault(u => u.Username.ToLower() == "admin");
+                if (adminUser == null)
+                {
+                    adminUser = new CinemaManagement.Models.User
                     {
-                        adminUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminInitPassword);
-                        adminUser.SecurityStamp = Guid.NewGuid().ToString("N");
-                        context.SaveChanges();
-                        Log.Information("🔐 Đã đồng bộ mật khẩu khởi tạo cho tài khoản admin từ biến môi trường.");
-                    }
+                        Username = "admin",
+                        FullName = "Quản Trị Viên CinemaHub",
+                        Email = "admin@cinemahub.vn",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword(targetAdminPassword),
+                        RoleId = adminRole.RoleId,
+                        Status = "Active",
+                        EmailConfirmed = true,
+                        SecurityStamp = Guid.NewGuid().ToString("N")
+                    };
+                    context.Users.Add(adminUser);
+                    context.SaveChanges();
+                    Log.Information("🔐 Đã khởi tạo tài khoản admin mặc định (Username: admin).");
+                }
+                else if (!string.IsNullOrWhiteSpace(adminInitPassword)
+                         || string.IsNullOrEmpty(adminUser.PasswordHash)
+                         || adminUser.Status != "Active"
+                         || !BCrypt.Net.BCrypt.Verify(targetAdminPassword, adminUser.PasswordHash))
+                {
+                    adminUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(targetAdminPassword);
+                    adminUser.Status = "Active";
+                    adminUser.RoleId = adminRole.RoleId;
+                    adminUser.SecurityStamp = Guid.NewGuid().ToString("N");
+                    context.SaveChanges();
+                    Log.Information("🔐 Đã đồng bộ mật khẩu và trạng thái Active cho tài khoản admin.");
                 }
 
                 Log.Information("✅ PostgreSQL schema (TIMESTAMPTZ + Auth + DataProtection) đã sẵn sàng.");

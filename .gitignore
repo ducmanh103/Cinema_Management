@@ -62,3 +62,13 @@ logs/
 
 # Nginx SSL Certificates
 nginx/certs/
+
+node_modules/
+dp_keys/
+
+# User Uploaded Media
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+
+# Agent Workspaces & Local Skills
+.agents/

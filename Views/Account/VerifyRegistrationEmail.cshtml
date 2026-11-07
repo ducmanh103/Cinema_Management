@@ -1,83 +1,60 @@
-@model CinemaManagement.Models.ViewModels.VerifyRegistrationEmailViewModel
+@model VerifyRegistrationEmailViewModel
 @{
-    ViewData["Title"] = "Xác thực Gmail";
-    Layout = "_Layout";
+    ViewData["Title"] = "Xác Thực Email Đăng Ký";
 }
 
-<div class="row justify-content-center mt-5">
-    <div class="col-md-5">
-        <div class="card" style="background:#1e1e1e; border:1px solid #333; border-radius:14px;">
-            <div class="card-body p-4">
-                <h3 class="text-center mb-3" style="color:#e50914">
-                    <i class="bi bi-envelope-check-fill"></i> Xác thực Gmail
-                </h3>
-                <p class="text-muted small text-center mb-4">
-                    Mã xác thực gồm <strong>6 chữ số</strong> đã được gửi tới hộp thư Gmail:<br />
-                    <span class="text-light fw-semibold">@Model.Email</span><br />
-                    <span class="text-secondary">(Tài khoản sẽ được tạo ngay sau khi bạn xác thực thành công)</span>
-                </p>
-
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:none"></div>
-
-                <form asp-action="VerifyRegistrationEmail" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" asp-for="Email" />
-
-                    <div class="mb-3">
-                        <label asp-for="OtpCode" class="form-label">Mã xác thực (OTP) *</label>
-                        <input asp-for="OtpCode"
-                               class="form-control text-center fw-bold fs-4"
-                               style="background:#2a2a2a; border-color:#444; color:#fff; letter-spacing:8px;"
-                               placeholder="000000"
-                               maxlength="6"
-                               inputmode="numeric"
-                               autocomplete="one-time-code"
-                               id="otp-input" />
-                        <span asp-validation-for="OtpCode" class="text-danger small"></span>
-                    </div>
-
-                    <div class="d-grid mb-3">
-                        <button type="submit" class="btn btn-danger fw-bold py-2" id="verify-otp-btn">
-                            <i class="bi bi-check2-circle me-1"></i> Xác thực &amp; Tạo tài khoản
-                        </button>
-                    </div>
-                </form>
-
-                <form asp-action="ResendRegistrationOtp" method="post" class="text-center mb-3">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="email" value="@Model.Email" />
-                    <button type="submit" class="btn btn-link text-danger small text-decoration-none p-0">
-                        <i class="bi bi-arrow-clockwise"></i> Không nhận được mã? Gửi lại mã xác thực
-                    </button>
-                </form>
-
-                <hr style="border-color:#444" />
-                <div class="text-center">
-                    <a asp-controller="Account" asp-action="Register" class="text-muted small text-decoration-none">
-                        <i class="bi bi-arrow-left"></i> Đổi địa chỉ Gmail / Quay lại trang đăng ký
-                    </a>
-                </div>
+<div class="py-5 my-4">
+    <div class="mx-auto p-4 p-md-5 rounded-5 cinema-spotlight"
+         style="max-width:540px;background:rgba(13,19,36,0.9);border:1px solid rgba(255,255,255,0.12);box-shadow:0 30px 70px rgba(0,0,0,0.65);">
+        <div class="text-center mb-4">
+            <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+                 style="width:68px;height:68px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.4);color:#38BDF8;font-size:2rem;">
+                <i class="bi bi-envelope-check-fill"></i>
             </div>
+            <h3 class="text-white fw-bolder mb-1" style="font-family:'Space Grotesk',sans-serif;">Xác Thực Mã OTP</h3>
+            <p class="text-white-50 small mb-0">
+                Chúng tôi đã gửi mã OTP 6 chữ số tới email <strong class="text-white">@Model.Email</strong>
+            </p>
         </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success rounded-4 py-2 px-3 small mb-3">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger rounded-4 py-2 px-3 small mb-3">@TempData["Error"]</div>
+        }
+
+        <form asp-action="VerifyRegistrationEmail" method="post" class="mb-3">
+            <input type="hidden" asp-for="Email" />
+            <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+            <div class="mb-3">
+                <label asp-for="OtpCode" class="form-label text-white-50 small fw-bold text-uppercase">Mã xác thực OTP (6 chữ số)</label>
+                <input asp-for="OtpCode"
+                       maxlength="6"
+                       class="form-control bg-transparent border-secondary border-opacity-25 text-white text-center fw-bolder py-3 font-monospace"
+                       style="font-size:1.5rem;letter-spacing:0.35em;"
+                       placeholder="000000" />
+                <span asp-validation-for="OtpCode" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn w-100 rounded-4 py-3 fw-bold text-white"
+                    style="background:linear-gradient(135deg,#FF2E55,#FF6B35);">
+                <i class="bi bi-shield-check me-1"></i> Xác Nhận &amp; Kích Hoạt Tài Khoản
+            </button>
+        </form>
+
+        <form asp-action="ResendRegistrationOtp" method="post" class="text-center">
+            <input type="hidden" name="email" value="@Model.Email" />
+            <button type="submit" class="btn btn-link text-info text-decoration-none small fw-semibold">
+                <i class="bi bi-arrow-repeat me-1"></i> Chưa nhận được mã? Gửi lại mã OTP mới
+            </button>
+        </form>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const vs = document.querySelector('[data-valmsg-summary]');
-            if (vs && vs.querySelector('li') && vs.querySelector('li').textContent.trim() !== '') {
-                vs.style.display = 'block';
-            }
-            const otpInput = document.getElementById('otp-input');
-            if (otpInput) {
-                otpInput.focus();
-                otpInput.addEventListener('input', function () {
-                    this.value = this.value.replace(/\D/g, '').slice(0, 6);
-                });
-            }
-        });
-    </script>
 }
-

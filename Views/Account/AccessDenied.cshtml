@@ -1,13 +1,27 @@
 @{
-    ViewData["Title"] = "Truy cập bị từ chối";
-    Layout = "_Layout";
+    ViewData["Title"] = "Truy Cập Bị Từ Chối";
 }
 
-<div class="text-center mt-5">
-    <div style="font-size: 5rem; color: #e50914;">🚫</div>
-    <h2 class="mt-3">Truy cập bị từ chối</h2>
-    <p class="text-muted">Bạn không có quyền truy cập trang này.</p>
-    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-danger" id="back-home-btn">
-        <i class="bi bi-house"></i> Về trang chủ
-    </a>
+<div class="py-5 my-5 text-center">
+    <div class="mx-auto p-5 rounded-5 cinema-spotlight"
+         style="max-width:540px;background:rgba(15,22,41,0.88);border:1px solid rgba(239,68,68,0.35);">
+        <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+             style="width:76px;height:76px;background:rgba(239,68,68,0.16);color:#F87171;font-size:2.2rem;">
+            <i class="bi bi-shield-slash-fill"></i>
+        </div>
+        <h2 class="text-white fw-bolder mb-2" style="font-family:'Space Grotesk',sans-serif;">Khu Vực Giới Hạn Quyền Truy Cập</h2>
+        <p class="text-white-50 small mb-4">
+            Tài khoản hiện tại của bạn không có quyền truy cập vào chức năng quản trị này.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a asp-controller="Home" asp-action="Index" class="btn rounded-pill px-4 py-2 fw-bold text-white"
+               style="background:linear-gradient(135deg,#FF2E55,#FF6B35);">
+                Về Trang Chủ
+            </a>
+            <a asp-controller="Account" asp-action="Login" class="btn rounded-pill px-4 py-2 fw-semibold text-white"
+               style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);">
+                Đổi Tài Khoản
+            </a>
+        </div>
+    </div>
 </div>

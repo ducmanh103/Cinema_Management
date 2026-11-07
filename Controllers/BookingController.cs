@@ -25,20 +25,23 @@ namespace CinemaManagement.Controllers
             _vnPayService = vnPayService;
         }
 
-        // GET: /Booking/SelectSeat/5  (showtimeId)
-        public async Task<IActionResult> SelectSeat(int id)
+        // GET: /Booking/SelectSeat/5 or /Booking/SelectSeat?showtimeId=5
+        public async Task<IActionResult> SelectSeat(int? id, int? showtimeId)
         {
+            int targetId = id ?? showtimeId ?? 0;
+            if (targetId <= 0) return NotFound();
+
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (int.TryParse(userIdClaim, out int userId))
             {
                 // Khi người dùng bấm Back từ cổng VNPay quay lại trang chọn ghế, giải phóng ngay ghế Pending chưa thanh toán của họ
-                await _ticketService.ReleaseUserPendingTicketsAsync(userId, id);
+                await _ticketService.ReleaseUserPendingTicketsAsync(userId, targetId);
             }
 
-            var showtime = await _showtimeService.GetShowtimeByIdAsync(id);
+            var showtime = await _showtimeService.GetShowtimeByIdAsync(targetId);
             if (showtime == null) return NotFound();
 
-            var seats = await _showtimeService.GetSeatStatusAsync(id);
+            var seats = await _showtimeService.GetSeatStatusAsync(targetId);
 
             ViewBag.Showtime = showtime;
             return View(seats);

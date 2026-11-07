@@ -1,105 +1,161 @@
 @{
-    ViewData["Title"] = "Về CinemaHub";
+    ViewData["Title"] = "Về CinemaHub — Chuẩn Mực Điện Ảnh Tương Lai";
+    ViewBag.FullWidth = true;
 }
 
 <style>
-    .about-header {
-        position: relative;
-        border-radius: 20px;
-        overflow: hidden;
-        margin-bottom: 3rem;
+    .ab-hero {
+        padding: 72px 0 60px;
+        background:
+            radial-gradient(circle at 75% 20%, rgba(255, 46, 85, 0.2), transparent 48%),
+            radial-gradient(circle at 20% 75%, rgba(99, 102, 241, 0.18), transparent 50%),
+            #050711;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .about-header-img {
-        width: 100%;
-        height: 400px;
-        object-fit: cover;
-        filter: brightness(0.6);
+    .ab-container {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 0 24px;
     }
-    .about-header-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to right, rgba(11,12,16,0.9), transparent);
-        display: flex;
-        align-items: center;
-        padding-left: 5%;
+    .ab-tech-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
     }
-    .feature-box {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
-        border-radius: 16px;
-        padding: 30px;
-        text-align: center;
-        transition: transform 0.3s;
+    .ab-tech-card {
+        padding: 26px;
+        border-radius: 24px;
+        background: rgba(15, 22, 41, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        transition: transform 0.3s ease, border-color 0.3s ease;
     }
-    .feature-box:hover {
-        transform: translateY(-10px);
-        background: rgba(229, 9, 20, 0.05);
-        border-color: rgba(229, 9, 20, 0.3);
+    .ab-tech-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(255, 46, 85, 0.45);
     }
-    .feature-icon {
-        font-size: 3rem;
-        color: var(--primary);
-        margin-bottom: 20px;
+    @@media (max-width: 991.98px) {
+        .ab-tech-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @@media (max-width: 575.98px) {
+        .ab-hero { padding: 36px 0 28px; }
+        .ab-container { padding: 0 14px; }
+        .ab-tech-grid { grid-template-columns: 1fr; gap: 14px; }
+        .ab-tech-card { padding: 18px 16px; border-radius: 18px; }
     }
 </style>
 
-<div class="about-header shadow-lg">
-    <img src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=1200&auto=format&fit=crop" class="about-header-img" alt="Inside CinemaHub" />
-    <div class="about-header-overlay">
-        <div>
-            <span class="badge bg-danger px-3 py-2 fs-6 mb-3 rounded-pill">Câu chuyện của chúng tôi</span>
-            <h1 class="fw-bolder text-white" style="font-size: 3.5rem; text-shadow: 2px 2px 15px rgba(0,0,0,0.8);">CINEMAHUB</h1>
-            <p class="fs-4 text-light mt-2" style="max-width: 600px; line-height: 1.5; text-shadow: 1px 1px 10px rgba(0,0,0,0.8);">
-                Định chuẩn lại trải nghiệm điện ảnh của người Việt. Nơi cảm xúc thăng hoa cùng âm thanh và hình ảnh tuyệt đỉnh.
+<section class="ab-hero">
+    <div class="ab-container text-center" data-animate="fade-up">
+        <span class="ch-eyebrow mb-3"><i class="bi bi-stars"></i> Câu Chuyện Thương Hiệu</span>
+        <h1 class="text-white fw-bolder mx-auto mb-3" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(2.2rem,4.2vw,3.6rem);max-width:860px;">
+            Kiến Tạo Trải Nghiệm Điện Ảnh Đỉnh Cao Cho Thế Hệ Khán Giả Số
+        </h1>
+        <p class="text-white-50 mx-auto mb-4" style="max-width:680px;font-size:1.05rem;line-height:1.75;">
+            CinemaHub kết hợp công nghệ trình chiếu IMAX Laser 4K HDR, âm thanh vòm Dolby Atmos 360° và nền tảng đặt vé thông minh tích hợp AI để biến mỗi buổi xem phim thành một kỷ niệm đáng nhớ.
+        </p>
+        <div class="d-flex justify-content-center flex-wrap gap-3">
+            <a asp-controller="Movies" asp-action="Index" class="btn rounded-pill px-4 py-3 fw-bold text-white"
+               style="background:linear-gradient(135deg,#FF2E55,#FF6B35);">
+                <i class="bi bi-film me-1"></i> Khám Phá Phim Đang Chiếu
+            </a>
+            <a asp-controller="Home" asp-action="Theaters" class="btn rounded-pill px-4 py-3 fw-bold text-white"
+               style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.16);">
+                <i class="bi bi-geo-alt me-1"></i> Xem Hệ Thống Cụm Rạp
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="ab-container py-5 my-3">
+    <div class="text-center mb-5" data-animate="fade-up">
+        <span class="ch-eyebrow mb-2"><i class="bi bi-cpu-fill"></i> Công Nghệ Phòng Chiếu</span>
+        <h2 class="text-white fw-bolder" style="font-family:'Space Grotesk',sans-serif;">4 Trụ Cột Khác Biệt Tại CinemaHub</h2>
+    </div>
+
+    <div class="ab-tech-grid mb-5">
+        <div class="ab-tech-card cinema-spotlight" data-animate="fade-up">
+            <div class="mb-3 d-inline-flex p-3 rounded-4" style="background:rgba(56,189,248,0.15);color:#38BDF8;">
+                <i class="bi bi-badge-4k-fill fs-3"></i>
+            </div>
+            <h4 class="text-white fw-bold mb-2">IMAX Laser 4K HDR</h4>
+            <p class="text-white-50 small mb-0" style="line-height:1.65;">
+                Hệ thống máy chiếu Laser kép mang lại độ tương phản sâu tuyệt đối và dải màu rực rỡ trên màn hình cong tràn viền.
+            </p>
+        </div>
+
+        <div class="ab-tech-card cinema-spotlight" data-animate="fade-up" data-delay="80">
+            <div class="mb-3 d-inline-flex p-3 rounded-4" style="background:rgba(245,185,66,0.15);color:#F5B942;">
+                <i class="bi bi-soundwave fs-3"></i>
+            </div>
+            <h4 class="text-white fw-bold mb-2">Dolby Atmos 360°</h4>
+            <p class="text-white-50 small mb-0" style="line-height:1.65;">
+                Hơn 64 kênh loa độc lập bao quanh trần và tường phòng chiếu, tái tạo từng chuyển động âm thanh chân thực đến từng chi tiết.
+            </p>
+        </div>
+
+        <div class="ab-tech-card cinema-spotlight" data-animate="fade-up" data-delay="160">
+            <div class="mb-3 d-inline-flex p-3 rounded-4" style="background:rgba(255,46,85,0.15);color:#FF8FA3;">
+                <i class="bi bi-person-workspace fs-3"></i>
+            </div>
+            <h4 class="text-white fw-bold mb-2">Ghế Công Thái Học VIP</h4>
+            <p class="text-white-50 small mb-0" style="line-height:1.65;">
+                Khoảng cách hàng ghế rộng 1.4m cùng chất liệu da cao cấp giúp bạn thoải mái suốt những bộ phim dài hơn 3 giờ.
+            </p>
+        </div>
+
+        <div class="ab-tech-card cinema-spotlight" data-animate="fade-up" data-delay="240">
+            <div class="mb-3 d-inline-flex p-3 rounded-4" style="background:rgba(16,185,129,0.15);color:#34D399;">
+                <i class="bi bi-qr-code-scan fs-3"></i>
+            </div>
+            <h4 class="text-white fw-bold mb-2">Vé QR &amp; AI Concierge</h4>
+            <p class="text-white-50 small mb-0" style="line-height:1.65;">
+                Đặt ghế trực quan trong 15 giây, thanh toán VNPAY an toàn và vào rạp không cần xếp hàng in vé giấy.
             </p>
         </div>
     </div>
-</div>
 
-<div class="row align-items-center mb-5 mt-5">
-    <div class="col-lg-6">
-        <h2 class="fw-bold mb-4"><span style="color:var(--primary)">Tầm nhìn</span> chiến lược</h2>
-        <p class="text-muted fs-5" style="line-height: 1.8;">
-            Được thành lập vào năm 2024, CinemaHub ra đời với khát vọng mang đến một không gian giải trí sang trọng, khác biệt và đậm chất công nghệ cho khán giả Việt Nam.
-        </p>
-        <p class="text-muted fs-5" style="line-height: 1.8;">
-            Chúng tôi không chỉ chiếu phim. Chúng tôi tạo ra một hệ sinh thái văn hóa thị giác, nơi mà mỗi lần bước chân vào rạp là một lần bạn được đắm mình vào đa vũ trụ của những giấc mơ.
-        </p>
-    </div>
-    <div class="col-lg-6 text-center">
-        <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800&auto=format&fit=crop" alt="Cinema View" class="img-fluid rounded-4 shadow-lg" style="border: 2px solid rgba(255,255,255,0.1);" />
-    </div>
-</div>
-
-<div class="row g-4 mt-5 mb-5 text-center">
-    <div class="col-12 mb-3">
-        <h2 class="fw-bold">Tại sao chọn CinemaHub?</h2>
-    </div>
-    <div class="col-md-4">
-        <div class="feature-box h-100">
-            <i class="bi bi-display feature-icon"></i>
-            <h4 class="fw-bold">Công Nghệ IMAX Laser</h4>
-            <p class="text-muted">Trang bị hệ thống máy chiếu kép Laser 4K sắc nét gấp 4 lần tiêu chuẩn thông thường, mang đến hình ảnh rực rỡ nhất.</p>
+    <!-- FAQ Accordion -->
+    <div class="mx-auto p-4 p-md-5 rounded-5 cinema-spotlight" style="max-width:920px;background:rgba(15,22,41,0.78);border:1px solid rgba(255,255,255,0.09);">
+        <h3 class="text-white fw-bold mb-4 text-center" style="font-family:'Space Grotesk',sans-serif;">
+            <i class="bi bi-patch-question-fill text-warning me-2"></i>Câu Hỏi Thường Gặp
+        </h3>
+        <div class="accordion accordion-flush" id="aboutFaqAccordion">
+            <div class="accordion-item bg-transparent border-secondary border-opacity-25">
+                <h2 class="accordion-header">
+                    <button class="accordion-button bg-transparent text-white fw-bold shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                        1. Tôi có cần in vé giấy khi đến rạp CinemaHub không?
+                    </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#aboutFaqAccordion">
+                    <div class="accordion-body text-white-50">
+                        Không cần! Sau khi đặt vé thành công, bạn chỉ cần mở mục <strong class="text-white">Vé Của Tôi</strong> trên điện thoại và đưa mã QR tại cổng soát vé tự động.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item bg-transparent border-secondary border-opacity-25">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-transparent text-white fw-bold shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                        2. Tôi có thể hủy vé đã đặt trước giờ chiếu không?
+                    </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#aboutFaqAccordion">
+                    <div class="accordion-body text-white-50">
+                        Có. Đối với các suất chiếu chưa bắt đầu, bạn có thể nhấn nút <strong class="text-white">Hủy Vé</strong> trực tiếp trong Ví Vé Điện Tử để giải phóng ghế.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item bg-transparent">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-transparent text-white fw-bold shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                        3. Phụ thu ghế VIP được tính như thế nào?
+                    </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#aboutFaqAccordion">
+                    <div class="accordion-body text-white-50">
+                        Ghế VIP nằm tại vùng nhìn và nghe chuẩn vàng (trung tâm phòng chiếu) với mức phụ thu chỉ <strong class="text-warning">+15.000 ₫</strong> so với giá vé tiêu chuẩn của suất chiếu đó.
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="feature-box h-100">
-            <i class="bi bi-speaker feature-icon"></i>
-            <h4 class="fw-bold">Âm thanh Dolby Atmos</h4>
-            <p class="text-muted">Hệ thống âm thanh vòm đỉnh cao với 64 kênh độc lập, biến mọi tiếng động trở nên sống động như đang diễn ra quanh bạn.</p>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="feature-box h-100">
-            <i class="bi bi-star feature-icon"></i>
-            <h4 class="fw-bold">Dịch Vụ Đẳng Cấp</h4>
-            <p class="text-muted">Phòng chờ VIP hạng thương gia, ghế ngồi bọc da cao cấp tự động ngả lưng, kèm theo menu ẩm thực riêng biệt.</p>
-        </div>
-    </div>
-</div>
-
-<div class="text-center p-5 mt-5" style="background: rgba(229, 9, 20, 0.1); border-radius: 20px; border: 1px solid rgba(229, 9, 20, 0.2);">
-    <h3 class="fw-bold mb-3">Sẵn sàng trải nghiệm?</h3>
-    <p class="text-light mb-4 fs-5">Hãy tham gia ngay cộng đồng yêu phim lớn nhất Việt Nam và nhận ưu đãi riêng cho người mới.</p>
-    <a asp-controller="Movies" asp-action="Index" class="btn btn-primary-custom rounded-pill px-5 py-3 fs-5 fw-bold shadow"><i class="bi bi-ticket-detailed"></i> Đặt Vé Ngay Hôm Nay</a>
-</div>
+</section>

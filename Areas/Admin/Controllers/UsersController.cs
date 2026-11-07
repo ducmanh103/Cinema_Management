@@ -123,5 +123,75 @@ namespace CinemaManagement.Areas.Admin.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+
+        // POST: /Admin/Users/DeleteUser/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var targetUser = await _context.Users
+                .Include(u => u.Role)
+                .Include(u => u.Tickets)
+                    .ThenInclude(t => t.Payment)
+                .Include(u => u.PasswordResetTokens)
+                .FirstOrDefaultAsync(u => u.UserId == id);
+
+            if (targetUser == null)
+            {
+                TempData["Error"] = "Không tìm thấy người dùng cần xóa.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (currentUserId != null && int.TryParse(currentUserId, out int currentId) && currentId == targetUser.UserId)
+            {
+                TempData["Error"] = "Bạn không thể tự xóa tài khoản của chính mình.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Tuyệt đối không cho phép xóa bất kỳ tài khoản Quản trị viên (Admin) nào
+            if (string.Equals(targetUser.Role?.RoleName, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["Error"] = "Không được phép xóa tài khoản Quản trị viên (Admin). Tất cả tài khoản Quản trị viên đều được bảo vệ trong hệ thống.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            int ticketCount = targetUser.Tickets.Count;
+            if (targetUser.Tickets.Any())
+            {
+                foreach (var ticket in targetUser.Tickets)
+                {
+                    if (ticket.Payment != null)
+                    {
+                        _context.Payments.Remove(ticket.Payment);
+                    }
+                }
+                _context.Tickets.RemoveRange(targetUser.Tickets);
+            }
+
+            if (targetUser.PasswordResetTokens.Any())
+            {
+                _context.PasswordResetTokens.RemoveRange(targetUser.PasswordResetTokens);
+            }
+
+            _context.Users.Remove(targetUser);
+            await _context.SaveChangesAsync();
+
+            _cache.Remove($"auth_stamp_{targetUser.UserId}");
+
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            _securityAlert.EnqueueAlert(new SecurityAlert(
+                SecurityAlertLevel.High,
+                "ADMIN_USER_DELETED",
+                $"Tài khoản '{targetUser.Username}' đã bị xóa vĩnh viễn khỏi hệ thống",
+                $"Thực hiện bởi Admin '{User.Identity?.Name}'. Đã dọn dẹp {ticketCount} vé liên quan.",
+                IpAddress: ip,
+                Username: User.Identity?.Name,
+                Path: "/Admin/Users/DeleteUser"));
+
+            TempData["Success"] = $"Đã xóa tài khoản '{targetUser.Username}' thành công.";
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

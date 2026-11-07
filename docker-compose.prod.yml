@@ -59,6 +59,7 @@ services:
       - "8080"
     volumes:
       - dp_keys:/app/dp_keys
+      - uploads_data:/app/wwwroot/uploads
     env_file:
       - .env.prod
     environment:
@@ -133,6 +134,7 @@ services:
 volumes:
   pgdata:
   dp_keys:
+  uploads_data:
   certbot_webroot:
 
 networks:

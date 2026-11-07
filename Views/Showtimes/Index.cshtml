@@ -1,917 +1,362 @@
-@using CinemaManagement.Models.ViewModels
 @model List<ShowtimeDto>
-@using Microsoft.EntityFrameworkCore
+@using CinemaManagement.Helpers
 @{
-    ViewData["Title"] = "Lịch Chiếu";
-    Layout = "_Layout";
-    ViewBag.FullWidth = true; // Renders full-width layout, container defined internally
+    ViewData["Title"] = "Lịch Chiếu & Đặt Vé";
+    ViewBag.FullWidth = true;
 
-    var movieTitle        = ViewBag.MovieTitle as string;
-    var movieId           = ViewBag.MovieId as int?;
-    var selectedDate      = ViewBag.SelectedDate as DateTime?;
-    var selectedTheaterId = ViewBag.SelectedTheaterId as int?;
-
-    // Chế độ xem phim: nhóm theo rạp → ngày
-    bool isMovieMode = movieTitle != null;
-
-    var groupedShowtimes = Model
-        .GroupBy(s => s.TheaterName)
-        .OrderBy(g => g.Key)
-        .ToDictionary(
-            g => g.Key,
-            g => g.GroupBy(s => s.StartTime.Date).OrderBy(d => d.Key).ToList()
-        );
-
-    // 14 ngày kể từ hôm nay
-    var today    = CinemaManagement.Helpers.VietnamTime.Today;
-    var dateRange = Enumerable.Range(0, 14).Select(i => today.AddDays(i)).ToList();
-
+    int? selectedMovieId = ViewBag.MovieId as int?;
+    int? selectedTheaterId = ViewBag.SelectedTheaterId as int?;
+    DateTime? selectedDate = ViewBag.SelectedDate as DateTime?;
+    var activeMovie = ViewBag.ActiveMovie as CinemaManagement.Models.Movie;
+    var movieInfoDict = ViewBag.MovieInfoDict as Dictionary<string, CinemaManagement.Models.Movie> ?? new Dictionary<string, CinemaManagement.Models.Movie>();
     var theaters = ViewBag.Theaters as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
 
-    // Dữ liệu phim từ Controller (không còn inject DbContext)
-    CinemaManagement.Models.Movie? activeMovie = ViewBag.ActiveMovie as CinemaManagement.Models.Movie;
-    var movieInfoDict = ViewBag.MovieInfoDict as Dictionary<string, CinemaManagement.Models.Movie>
-        ?? new Dictionary<string, CinemaManagement.Models.Movie>();
+    var today = VietnamTime.Today;
+    var dateList = Enumerable.Range(0, 14).Select(offset => today.AddDays(offset)).ToList();
+    string[] dayNames = { "CN", "Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7" };
 }
 
 <style>
-    /* Styling variables and custom animations */
-    :root {
-        --primary: #e50914;
-        --primary-glow: rgba(229, 9, 20, 0.35);
-        --transition-base: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        --glass-bg: rgba(20, 20, 20, 0.6);
-        --glass-border: rgba(255, 255, 255, 0.08);
-        --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
-    }
-
-    /* Container alignment */
-    .showtimes-container {
-        max-width: 1240px;
-        margin: 0 auto;
-        padding: 0 1.5rem;
-    }
-
-    /* ───── Hero Header (Movie Mode) ───── */
-    .showtimes-hero-wrapper {
-        position: relative;
-        height: 380px;
-        border-radius: 24px;
-        overflow: hidden;
-        border: 1px solid var(--glass-border);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-        margin-top: 1rem;
-        margin-bottom: 2.5rem;
-    }
-    .showtimes-hero-bg {
-        position: absolute;
-        inset: 0;
-        background-size: cover;
-        background-position: center 30%;
-        filter: blur(20px) brightness(0.35);
-        transform: scale(1.1);
-        z-index: 1;
-    }
-    .showtimes-hero-gradient {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to right, rgba(15, 15, 15, 0.95) 0%, rgba(15, 15, 15, 0.6) 50%, rgba(15, 15, 15, 0.15) 100%),
-                    linear-gradient(to top, rgba(15, 15, 15, 1) 0%, rgba(15, 15, 15, 0) 50%);
-        z-index: 2;
-    }
-    .showtimes-hero-content {
-        position: relative;
-        z-index: 3;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        padding: 2.5rem;
-        gap: 2rem;
-    }
-    .showtimes-hero-poster {
-        height: 300px;
-        aspect-ratio: 2/3;
-        object-fit: cover;
-        border-radius: 16px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(229, 9, 20, 0.2);
-        border: 2px solid rgba(255, 255, 255, 0.15);
-        transition: transform 0.4s ease;
-    }
-    .showtimes-hero-poster:hover {
-        transform: scale(1.03) rotate(0.5deg);
-    }
-    .showtimes-hero-details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-    .showtimes-hero-title {
-        font-size: 2.3rem;
-        font-weight: 800;
-        color: #fff;
-        line-height: 1.2;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-        margin: 0;
-    }
-    .showtimes-hero-meta {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 12px;
-        margin-top: 0.25rem;
-    }
-    .showtimes-hero-desc {
-        color: #c0c0c0;
-        font-size: 0.92rem;
-        line-height: 1.5;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        margin-top: 0.5rem;
-        max-width: 750px;
-    }
-
-    /* ───── Simple Page Header (General Mode) ───── */
-    .page-title-card {
-        background: var(--glass-bg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 2rem;
-        text-align: center;
-        box-shadow: var(--glass-shadow);
-        margin-top: 1rem;
-        margin-bottom: 2.5rem;
-    }
-    .page-title-card h2 {
-        font-size: 2.2rem;
-        font-weight: 800;
-        letter-spacing: 1px;
-        margin: 0;
-        background: linear-gradient(to right, #fff, #f5a623);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 15px rgba(245, 166, 35, 0.1);
-    }
-    .page-title-card p {
-        color: #888;
-        margin: 0.5rem 0 0 0;
-        font-size: 0.95rem;
-    }
-
-    /* ───── Filter Bar Glassmorphism ───── */
-    .filter-bar-glass {
-        background: rgba(20, 20, 20, 0.7);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
-        border-radius: 24px;
-        padding: 1.5rem;
-        box-shadow: var(--glass-shadow);
-        margin-bottom: 2.5rem;
-    }
-    .filter-label {
-        font-size: 0.75rem;
-        color: #888;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        margin-bottom: 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .filter-label i {
-        color: var(--primary);
-    }
-
-    /* ───── Date Strip Styling ───── */
-    .date-strip-wrap {
-        overflow-x: auto;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-        padding-bottom: 4px;
-    }
-    .date-strip-wrap::-webkit-scrollbar { display: none; }
-    .date-strip {
-        display: flex;
-        gap: 12px;
-        min-width: max-content;
-    }
-    .date-btn-capsule {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 76px;
-        height: 88px;
-        border-radius: 18px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(255, 255, 255, 0.02);
-        color: #b5b5b5;
-        text-decoration: none;
-        transition: var(--transition-base);
-        cursor: pointer;
-        user-select: none;
-    }
-    .date-btn-capsule .day-name {
-        font-size: 0.72rem;
-        color: #777;
-        font-weight: 600;
-        margin-bottom: 3px;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-    }
-    .date-btn-capsule .day-num {
-        font-size: 1.45rem;
-        font-weight: 800;
-        line-height: 1;
-    }
-    .date-btn-capsule .month-lbl {
-        font-size: 0.7rem;
-        color: #777;
-        margin-top: 3px;
-        font-weight: 500;
-    }
-    .date-btn-capsule:hover {
-        border-color: rgba(229, 9, 20, 0.5);
-        background: rgba(229, 9, 20, 0.08);
-        color: #fff;
-        transform: translateY(-4px);
-        box-shadow: 0 6px 15px rgba(229, 9, 20, 0.15);
-    }
-    .date-btn-capsule.active {
-        background: linear-gradient(135deg, #e50914, #b20710);
-        border-color: #e50914;
-        color: #fff;
-        box-shadow: 0 8px 24px rgba(229, 9, 20, 0.45);
-        transform: scale(1.02);
-    }
-    .date-btn-capsule.active .day-name,
-    .date-btn-capsule.active .month-lbl {
-        color: rgba(255, 255, 255, 0.8);
-    }
-
-    /* ───── Theater Strip Styling ───── */
-    .theater-strip-wrap {
-        overflow-x: auto;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-        padding-bottom: 4px;
-    }
-    .theater-strip-wrap::-webkit-scrollbar { display: none; }
-    .theater-strip {
-        display: flex;
-        gap: 12px;
-        min-width: max-content;
-    }
-    .theater-btn-capsule {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        min-width: 180px;
-        height: 52px;
-        padding: 0 16px;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(255, 255, 255, 0.02);
-        color: #b5b5b5;
-        text-decoration: none;
-        transition: var(--transition-base);
-        cursor: pointer;
-        user-select: none;
-    }
-    .theater-btn-capsule .tb-icon {
-        font-size: 1.25rem;
-    }
-    .theater-btn-capsule .tb-name {
-        font-weight: 600;
-        font-size: 0.85rem;
-        line-height: 1.2;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-    }
-    .theater-btn-capsule:hover {
-        border-color: rgba(229, 9, 20, 0.5);
-        background: rgba(229, 9, 20, 0.08);
-        color: #fff;
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(229, 9, 20, 0.15);
-    }
-    .theater-btn-capsule.active {
-        background: linear-gradient(135deg, #e50914, #b20710);
-        border-color: #e50914;
-        color: #fff;
-        box-shadow: 0 8px 24px rgba(229, 9, 20, 0.45);
-        transform: scale(1.02);
-    }
-
-    /* ───── Theater Cards ───── */
-    .theater-card-glass {
-        background: var(--glass-bg);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid var(--glass-border);
-        border-radius: 24px;
-        padding: 1.8rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--glass-shadow);
-        border-left: 5px solid var(--primary);
-    }
-    .theater-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
+    .st-hero {
+        padding: 48px 0 36px;
+        background:
+            radial-gradient(circle at 80% 15%, rgba(255, 46, 85, 0.16), transparent 45%),
+            radial-gradient(circle at 20% 80%, rgba(56, 189, 248, 0.12), transparent 50%),
+            #050711;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .theater-title {
-        font-size: 1.35rem;
-        font-weight: 700;
-        color: #fff;
-        margin: 0;
+    .st-container {
+        max-width: 1380px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+    /* 14-day Capsule Scroller */
+    .st-date-scroller {
         display: flex;
-        align-items: center;
         gap: 10px;
+        overflow-x: auto;
+        padding: 8px 2px 14px;
+        scrollbar-width: thin;
     }
-    .theater-title i {
-        color: var(--primary);
-        font-size: 1.5rem;
-    }
-
-    /* ───── Movie Row Styling (General Mode) ───── */
-    .showtime-movie-row {
-        display: flex;
-        flex-direction: column;
-        gap: 1.25rem;
-        padding: 1.5rem;
-        background: rgba(255, 255, 255, 0.015);
-        border: 1px solid rgba(255, 255, 255, 0.04);
+    .st-date-pill {
+        min-width: 82px;
+        padding: 12px 14px;
         border-radius: 18px;
-        margin-bottom: 1.5rem;
-        transition: var(--transition-base);
-    }
-    .showtime-movie-row:hover {
-        background: rgba(255, 255, 255, 0.03);
-        border-color: rgba(255, 255, 255, 0.07);
-    }
-    .showtime-movie-info-wrap {
-        display: flex;
-        gap: 1.25rem;
-        align-items: flex-start;
-    }
-    .movie-poster-thumb {
-        width: 70px;
-        aspect-ratio: 2/3;
-        object-fit: cover;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-    }
-    .movie-details-wrap {
-        flex: 1;
+        background: rgba(15, 22, 41, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #CBD5E1;
+        text-decoration: none;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+        transition: all 0.25s ease;
     }
-    .movie-title-link {
-        font-size: 1.2rem;
-        font-weight: 700;
+    .st-date-pill:hover {
+        border-color: rgba(255, 46, 85, 0.45);
+        transform: translateY(-3px);
         color: #fff;
-        text-decoration: none;
-        transition: var(--transition-base);
-        margin: 0;
     }
-    .movie-title-link:hover {
-        color: var(--primary);
+    .st-date-pill.active {
+        background: linear-gradient(135deg, #FF2E55, #FF6B35);
+        border-color: transparent;
+        color: #fff;
+        box-shadow: 0 12px 26px rgba(255, 46, 85, 0.38);
     }
+    .st-date-dow { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; opacity: 0.85; }
+    .st-date-num { font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 800; line-height: 1.1; }
+    .st-date-mon { font-size: 0.7rem; opacity: 0.75; }
 
-    /* Badges system */
-    .badge-capsule {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.72rem;
+    /* Theater Filter Bar */
+    .st-theater-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+    }
+    .st-theater-pill {
+        min-height: 42px;
+        padding: 8px 18px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #CBD5E1;
+        font-size: 0.84rem;
         font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-    }
-    .badge-age-t18 { background: #dc3545; color: #fff; }
-    .badge-age-t16 { background: #fd7e14; color: #fff; }
-    .badge-age-t13 { background: #ffc107; color: #212529; }
-    .badge-age-p   { background: #198754; color: #fff; }
-
-    .badge-format {
-        background: rgba(245, 166, 35, 0.15);
-        color: #f5a623;
-        border: 1px solid rgba(245, 166, 35, 0.3);
-    }
-    .badge-genre {
-        background: rgba(255, 255, 255, 0.05);
-        color: #aaa;
-        border: 1px solid rgba(255, 255, 255, 0.07);
-    }
-    .meta-item {
-        font-size: 0.8rem;
-        color: #888;
+        text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
+        gap: 8px;
+        transition: all 0.22s ease;
+    }
+    .st-theater-pill:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+    .st-theater-pill.active {
+        background: rgba(56, 189, 248, 0.16);
+        border-color: #38BDF8;
+        color: #38BDF8;
     }
 
-    /* ───── Showtime Tickets Grid ───── */
-    .showtimes-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
-        gap: 12px;
-        width: 100%;
+    /* Movie Showtime Card */
+    .st-movie-block {
+        margin-bottom: 28px;
+        padding: 26px;
+        border-radius: 26px;
+        background: rgba(15, 22, 41, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(18px);
     }
-    .showtime-ticket {
+    .st-movie-layout {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 28px;
+    }
+    .st-movie-poster {
+        width: 100%;
+        aspect-ratio: 2 / 3;
+        object-fit: cover;
+        border-radius: 18px;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+    }
+    /* Perforated Mini-Ticket Slot */
+    .st-slot-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 12px;
+    }
+    .st-slot-ticket {
+        position: relative;
+        min-width: 138px;
+        padding: 12px 16px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-decoration: none;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 14px;
-        padding: 10px 14px;
-        color: #fff;
-        text-decoration: none;
-        transition: var(--transition-base);
-        cursor: pointer;
-        user-select: none;
-        text-align: center;
+        transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    .showtime-ticket .time-lbl {
-        font-size: 1.3rem;
-        font-weight: 800;
-        color: #fff;
-        line-height: 1.1;
-    }
-    .showtime-ticket .room-lbl {
-        font-size: 0.72rem;
-        color: #888;
-        margin-top: 4px;
-        font-weight: 500;
-    }
-    .showtime-ticket .price-lbl {
-        font-size: 0.72rem;
-        color: #f5a623;
-        margin-top: 2px;
-        font-weight: 600;
-    }
-    .showtime-ticket .seat-lbl {
-        font-size: 0.65rem;
-        color: #2ec4b6;
-        margin-top: 4px;
-        font-weight: 600;
-        background: rgba(46, 196, 182, 0.1);
-        padding: 1px 6px;
-        border-radius: 4px;
-    }
-    .showtime-ticket:hover {
-        background: linear-gradient(135deg, var(--primary), #b20710);
-        border-color: var(--primary);
+    .st-slot-ticket:hover {
         transform: translateY(-4px);
-        box-shadow: 0 8px 20px rgba(229, 9, 20, 0.45);
-        color: #fff;
+        background: linear-gradient(135deg, rgba(255, 46, 85, 0.2), rgba(255, 107, 53, 0.16));
+        border-color: #FF2E55;
+        box-shadow: 0 12px 26px rgba(255, 46, 85, 0.28);
     }
-    .showtime-ticket:hover .time-lbl,
-    .showtime-ticket:hover .room-lbl,
-    .showtime-ticket:hover .price-lbl {
-        color: #fff;
+    .st-slot-time {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #F8FAFC;
     }
-    .showtime-ticket:hover .seat-lbl {
-        background: rgba(255, 255, 255, 0.25);
-        color: #fff;
-    }
-
-    /* Disabled / Passed states */
-    .showtime-ticket.disabled {
-        background: rgba(255, 255, 255, 0.01) !important;
-        border-color: rgba(255, 255, 255, 0.03) !important;
-        cursor: not-allowed;
-        pointer-events: none;
-        box-shadow: none !important;
-        transform: none !important;
-    }
-    .showtime-ticket.disabled .time-lbl {
-        color: #444 !important;
-        text-decoration: line-through;
-    }
-    .showtime-ticket.disabled .room-lbl,
-    .showtime-ticket.disabled .price-lbl {
-        color: #333 !important;
-    }
-    .showtime-ticket.disabled .status-lbl-disabled {
-        font-size: 0.65rem;
-        color: #777;
-        margin-top: 4px;
-        font-weight: 600;
-        background: rgba(255, 255, 255, 0.04);
-        padding: 1px 6px;
-        border-radius: 4px;
-    }
-
-    /* ───── Empty State ───── */
-    .empty-state-glass {
-        background: var(--glass-bg);
-        border: 1px dashed rgba(255, 255, 255, 0.15);
-        border-radius: 24px;
-        text-align: center;
-        padding: 4rem 2rem;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: var(--glass-shadow);
-    }
-    .empty-state-glass i {
-        font-size: 4rem;
-        color: rgba(255, 255, 255, 0.15);
-        display: block;
-        margin-bottom: 1.5rem;
-    }
-    .empty-state-glass h5 {
-        color: #fff;
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-    .empty-state-glass p {
-        color: #888;
-        font-size: 0.9rem;
-        margin-bottom: 1.5rem;
-    }
-
-    /* Movie Mode - Date header under theater */
-    .theater-date-header {
-        font-size: 0.85rem;
+    .st-slot-room {
+        font-size: 0.72rem;
+        color: #38BDF8;
         font-weight: 700;
-        color: #aaa;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: 1.25rem;
-        margin-bottom: 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        margin-top: 2px;
     }
-    .theater-date-header i {
-        color: var(--primary);
+    .st-slot-price {
+        font-size: 0.74rem;
+        color: #F5B942;
+        font-weight: 700;
+        margin-top: 4px;
+        padding-top: 4px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.14);
+        width: 100%;
+        text-align: center;
+    }
+    @@media (max-width: 767.98px) {
+        .st-hero { padding: 28px 0 24px; }
+        .st-container { padding: 0 14px; }
+        .st-date-pill { min-width: 70px; padding: 10px; border-radius: 14px; }
+        .st-date-num { font-size: 1.15rem; }
+        .st-theater-bar {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            scrollbar-width: none;
+        }
+        .st-theater-bar::-webkit-scrollbar { display: none; }
+        .st-theater-pill {
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-height: 38px;
+            padding: 6px 14px;
+            font-size: 0.78rem;
+        }
+        .st-movie-block { padding: 16px 14px; border-radius: 20px; margin-bottom: 18px; }
+        .st-movie-layout { grid-template-columns: 1fr; gap: 16px; }
+        .st-movie-poster { max-width: 130px; border-radius: 14px; }
+        .st-slot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+            gap: 8px;
+        }
+        .st-slot-ticket {
+            min-width: 0;
+            width: 100%;
+            padding: 10px 8px;
+            border-radius: 12px;
+        }
+        .st-slot-time { font-size: 1rem; }
     }
 </style>
 
-<div class="showtimes-container mt-4">
-    @* ── Movie Detail Hero Header (Movie Mode) ── *@
-    @if (isMovieMode)
-    {
-        var poster = activeMovie?.PosterUrl ?? "/img/movies/default.jpg";
-        var banner = activeMovie?.BannerUrl ?? poster;
-        var durationText = activeMovie != null ? $"{activeMovie.Duration} phút" : "N/A";
-        var rating = activeMovie != null ? GetMovieRating(activeMovie.MovieId).ToString("0.0") : "7.5";
-
-        <div class="showtimes-hero-wrapper">
-            <div class="showtimes-hero-bg" style="background-image: url('@banner');"></div>
-            <div class="showtimes-hero-gradient"></div>
-            <div class="showtimes-hero-content">
-                <img src="@poster" class="showtimes-hero-poster" alt="@movieTitle" />
-                <div class="showtimes-hero-details">
-                    <div>
-                        <span class="badge bg-danger mb-2">🔥 ĐANG CHIẾU</span>
-                        <h2 class="showtimes-hero-title">@movieTitle</h2>
-                    </div>
-
-                    <div class="showtimes-hero-meta">
-                        <span class="badge-capsule @GetAgeBadgeClass(movieTitle ?? "")" title="@GetAgeBadgeDesc(movieTitle ?? "")">
-                            @GetAgeBadgeText(movieTitle ?? "")
-                        </span>
-                        <span class="badge-capsule badge-format">
-                            @GetMovieFormat(movieTitle ?? "")
-                        </span>
-                        <span class="meta-item">
-                            <i class="bi bi-clock"></i> @durationText
-                        </span>
-                        <span class="meta-item text-warning">
-                            <i class="bi bi-star-fill text-warning"></i> @rating/10
-                        </span>
-                    </div>
-
-                    @if (activeMovie != null && !string.IsNullOrEmpty(activeMovie.Description))
-                    {
-                        <p class="showtimes-hero-desc">@activeMovie.Description</p>
-                    }
-
-                    <div class="mt-2">
-                        <a asp-controller="Movies" asp-action="Index" class="btn btn-outline-light rounded-pill btn-sm px-4">
-                            <i class="bi bi-arrow-left me-1"></i> Quay lại Danh sách Phim
-                        </a>
-                    </div>
-                </div>
+<section class="st-hero">
+    <div class="st-container">
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4" data-animate="fade-up">
+            <div>
+                <span class="ch-eyebrow mb-2"><i class="bi bi-calendar2-week-fill"></i> Lịch Chiếu Thời Gian Thực</span>
+                <h1 class="text-white fw-bolder mb-1" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(1.9rem,3.4vw,2.8rem);">
+                    @(activeMovie != null ? $"Lịch Chiếu: {activeMovie.Title}" : "Lịch Chiếu & Chọn Suất")
+                </h1>
+                <p class="text-white-50 mb-0">Chọn ngày chiếu, cụm rạp và khung giờ thuận tiện nhất để giữ ghế đẹp ngay lập tức.</p>
             </div>
-        </div>
-    }
-    else
-    {
-        @* ── Page Title (General Mode) ── *@
-        <div class="page-title-card">
-            <h2>LỊCH CHIẾU HỆ THỐNG</h2>
-            <p>Khám phá lịch chiếu và đặt vé xem phim ngay lập tức tại các rạp CinemaHub</p>
-        </div>
-    }
-
-    @* ── Filter Bar ── *@
-    <div class="filter-bar-glass">
-        @* ── 14 Days Strip ── *@
-        <div class="filter-label">
-            <i class="bi bi-calendar3"></i> Chọn ngày chiếu
-        </div>
-        <div class="date-strip-wrap mb-4" id="dateStripWrap">
-            <div class="date-strip">
-                @foreach (var d in dateRange)
-                {
-                    bool isActive = selectedDate.HasValue && selectedDate.Value.Date == d.Date;
-                    string dayName = d.Date == today ? "Hôm nay"
-                                   : d.Date == today.AddDays(1) ? "Ngày mai"
-                                   : d.ToString("ddd", new System.Globalization.CultureInfo("vi-VN"));
-
-                    var dateUrl = isMovieMode
-                        ? Url.Action("Index", "Showtimes", new { movieId = movieId, date = d.ToString("yyyy-MM-dd"), theaterId = selectedTheaterId })
-                        : Url.Action("Index", "Showtimes", new { date = d.ToString("yyyy-MM-dd"), theaterId = selectedTheaterId });
-
-                    <a href="@dateUrl" class="date-btn-capsule @(isActive ? "active" : "")">
-                        <span class="day-name">@dayName</span>
-                        <span class="day-num">@d.Day</span>
-                        <span class="month-lbl">Thg @(d.Month)</span>
-                    </a>
-                }
-            </div>
-        </div>
-
-        @* ── Theater Selection Strip ── *@
-        <div class="filter-label">
-            <i class="bi bi-building"></i> Chọn rạp chiếu
-        </div>
-        <div class="theater-strip-wrap" id="theaterStripWrap">
-            <div class="theater-strip">
-                @{
-                    var allRapUrl = isMovieMode
-                        ? Url.Action("Index", "Showtimes", new { movieId = movieId, date = selectedDate?.ToString("yyyy-MM-dd") })
-                        : Url.Action("Index", "Showtimes", new { date = selectedDate?.ToString("yyyy-MM-dd") });
-                }
-                <a href="@allRapUrl" class="theater-btn-capsule @(selectedTheaterId == null ? "active" : "")">
-                    <span class="tb-icon">🎬</span>
-                    <span class="tb-name">Tất cả các rạp</span>
+            @if (selectedMovieId.HasValue || selectedDate.HasValue || selectedTheaterId.HasValue)
+            {
+                <a asp-action="Index" class="btn rounded-pill px-4 py-2 fw-bold text-white"
+                   style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Xem Tất Cả Lịch Chiếu
                 </a>
-                @foreach (var t in theaters)
-                {
-                    var rapUrl = isMovieMode
-                        ? Url.Action("Index", "Showtimes", new { movieId = movieId, date = selectedDate?.ToString("yyyy-MM-dd"), theaterId = t.TheaterId })
-                        : Url.Action("Index", "Showtimes", new { date = selectedDate?.ToString("yyyy-MM-dd"), theaterId = t.TheaterId });
-                    var rapActive = (selectedTheaterId == t.TheaterId);
-                    <a href="@rapUrl" class="theater-btn-capsule @(rapActive ? "active" : "")">
-                        <span class="tb-icon">🏛️</span>
-                        <span class="tb-name">@t.TheaterName</span>
-                    </a>
-                }
-            </div>
+            }
+        </div>
+
+        <!-- 14-Day Capsule Calendar -->
+        <div class="st-date-scroller" data-animate="fade-up" data-delay="60">
+            <a asp-action="Index"
+               asp-route-movieId="@selectedMovieId"
+               asp-route-theaterId="@selectedTheaterId"
+               class="st-date-pill @(!selectedDate.HasValue ? "active" : "")">
+                <span class="st-date-dow">Tất cả</span>
+                <span class="st-date-num"><i class="bi bi-calendar3"></i></span>
+                <span class="st-date-mon">Mọi ngày</span>
+            </a>
+
+            @foreach (var d in dateList)
+            {
+                bool isActive = selectedDate.HasValue && selectedDate.Value.Date == d.Date;
+                string dow = d.Date == today ? "Hôm nay" : dayNames[(int)d.DayOfWeek];
+                <a asp-action="Index"
+                   asp-route-movieId="@selectedMovieId"
+                   asp-route-theaterId="@selectedTheaterId"
+                   asp-route-date="@d.ToString("yyyy-MM-dd")"
+                   class="st-date-pill @(isActive ? "active" : "")">
+                    <span class="st-date-dow">@dow</span>
+                    <span class="st-date-num">@d.ToString("dd")</span>
+                    <span class="st-date-mon">Tháng @d.ToString("MM")</span>
+                </a>
+            }
+        </div>
+
+        <!-- Theater Pills (No Emojis - Clean Bootstrap Icons) -->
+        <div class="st-theater-bar" data-animate="fade-up" data-delay="100">
+            <a asp-action="Index"
+               asp-route-movieId="@selectedMovieId"
+               asp-route-date="@(selectedDate?.ToString("yyyy-MM-dd"))"
+               class="st-theater-pill @(!selectedTheaterId.HasValue ? "active" : "")">
+                <i class="bi bi-buildings-fill"></i> Tất Cả Cụm Rạp
+            </a>
+            @foreach (var th in theaters)
+            {
+                bool isThActive = selectedTheaterId.HasValue && selectedTheaterId.Value == (int)th.TheaterId;
+                <a asp-action="Index"
+                   asp-route-movieId="@selectedMovieId"
+                   asp-route-date="@(selectedDate?.ToString("yyyy-MM-dd"))"
+                   asp-route-theaterId="@th.TheaterId"
+                   class="st-theater-pill @(isThActive ? "active" : "")">
+                    <i class="bi bi-geo-alt-fill"></i> @th.TheaterName
+                </a>
+            }
         </div>
     </div>
+</section>
 
-    @* ── Showtimes Results ── *@
-    @if (!Model.Any())
+<section class="st-container py-5">
+    @if (Model == null || !Model.Any())
     {
-        <div class="empty-state-glass">
-            <i class="bi bi-calendar-x"></i>
-            <h5>Không có suất chiếu nào</h5>
-            <p>
-                @if (isMovieMode)
-                {
-                    <text>Rất tiếc, bộ phim chưa có lịch chiếu tại các rạp được chọn cho ngày @selectedDate?.ToString("dd/MM/yyyy").</text>
-                }
-                else
-                {
-                    <text>Hiện tại chưa có suất chiếu nào được lên lịch cho ngày @selectedDate?.ToString("dd/MM/yyyy").</text>
-                }
-            </p>
-            <a asp-controller="Movies" asp-action="Index" class="btn btn-outline-light rounded-pill px-4 btn-sm">
-                <i class="bi bi-film me-1"></i> Khám phá phim khác
-            </a>
+        <div class="text-center py-5">
+            <div class="p-5 rounded-4 mx-auto" style="max-width:540px;background:rgba(15,22,41,0.75);border:1px solid rgba(255,255,255,0.08);">
+                <i class="bi bi-calendar-x fs-1 text-danger d-block mb-3"></i>
+                <h4 class="text-white fw-bold">Chưa có suất chiếu trong khung lọc này</h4>
+                <p class="text-white-50 mb-4">Vui lòng chọn ngày chiếu khác hoặc xem toàn bộ lịch chiếu của các cụm rạp CinemaHub.</p>
+                <a asp-action="Index" class="btn rounded-pill px-4 py-2 fw-bold text-white"
+                   style="background:linear-gradient(135deg,#FF2E55,#FF6B35);">
+                    <i class="bi bi-calendar2-week me-1"></i> Xem Toàn Bộ Suất Chiếu
+                </a>
+            </div>
         </div>
     }
     else
     {
-        @foreach (var theater in groupedShowtimes)
+        var groupedByMovie = Model.GroupBy(s => s.MovieTitle).ToList();
+        foreach (var movieGroup in groupedByMovie)
         {
-            <div class="theater-card-glass">
-                <div class="theater-header">
-                    <h3 class="theater-title">
-                        <i class="bi bi-building"></i> @theater.Key
-                    </h3>
-                </div>
+            var mTitle = movieGroup.Key;
+            movieInfoDict.TryGetValue(mTitle, out var mObj);
+            var posterUrl = mObj?.PosterUrl ?? "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600";
+            var ageClass = MovieDisplayHelper.GetAgeBadgeClass(mTitle);
+            var ageText = MovieDisplayHelper.GetAgeBadgeText(mTitle);
+            var format = MovieDisplayHelper.GetMovieFormat(mTitle);
 
-                @if (isMovieMode)
-                {
-                    @foreach (var dateGroup in theater.Value)
-                    {
-                        <div class="theater-date-header">
-                            <i class="bi bi-calendar-check"></i>
-                            @dateGroup.Key.ToString("dd/MM/yyyy")
-                            @if (dateGroup.Key.Date == today)
+            <div class="st-movie-block cinema-spotlight" data-animate="fade-up">
+                <div class="st-movie-layout">
+                    <div>
+                        <img src="@posterUrl"
+                             alt="@mTitle"
+                             class="st-movie-poster"
+                             onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600'" />
+                    </div>
+                    <div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <span class="badge @ageClass rounded-pill px-3 py-1 fw-bold">@ageText</span>
+                            <span class="badge rounded-pill px-3 py-1" style="background:rgba(56,189,248,0.14);color:#38BDF8;border:1px solid rgba(56,189,248,0.3);">@format</span>
+                            @if (mObj != null)
                             {
-                                <span class="badge bg-danger ms-2" style="font-size:0.65rem;">Hôm nay</span>
+                                <span class="text-white-50 small"><i class="bi bi-clock me-1 text-info"></i>@mObj.Duration phút</span>
                             }
                         </div>
 
-                        <div class="showtimes-grid mb-4">
-                            @foreach (var st in dateGroup)
+                        <h3 class="text-white fw-bold mb-3" style="font-family:'Space Grotesk',sans-serif;">
+                            @if (mObj != null)
                             {
-                                bool isPassed = st.StartTime < VietnamTime.Now;
-                                bool isBookable = st.AvailableSeats > 0 && !isPassed;
-
-                                if (isBookable)
-                                {
-                                    <a asp-controller="Booking" asp-action="SelectSeat" asp-route-id="@st.ShowtimeId"
-                                       class="showtime-ticket"
-                                       title="@st.MovieTitle | Phòng: @st.RoomName | Giá: @st.Price.ToString("N0") VNĐ">
-                                        <span class="time-lbl">@st.StartTime.ToString("HH:mm")</span>
-                                        <span class="room-lbl">@st.RoomName</span>
-                                        <span class="price-lbl">@st.Price.ToString("N0")₫</span>
-                                        <span class="seat-lbl">@st.AvailableSeats ghế trống</span>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <div class="showtime-ticket disabled">
-                                        <span class="time-lbl">@st.StartTime.ToString("HH:mm")</span>
-                                        <span class="room-lbl">@st.RoomName</span>
-                                        <span class="price-lbl">@st.Price.ToString("N0")₫</span>
-                                        <span class="status-lbl-disabled">@(isPassed ? "Đã chiếu" : "Hết ghế")</span>
-                                    </div>
-                                }
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@mObj.MovieId" class="text-white text-decoration-none">@mTitle</a>
                             }
-                        </div>
-                    }
-                }
-                else
-                {
-                    @* General Mode: Group by Movie *@
-                    @foreach (var dateGroup in theater.Value)
-                    {
-                        var byMovie = dateGroup.GroupBy(s => s.MovieTitle).OrderBy(g => g.Key).ToList();
-                        @foreach (var movieGroup in byMovie)
+                            else
+                            {
+                                @mTitle
+                            }
+                        </h3>
+
+                        @foreach (var theaterGroup in movieGroup.GroupBy(s => s.TheaterName))
                         {
-                            var title = movieGroup.Key;
-                            var movieDetails = movieInfoDict.GetValueOrDefault(title);
-
-                            <div class="showtime-movie-row">
-                                <div class="showtime-movie-info-wrap">
-                                    @{
-                                        var moviePoster = movieDetails?.PosterUrl ?? "/img/movies/default.jpg";
-                                        var movieDuration = movieDetails != null ? $"{movieDetails.Duration} phút" : "N/A";
-                                        var rating = movieDetails != null ? GetMovieRating(movieDetails.MovieId).ToString("0.0") : "7.5";
-                                        var idLink = movieDetails != null ? Url.Action("Details", "Movies", new { id = movieDetails.MovieId }) : "#";
-                                    }
-                                    <a href="@idLink">
-                                        <img src="@moviePoster" class="movie-poster-thumb" alt="@title" />
-                                    </a>
-                                    <div class="movie-details-wrap">
-                                        <a href="@idLink" class="movie-title-link">@title</a>
-                                        <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
-                                            <span class="badge-capsule @GetAgeBadgeClass(title)" title="@GetAgeBadgeDesc(title)">
-                                                @GetAgeBadgeText(title)
-                                            </span>
-                                            <span class="badge-capsule badge-format">
-                                                @GetMovieFormat(title)
-                                            </span>
-                                            <span class="meta-item">
-                                                <i class="bi bi-clock"></i> @movieDuration
-                                            </span>
-                                            <span class="meta-item text-warning">
-                                                <i class="bi bi-star-fill text-warning"></i> @rating/10
-                                            </span>
-                                            @if (movieDetails != null && movieDetails.MovieGenres != null)
-                                            {
-                                                @foreach (var mg in movieDetails.MovieGenres.Take(3))
-                                                {
-                                                    <span class="badge-capsule badge-genre">@mg.Genre.GenreName</span>
-                                                }
-                                            }
-                                        </div>
-                                    </div>
+                            <div class="mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                                <div class="d-flex align-items-center gap-2 text-white fw-bold mb-2">
+                                    <i class="bi bi-geo-alt-fill text-danger"></i>
+                                    <span>@theaterGroup.Key</span>
                                 </div>
-
-                                <div class="showtimes-grid">
-                                    @foreach (var st in movieGroup)
+                                <div class="st-slot-grid">
+                                    @foreach (var st in theaterGroup.OrderBy(x => x.StartTime))
                                     {
-                                        bool isPassed = st.StartTime < VietnamTime.Now;
-                                        bool isBookable = st.AvailableSeats > 0 && !isPassed;
-
-                                        if (isBookable)
-                                        {
-                                            <a asp-controller="Booking" asp-action="SelectSeat" asp-route-id="@st.ShowtimeId"
-                                               class="showtime-ticket"
-                                               title="@st.MovieTitle | Phòng: @st.RoomName | Giá: @st.Price.ToString("N0") VNĐ">
-                                                <span class="time-lbl">@st.StartTime.ToString("HH:mm")</span>
-                                                <span class="room-lbl">@st.RoomName</span>
-                                                <span class="price-lbl">@st.Price.ToString("N0")₫</span>
-                                                <span class="seat-lbl">@st.AvailableSeats ghế trống</span>
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            <div class="showtime-ticket disabled">
-                                                <span class="time-lbl">@st.StartTime.ToString("HH:mm")</span>
-                                                <span class="room-lbl">@st.RoomName</span>
-                                                <span class="price-lbl">@st.Price.ToString("N0")₫</span>
-                                                <span class="status-lbl-disabled">@(isPassed ? "Đã chiếu" : "Hết ghế")</span>
-                                            </div>
-                                        }
+                                        <a asp-controller="Booking"
+                                           asp-action="SelectSeat"
+                                           asp-route-id="@st.ShowtimeId"
+                                           asp-route-showtimeId="@st.ShowtimeId"
+                                           class="st-slot-ticket">
+                                            <span class="st-slot-time">@st.StartTime.ToString("HH:mm")</span>
+                                            <span class="st-slot-room">@st.RoomName • @st.StartTime.ToString("dd/MM")</span>
+                                            <span class="st-slot-price">@st.Price.ToString("N0") ₫</span>
+                                        </a>
                                     }
                                 </div>
                             </div>
                         }
-                    }
-                }
+                    </div>
+                </div>
             </div>
         }
     }
-</div>
-
-@section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            function enableDragScroll(sliderId) {
-                const slider = document.getElementById(sliderId);
-                if (!slider) return;
-
-                let isDown = false;
-                let startX;
-                let scrollLeft;
-                let isDragging = false;
-
-                slider.style.cursor = "grab";
-                slider.style.userSelect = "none";
-                slider.style.touchAction = "pan-y";
-
-                slider.addEventListener("mousedown", (e) => {
-                    if (e.button !== 0) return; // Only left click
-                    isDown = true;
-                    isDragging = false;
-                    slider.style.cursor = "grabbing";
-                    startX = e.pageX - slider.offsetLeft;
-                    scrollLeft = slider.scrollLeft;
-                });
-
-                document.addEventListener("mouseup", () => {
-                    if (isDown) {
-                        isDown = false;
-                        slider.style.cursor = "grab";
-                    }
-                });
-
-                slider.addEventListener("mousemove", (e) => {
-                    if (!isDown) return;
-                    e.preventDefault();
-                    const x = e.pageX - slider.offsetLeft;
-                    const walk = (x - startX) * 1.5;
-                    if (Math.abs(walk) > 5) {
-                        isDragging = true;
-                    }
-                    slider.scrollLeft = scrollLeft - walk;
-                });
-
-                // Prevent browser's native drag-and-drop ghost image
-                slider.addEventListener("dragstart", (e) => {
-                    e.preventDefault();
-                });
-
-                // Prevent click actions if dragging occurred
-                slider.addEventListener("click", (e) => {
-                    if (isDragging) {
-                        e.preventDefault();
-                        e.stopImmediatePropagation();
-                    }
-                }, true);
-            }
-
-            enableDragScroll("dateStripWrap");
-            enableDragScroll("theaterStripWrap");
-        });
-    </script>
-}
-
-@functions {
-    // Delegate sang shared helper để tránh duplicate code
-    public string GetAgeBadgeClass(string title) => CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeClass(title);
-    public string GetAgeBadgeText(string title) => CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeText(title);
-    public string GetAgeBadgeDesc(string title) => CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeDesc(title);
-    public string GetMovieFormat(string title) => CinemaManagement.Helpers.MovieDisplayHelper.GetMovieFormat(title);
-    public double GetMovieRating(int id) => CinemaManagement.Helpers.MovieDisplayHelper.GetMovieRating(id);
-}
+</section>

@@ -1,464 +1,283 @@
-@using CinemaManagement.Models
 @model CinemaManagement.Models.Movie
+@using CinemaManagement.Helpers
 @{
-    bool isAdmin = false;
-    if (User.IsInRole("Admin") || User.IsInRole("Staff"))
-    {
-        var referer = Context.Request.Headers["Referer"].ToString();
-        if (referer.Contains("/Admin") || Context.Request.Query["admin"].ToString() == "true")
-        {
-            isAdmin = true;
-        }
+    ViewData["Title"] = Model.Title;
+    ViewBag.FullWidth = true;
+
+    bool isAdmin = (User.IsInRole("Admin") || User.IsInRole("Staff")) &&
+                   (Context.Request.Headers["Referer"].ToString().Contains("/Admin") || Context.Request.Query["admin"] == "true");
+
+    var genres = ViewBag.Genres as IEnumerable<string> ?? Enumerable.Empty<string>();
+    var ageClass = MovieDisplayHelper.GetAgeBadgeClass(Model.Title);
+    var ageText = MovieDisplayHelper.GetAgeBadgeText(Model.Title);
+    var ageDesc = MovieDisplayHelper.GetAgeBadgeDesc(Model.Title);
+    var format = MovieDisplayHelper.GetMovieFormat(Model.Title);
+    var rating = MovieDisplayHelper.GetMovieRating(Model.MovieId).ToString("0.0");
+    var trailerUrl = MovieDisplayHelper.GetTrailerEmbedUrl(Model.Title);
+    var poster = string.IsNullOrWhiteSpace(Model.PosterUrl)
+        ? "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800"
+        : Model.PosterUrl;
+}
+
+<style>
+    .md-stage {
+        position: relative;
+        padding: 56px 0 80px;
+        overflow: hidden;
+        background: #050711;
     }
+    .md-backdrop {
+        position: absolute;
+        inset: -8%;
+        background-image: url('@poster');
+        background-size: cover;
+        background-position: center 25%;
+        filter: blur(36px) saturate(1.4) brightness(0.28);
+        z-index: 0;
+    }
+    .md-vignette {
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 75% 25%, rgba(255, 46, 85, 0.2), transparent 50%),
+            linear-gradient(180deg, rgba(5, 7, 17, 0.45) 0%, #050711 92%);
+        z-index: 1;
+    }
+    .md-container {
+        position: relative;
+        z-index: 2;
+        max-width: 1340px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+    .md-grid {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 48px;
+        align-items: start;
+    }
+    .md-poster-frame {
+        border-radius: 26px;
+        padding: 10px;
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03));
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.75);
+    }
+    .md-poster-frame img {
+        width: 100%;
+        aspect-ratio: 2 / 3;
+        object-fit: cover;
+        border-radius: 18px;
+        display: block;
+    }
+    .md-spec-bento {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin: 28px 0;
+    }
+    .md-spec-card {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(15, 22, 41, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(14px);
+    }
+    @@media (max-width: 991.98px) {
+        .md-grid { grid-template-columns: 1fr; gap: 32px; }
+        .md-poster-frame { max-width: 300px; margin: 0 auto; }
+        .md-spec-bento { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
 
-    ViewData["Title"] = "Chi tiết phim – " + Model.Title;
-    Layout = isAdmin ? "_AdminLayout" : "_Layout";
-    var genres = (ViewBag.Genres as IEnumerable<string>) ?? new List<string>();
-    var totalTickets = (int)(ViewBag.TotalTickets ?? 0);
-    var totalRevenue = (decimal)(ViewBag.TotalRevenue ?? 0m);
-}
+<section class="md-stage">
+    <div class="md-backdrop"></div>
+    <div class="md-vignette"></div>
 
-@if (isAdmin)
-{
-    <!-- Content Header -->
-    <section class="content-header">
-        <h1>
-            Chi tiết phim
-            <small>@Model.Title</small>
-        </h1>
-        <ol class="breadcrumb">
-            <li><a asp-action="Index" asp-controller="Admin"><i class="fa fa-dashboard"></i> Dashboard</a></li>
-            <li><a asp-action="Movies" asp-controller="Admin"><i class="fa fa-film"></i> Phim</a></li>
-            <li class="active">Chi tiết</li>
-        </ol>
-    </section>
+    <div class="md-container">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4" data-animate="fade-up">
+            <ol class="breadcrumb mb-0" style="font-size:0.86rem;">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-white-50 text-decoration-none">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Movies" asp-action="Index" class="text-white-50 text-decoration-none">Kho phim</a></li>
+                <li class="breadcrumb-item active text-white fw-semibold" aria-current="page">@Model.Title</li>
+            </ol>
+        </nav>
 
-    <!-- Main content -->
-    <section class="content">
-
-        <!-- Thông tin chính -->
-        <div class="row">
-            <!-- Poster + Quick Info -->
-            <div class="col-md-3">
-                <div class="box box-primary">
-                    <div class="box-body" style="padding:15px; text-align:center">
-                        @if (!string.IsNullOrEmpty(Model.PosterUrl))
-                        {
-                            <img src="@Model.PosterUrl" alt="@Model.Title"
-                                 style="width:100%; max-width:220px; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.3)"
-                                 onerror="this.src='/images/default-movie.jpg'" />
-                        }
-                        else
-                        {
-                            <div style="width:100%; height:300px; background:#e9ecef; border-radius:6px;
-                                        display:flex; align-items:center; justify-content:center; flex-direction:column; color:#aaa">
-                                <i class="fa fa-film fa-4x"></i>
-                                <p style="margin-top:10px">Chưa có poster</p>
-                            </div>
-                        }
-
-                        <div style="margin-top:15px">
-                            @{
-                                string statusBg = Model.Status == "Now Showing" ? "label-success"
-                                                : Model.Status == "Coming Soon" ? "label-warning" : "label-default";
-                                string statusText = Model.Status == "Now Showing" ? "Đang chiếu"
-                                                 : Model.Status == "Coming Soon" ? "Sắp chiếu" : "Ngừng chiếu";
-                            }
-                            <span class="label @statusBg" style="font-size:14px; padding:6px 12px">@statusText</span>
-                        </div>
-
-                        <div class="description-block border-right" style="margin-top:20px">
-                            <span class="description-percentage"><i class="fa fa-clock-o"></i> @Model.Duration phút</span>
-                            <h5 class="description-header">Thời lượng</h5>
-                        </div>
-                    </div>
-                    <!-- Actions -->
-                    <div class="box-footer" style="text-align:center">
-                        <a asp-controller="Movies" asp-action="Edit" asp-route-id="@Model.MovieId"
-                           class="btn btn-warning btn-sm">
-                            <i class="fa fa-edit"></i> Sửa phim
-                        </a>
-                        &nbsp;
-                        <a asp-action="Movies" asp-controller="Admin" class="btn btn-default btn-sm">
-                            <i class="fa fa-arrow-left"></i> Quay lại
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Stats nhỏ -->
-                <div class="box box-success">
-                    <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-bar-chart"></i> Thống kê</h3>
-                    </div>
-                    <div class="box-body" style="padding:10px 15px">
-                        <div class="description-block border-right">
-                            <span class="description-percentage text-green">@totalTickets</span>
-                            <h5 class="description-header">Vé đã bán</h5>
-                        </div>
-                        <hr style="margin:10px 0">
-                        <div class="description-block">
-                            <span class="description-percentage text-green" style="font-size:15px">@totalRevenue.ToString("N0") ₫</span>
-                            <h5 class="description-header">Doanh thu</h5>
-                        </div>
-                    </div>
-                </div>
+        <div class="md-grid">
+            <!-- Left: 3D Poster Frame -->
+            <div class="md-poster-frame cinema-tilt" data-animate="scale-in">
+                <img src="@poster"
+                     alt="@Model.Title"
+                     onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800'" />
             </div>
 
-            <!-- Chi tiết -->
-            <div class="col-md-9">
-                <div class="box box-primary">
-                    <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-info-circle"></i> Thông tin phim – ID #@Model.MovieId</h3>
-                    </div>
-                    <div class="box-body">
-                        <dl class="dl-horizontal">
-                            <dt>Tên phim</dt>
-                            <dd><strong style="font-size:16px">@Model.Title</strong></dd>
-
-                            <dt>Thể loại</dt>
-                            <dd>
-                                @if (genres.Any())
-                                {
-                                    foreach (var g in genres)
-                                    {
-                                        <span class="label label-info" style="margin-right:4px">@g</span>
-                                    }
-                                }
-                                else
-                                {
-                                    <span class="text-muted">Chưa phân loại</span>
-                                }
-                            </dd>
-
-                            <dt>Thời lượng</dt>
-                            <dd>@Model.Duration phút</dd>
-
-                            <dt>Ngày phát hành</dt>
-                            <dd>
-                                @if (Model.ReleaseDate.HasValue)
-                                {
-                                    @Model.ReleaseDate.Value.ToString("dd/MM/yyyy")
-                                }
-                                else
-                                {
-                                    <span class="text-muted">Chưa xác định</span>
-                                }
-                            </dd>
-
-                            <dt>Trạng thái</dt>
-                            <dd><span class="label @statusBg">@statusText</span></dd>
-
-                            @if (!string.IsNullOrEmpty(Model.BannerUrl))
-                            {
-                                <dt>Banner URL</dt>
-                                <dd>
-                                    <a href="@Model.BannerUrl" target="_blank" class="text-primary">
-                                        <i class="fa fa-external-link"></i> @Model.BannerUrl
-                                    </a>
-                                </dd>
-                            }
-                        </dl>
-
-                        @if (!string.IsNullOrWhiteSpace(Model.Description))
-                        {
-                            <hr>
-                            <h4><i class="fa fa-align-left"></i> Mô tả</h4>
-                            <p style="line-height:1.8; color:#444">@Model.Description</p>
-                        }
-
-                        @if (!string.IsNullOrEmpty(Model.BannerUrl))
-                        {
-                            <hr>
-                            <h4><i class="fa fa-image"></i> Banner</h4>
-                            <img src="@Model.BannerUrl" alt="Banner @Model.Title"
-                                 style="max-width:100%; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.2)"
-                                 onerror="this.style.display='none'" />
-                        }
-                    </div>
+            <!-- Right: Blockbuster Microsite Info -->
+            <div data-animate="fade-up" data-delay="100">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <span class="badge @ageClass px-3 py-2 rounded-pill fw-bold">@ageText</span>
+                    <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38BDF8;">
+                        <i class="bi bi-badge-4k-fill me-1"></i>@format
+                    </span>
+                    <span class="badge rounded-pill px-3 py-2 fw-bold" style="background:rgba(245,185,66,0.15);border:1px solid rgba(245,185,66,0.35);color:#F5B942;">
+                        <i class="bi bi-star-fill me-1"></i>@rating / 10 IMDb
+                    </span>
                 </div>
 
-                <!-- Suất chiếu -->
-                <div class="box box-warning">
-                    <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-calendar"></i> Suất chiếu (@Model.Showtimes.Count)</h3>
-                        <div class="box-tools pull-right">
-                            <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
-                        </div>
-                    </div>
-                    <div class="box-body" style="padding:0">
-                        @if (Model.Showtimes.Any())
-                        {
-                            <table class="table table-striped table-hover" style="margin:0">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Rạp</th>
-                                        <th>Phòng</th>
-                                        <th>Giờ chiếu</th>
-                                        <th>Giá vé</th>
-                                        <th>Trạng thái</th>
-                                        <th>Vé đã bán</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var st in Model.Showtimes.OrderBy(s => s.StartTime))
-                                    {
-                                        string stStatus, stClass;
-                                        if (st.StartTime > VietnamTime.Now)
-                                        { stStatus = "Sắp chiếu"; stClass = "label-success"; }
-                                        else if (st.StartTime.AddMinutes(Model.Duration) > VietnamTime.Now)
-                                        { stStatus = "Đang chiếu"; stClass = "label-warning"; }
-                                        else
-                                        { stStatus = "Đã chiếu"; stClass = "label-default"; }
+                <h1 class="text-white fw-bolder mb-3" style="font-family:'Space Grotesk',sans-serif;font-size:clamp(2.1rem,4vw,3.4rem);line-height:1.08;">
+                    @Model.Title
+                </h1>
 
-                                        int bookedCount = st.Tickets.Count(t => t.Status == "Booked");
-                                        <tr>
-                                            <td>@st.ShowtimeId</td>
-                                            <td>@(st.Room?.Theater?.TheaterName ?? "N/A")</td>
-                                            <td>@(st.Room?.RoomName ?? "N/A")</td>
-                                            <td>@st.StartTime.ToString("HH:mm dd/MM/yyyy")</td>
-                                            <td>@st.Price.ToString("N0") ₫</td>
-                                            <td><span class="label @stClass">@stStatus</span></td>
-                                            <td>
-                                                <span class="badge bg-blue">@bookedCount</span>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        }
-                        else
-                        {
-                            <div class="text-center text-muted" style="padding:30px">
-                                <i class="fa fa-calendar-times-o fa-3x"></i>
-                                <p style="margin-top:10px">Chưa có suất chiếu nào cho phim này.</p>
-                                <a asp-action="Showtimes" asp-controller="Admin" class="btn btn-primary btn-sm">
-                                    <i class="fa fa-plus"></i> Thêm suất chiếu
-                                </a>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-}
-else
-{
-    <!-- Public Theme -->
-    <style>
-        .movie-detail-hero {
-            position: relative;
-            background-size: cover;
-            background-position: center;
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 3rem;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .movie-detail-hero-blur {
-            position: absolute;
-            inset: 0;
-            background-size: cover;
-            background-position: center;
-            filter: blur(40px) brightness(0.3);
-            transform: scale(1.1);
-        }
-        .movie-detail-hero-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to right, rgba(15, 15, 15, 0.95) 0%, rgba(15, 15, 15, 0.6) 50%, rgba(15, 15, 15, 0.9) 100%);
-        }
-        .movie-detail-hero-content {
-            position: relative;
-            z-index: 2;
-            padding: 3rem;
-        }
-        .movie-detail-poster {
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border: 2px solid rgba(255,255,255,0.1);
-            max-width: 100%;
-            height: auto;
-            aspect-ratio: 2/3;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-        .movie-detail-poster:hover {
-            transform: scale(1.02);
-        }
-        .genre-pill {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 6px 16px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            color: #eee;
-            font-weight: 500;
-        }
-        .info-label {
-            color: #888;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 2px;
-        }
-        .info-value {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-        /* Badges system */
-        .badge-capsule {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .5px;
-        }
-        .badge-age-t18 { background: #dc3545; color: #fff; }
-        .badge-age-t16 { background: #fd7e14; color: #fff; }
-        .badge-age-t13 { background: #ffc107; color: #212529; }
-        .badge-age-p   { background: #198754; color: #fff; }
-
-        .badge-format {
-            background: rgba(245, 166, 35, 0.15);
-            color: #f5a623;
-            border: 1px solid rgba(245, 166, 35, 0.3);
-        }
-    </style>
-
-    <div class="movie-detail-hero">
-        <!-- Background Banner Blur and Overlay -->
-        @if (!string.IsNullOrEmpty(Model.BannerUrl))
-        {
-            <div class="movie-detail-hero-blur" style="background-image: url('@Model.BannerUrl');"></div>
-        }
-        else if (!string.IsNullOrEmpty(Model.PosterUrl))
-        {
-            <div class="movie-detail-hero-blur" style="background-image: url('@Model.PosterUrl');"></div>
-        }
-        else
-        {
-            <div class="movie-detail-hero-blur" style="background-color: #222;"></div>
-        }
-        <div class="movie-detail-hero-overlay"></div>
-
-        <div class="movie-detail-hero-content">
-            <div class="row g-5 align-items-center">
-                <!-- Movie Poster -->
-                <div class="col-md-4 text-center">
-                    @if (!string.IsNullOrEmpty(Model.PosterUrl))
-                    {
-                        <img src="@Model.PosterUrl" class="movie-detail-poster" alt="@Model.Title" />
-                    }
-                    else
-                    {
-                        <div class="movie-detail-poster bg-dark d-flex flex-column align-items-center justify-content-center" style="width: 100%; aspect-ratio: 2/3;">
-                            <i class="bi bi-camera-reels-fill fs-1 text-muted"></i>
-                            <span class="text-muted mt-2">Chưa có ảnh</span>
-                        </div>
-                    }
-                </div>
-
-                <!-- Movie Info -->
-                <div class="col-md-8">
-                    <div class="d-flex flex-wrap gap-2 mb-3">
+                @if (genres.Any())
+                {
+                    <div class="d-flex flex-wrap gap-2 mb-4">
                         @foreach (var g in genres)
                         {
-                            <span class="genre-pill">@g</span>
+                            <span class="px-3 py-1 rounded-pill text-white" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);font-size:0.82rem;font-weight:600;">
+                                @g
+                            </span>
                         }
                     </div>
+                }
 
-                    <h1 class="fw-bolder mb-3 d-flex align-items-center gap-3 flex-wrap" style="font-size: 2.8rem; text-shadow: 2px 2px 8px rgba(0,0,0,0.5);">
-                        @Model.Title
-                        <span class="badge-capsule @CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeClass(Model.Title)" 
-                              title="@CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeDesc(Model.Title)">
-                            @CinemaManagement.Helpers.MovieDisplayHelper.GetAgeBadgeText(Model.Title)
-                        </span>
-                    </h1>
+                <!-- Bento Technical Specs -->
+                <div class="md-spec-bento">
+                    <div class="md-spec-card">
+                        <div class="text-white-50 small mb-1"><i class="bi bi-clock-history text-info me-1"></i>Thời lượng</div>
+                        <div class="text-white fw-bold fs-5">@Model.Duration phút</div>
+                    </div>
+                    <div class="md-spec-card">
+                        <div class="text-white-50 small mb-1"><i class="bi bi-calendar2-check text-warning me-1"></i>Khởi chiếu</div>
+                        <div class="text-white fw-bold fs-5">@(Model.ReleaseDate?.ToString("dd/MM/yyyy") ?? "Đang cập nhật")</div>
+                    </div>
+                    <div class="md-spec-card">
+                        <div class="text-white-50 small mb-1"><i class="bi bi-soundwave text-danger me-1"></i>Âm thanh</div>
+                        <div class="text-white fw-bold fs-5">Dolby Atmos</div>
+                    </div>
+                    <div class="md-spec-card">
+                        <div class="text-white-50 small mb-1"><i class="bi bi-translate text-success me-1"></i>Phụ đề</div>
+                        <div class="text-white fw-bold fs-5">Vietsub / Lồng tiếng</div>
+                    </div>
+                </div>
 
-                    <!-- Stats Row -->
-                    <div class="row g-4 my-3 py-3 border-top border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
-                        <div class="col-6 col-sm-3">
-                            <div class="info-label"><i class="bi bi-clock"></i> Thời lượng</div>
-                            <div class="info-value">@Model.Duration phút</div>
-                        </div>
-                        <div class="col-6 col-sm-3">
-                            <div class="info-label"><i class="bi bi-calendar-event"></i> Phát hành</div>
-                            <div class="info-value">@(Model.ReleaseDate?.ToString("dd/MM/yyyy") ?? "N/A")</div>
-                        </div>
-                        <div class="col-6 col-sm-3">
-                            <div class="info-label"><i class="bi bi-film"></i> Định dạng</div>
-                            <div class="info-value">
-                                <span class="badge-capsule badge-format">
-                                    @CinemaManagement.Helpers.MovieDisplayHelper.GetMovieFormat(Model.Title)
-                                </span>
+                <!-- Age restriction notice -->
+                <div class="p-3 rounded-4 mb-4 d-flex align-items-center gap-3"
+                     style="background:rgba(245,185,66,0.08);border:1px solid rgba(245,185,66,0.25);">
+                    <i class="bi bi-shield-exclamation text-warning fs-4"></i>
+                    <div class="small text-white-50">
+                        <strong class="text-white">Phân loại độ tuổi (@ageText):</strong> @ageDesc
+                    </div>
+                </div>
+
+                <!-- Synopsis -->
+                <div class="p-4 rounded-4 mb-4" style="background:rgba(15,22,41,0.65);border:1px solid rgba(255,255,255,0.08);">
+                    <h5 class="text-white fw-bold mb-2 d-flex align-items-center gap-2">
+                        <i class="bi bi-journal-richtext text-danger"></i> Nội Dung Phim
+                    </h5>
+                    <p class="text-white-50 mb-0" style="line-height:1.75;font-size:0.98rem;">
+                        @(string.IsNullOrWhiteSpace(Model.Description)
+                            ? "Bộ phim mang đến hành trình điện ảnh mãn nhãn với kỹ xảo hình ảnh IMAX thế hệ mới và chiều sâu cảm xúc khó quên."
+                            : Model.Description)
+                    </p>
+                </div>
+
+                @if (isAdmin)
+                {
+                    <!-- Admin Box Office & Quick Controls -->
+                    <div class="p-4 rounded-4 mb-4" style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div>
+                                <div class="text-info fw-bold small text-uppercase mb-1"><i class="bi bi-speedometer2 me-1"></i>Số Liệu Quản Trị Phòng Vé</div>
+                                <div class="d-flex gap-4">
+                                    <div>
+                                        <span class="text-white-50 small">Vé đã bán:</span>
+                                        <strong class="text-white ms-1">@((ViewBag.TotalTickets ?? 0).ToString("N0")) vé</strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-white-50 small">Doanh thu:</span>
+                                        <strong class="text-warning ms-1">@(((decimal)(ViewBag.TotalRevenue ?? 0m)).ToString("N0")) ₫</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a asp-area="Admin" asp-controller="Movies" asp-action="Edit" asp-route-id="@Model.MovieId"
+                                   class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">
+                                    <i class="bi bi-pencil-square me-1"></i> Sửa Phim
+                                </a>
+                                <a asp-area="Admin" asp-controller="Movies" asp-action="Index"
+                                   class="btn btn-outline-light btn-sm rounded-pill px-3">
+                                    <i class="bi bi-arrow-left me-1"></i> Quản Trị Phim
+                                </a>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-3">
-                            <div class="info-label"><i class="bi bi-star-fill text-warning"></i> Đánh giá</div>
-                            <div class="info-value text-warning">@CinemaManagement.Helpers.MovieDisplayHelper.GetMovieRating(Model.MovieId).ToString("0.0")/10</div>
-                        </div>
                     </div>
+                }
 
-                    @if (!string.IsNullOrWhiteSpace(Model.Description))
-                    {
-                        <div class="mb-4">
-                            <h5 class="fw-bold mb-2 text-white"><i class="bi bi-align-left text-danger"></i> Tóm tắt phim</h5>
-                            <p class="text-light-muted" style="line-height: 1.8; font-size: 1.05rem;">@Model.Description</p>
-                        </div>
-                    }
+                <!-- Action CTA Bar -->
+                <div class="d-flex flex-wrap gap-3">
+                    <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@Model.MovieId"
+                       class="btn btn-lg rounded-4 px-4 py-3 fw-bold text-white d-inline-flex align-items-center gap-2 cinema-magnetic"
+                       style="background:linear-gradient(135deg,#FF2E55,#FF6B35);box-shadow:0 16px 36px rgba(255,46,85,0.4);">
+                        <i class="bi bi-ticket-perforated-fill"></i>
+                        <span>Chọn Suất Chiếu &amp; Đặt Vé</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
 
-                    <div class="d-flex flex-wrap gap-3 mt-4 align-items-center">
-                        @if (Model.Status == "Now Showing")
-                        {
-                            bool hasAvailableShowtimes = Model.Showtimes.Any(s => s.StartTime >= VietnamTime.Now);
-                            if (hasAvailableShowtimes)
-                            {
-                                <a asp-controller="Showtimes" asp-action="Index" asp-route-movieId="@Model.MovieId" class="btn btn-primary-custom btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg">
-                                    <i class="bi bi-ticket-fill me-2"></i> ĐẶT VÉ NGAY
-                                </a>
-                            }
-                            else
-                            {
-                                <button class="btn btn-secondary btn-lg px-5 py-3 rounded-pill fw-bold" style="opacity: 0.75; cursor: not-allowed;" title="Hiện chưa có lịch chiếu khả dụng cho phim này" disabled>
-                                    <i class="bi bi-calendar-x me-2"></i> CHƯA CÓ LỊCH CHIẾU
-                                </button>
-                            }
-                        }
-                        else if (Model.Status == "Coming Soon")
-                        {
-                            <button class="btn btn-secondary btn-lg px-5 py-3 rounded-pill fw-bold" style="opacity: 0.75; cursor: not-allowed;" disabled>
-                                <i class="bi bi-clock-history me-2"></i> PHIM SẮP CHIẾU
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-dark btn-lg px-5 py-3 rounded-pill fw-bold" style="opacity: 0.7; cursor: not-allowed; border: 1px solid rgba(255,255,255,0.2);" disabled>
-                                <i class="bi bi-dash-circle me-2"></i> ĐÃ NGỪNG CHIẾU
-                            </button>
-                        }
-                        <a asp-action="Index" class="btn btn-outline-light btn-lg px-4 py-3 rounded-pill fw-bold">
-                            <i class="bi bi-arrow-left me-2"></i> Quay lại
-                        </a>
-                    </div>
+                    <button type="button"
+                            class="btn btn-lg rounded-4 px-4 py-3 fw-bold text-white d-inline-flex align-items-center gap-2"
+                            style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.16);"
+                            data-bs-toggle="modal"
+                            data-bs-target="#detailTrailerModal">
+                        <i class="bi bi-play-circle-fill text-danger fs-5"></i>
+                        <span>Xem Trailer Chính Thức</span>
+                    </button>
+
+                    <a asp-controller="Movies" asp-action="Index"
+                       class="btn btn-lg rounded-4 px-4 py-3 fw-semibold text-white-50 d-inline-flex align-items-center gap-2"
+                       style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);">
+                        <i class="bi bi-grid"></i>
+                        <span>Kho Phim</span>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+</section>
 
-    <!-- Banner section if there is banner -->
-    @if (!string.IsNullOrEmpty(Model.BannerUrl))
-    {
-        <div class="glass p-4 rounded-4 mb-5">
-            <h4 class="fw-bold mb-3 text-white"><i class="bi bi-image text-danger"></i> Banner chính thức</h4>
-            <div class="text-center">
-                <img src="@Model.BannerUrl" alt="Banner @Model.Title" class="img-fluid rounded-3 shadow-lg" style="max-height: 450px; width: 100%; object-fit: cover; border: 1px solid rgba(255,255,255,0.1);" />
+<!-- Official Trailer Modal -->
+<div class="modal fade" id="detailTrailerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" style="background:#080c18;border:1px solid rgba(255,255,255,0.16);border-radius:24px;overflow:hidden;">
+            <div class="modal-header border-0 px-4 pt-3 pb-2">
+                <h5 class="modal-title text-white fw-bold"><i class="bi bi-play-btn-fill text-danger me-2"></i>Trailer: @Model.Title</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="ratio ratio-16x9 bg-black">
+                    <iframe id="detailTrailerIframe" data-src="@trailerUrl" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                </div>
             </div>
         </div>
-    }
-}
+    </div>
+</div>
 
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var modal = document.getElementById('detailTrailerModal');
+            var iframe = document.getElementById('detailTrailerIframe');
+            if (modal && iframe) {
+                modal.addEventListener('show.bs.modal', function () {
+                    var url = iframe.getAttribute('data-src');
+                    if (url) {
+                        var sep = url.indexOf('?') === -1 ? '?' : '&';
+                        iframe.src = url + sep + 'autoplay=1';
+                    }
+                });
+                modal.addEventListener('hidden.bs.modal', function () {
+                    iframe.src = '';
+                });
+            }
+        });
+    </script>
+}

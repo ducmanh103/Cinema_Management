@@ -1,122 +1,383 @@
 @model CinemaManagement.Models.Movie
 @{
-    ViewData["Title"] = "Thêm phim mới";
-    var genres = ViewBag.Genres as List<CinemaManagement.Models.Genre> ?? new();
+    ViewData["Title"] = "Thêm Phim Mới";
+    var genres = ViewBag.Genres as List<CinemaManagement.Models.Genre> ?? new List<CinemaManagement.Models.Genre>();
 }
 
-<section class="content-header">
-    <h1>Thêm phim <small>Nhập thông tin phim mới</small></h1>
-    <ol class="breadcrumb">
-        <li><a asp-controller="Dashboard" asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
-        <li><a asp-controller="Movies" asp-action="Index"><i class="fa fa-film"></i> Phim</a></li>
-        <li class="active">Thêm mới</li>
-    </ol>
-</section>
+<div class="adm-card mx-auto" style="max-width:980px;">
+    <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger-subtle text-danger px-2 py-1 rounded-pill small fw-bold">QUẢN LÝ KHO PHIM</span>
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-film text-danger me-2"></i>Thêm Phim Mới Vào Hệ Thống
+                </h4>
+            </div>
+            <p class="text-muted small mb-0">Hỗ trợ tải trực tiếp tệp ảnh/banner từ thiết bị hoặc nhập liên kết ảnh từ xa (CDN / URL)</p>
+        </div>
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i> Quay Lại
+        </a>
+    </div>
 
-<section class="content">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="box box-primary">
-                <div class="box-header with-border">
-                    <h3 class="box-title"><i class="fa fa-plus-circle"></i> Thông tin phim</h3>
-                </div>
-                <form asp-action="Create" method="post">
-                    @Html.AntiForgeryToken()
-                    <div class="box-body">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label asp-for="Title">Tên phim <span class="text-danger">*</span></label>
-                                    <input asp-for="Title" class="form-control" placeholder="Nhập tên phim" id="movie-title" />
-                                    <span asp-validation-for="Title" class="text-danger small"></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label asp-for="Duration">Thời lượng (phút) <span class="text-danger">*</span></label>
-                                    <input asp-for="Duration" type="number" class="form-control" min="1" id="movie-duration" />
-                                    <span asp-validation-for="Duration" class="text-danger small"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label asp-for="ReleaseDate">Ngày phát hành</label>
-                                    <input asp-for="ReleaseDate" type="date" class="form-control" id="movie-release" />
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label asp-for="Status">Trạng thái</label>
-                                    <select asp-for="Status" class="form-control" id="movie-status">
-                                        <option value="Now Showing">Đang chiếu</option>
-                                        <option value="Coming Soon">Sắp chiếu</option>
-                                        <option value="Ended">Đã kết thúc</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="PosterUrl">URL Poster</label>
-                                    <input asp-for="PosterUrl" class="form-control" placeholder="https://..." id="movie-poster" />
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="BannerUrl">URL Banner</label>
-                                    <input asp-for="BannerUrl" class="form-control" placeholder="https://..." id="movie-banner" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="Description">Mô tả</label>
-                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Nội dung phim..." id="movie-desc"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Thể loại</label>
-                            <div class="row">
-                                @foreach (var g in genres)
-                                {
-                                    <div class="col-md-3 col-xs-6">
-                                        <div class="checkbox">
-                                            <label>
-                                                <input type="checkbox" name="selectedGenres" value="@g.GenreId" id="genre-@g.GenreId" />
-                                                @g.GenreName
-                                            </label>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                        <div id="poster-preview-wrap" style="display:none; margin-top:8px">
-                            <label>Xem trước poster:</label><br />
-                            <img id="poster-preview" src="" style="max-height:180px; border-radius:4px; border:1px solid #ddd" />
-                        </div>
-                    </div>
-                    <div class="box-footer">
-                        <button type="submit" class="btn btn-primary" id="save-movie-btn">
-                            <i class="fa fa-save"></i> Lưu phim
-                        </button>
-                        <a asp-controller="Movies" asp-action="Index" class="btn btn-default pull-right">
-                            <i class="fa fa-arrow-left"></i> Huỷ
-                        </a>
-                    </div>
-                </form>
+    <form asp-action="Create" method="post" enctype="multipart/form-data" id="createMovieForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 px-3 small rounded-3 mb-3"></div>
+
+        <!-- 1. THÔNG TIN CƠ BẢN CỦA PHIM -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-7">
+                <label asp-for="Title" class="form-label small fw-bold text-uppercase text-secondary">
+                    Tên bộ phim <span class="text-danger">*</span>
+                </label>
+                <input asp-for="Title" class="form-control" required placeholder="Ví dụ: Dune: Hành Tinh Cát - Phần 2..." />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-2">
+                <label asp-for="Duration" class="form-label small fw-bold text-uppercase text-secondary">
+                    Thời lượng (phút) <span class="text-danger">*</span>
+                </label>
+                <input asp-for="Duration" type="number" min="1" max="600" class="form-control" required value="120" />
+                <span asp-validation-for="Duration" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Status" class="form-label small fw-bold text-uppercase text-secondary">
+                    Trạng thái chiếu
+                </label>
+                <select asp-for="Status" class="form-select">
+                    <option value="Now Showing">Now Showing (Đang chiếu)</option>
+                    <option value="Coming Soon">Coming Soon (Sắp chiếu)</option>
+                    <option value="Ended">Ended (Ngừng chiếu)</option>
+                </select>
+                <span asp-validation-for="Status" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="ReleaseDate" class="form-label small fw-bold text-uppercase text-secondary">
+                    Ngày khởi chiếu
+                </label>
+                <input asp-for="ReleaseDate" type="date" class="form-control" />
+                <span asp-validation-for="ReleaseDate" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-8">
+                <label asp-for="Description" class="form-label small fw-bold text-uppercase text-secondary">
+                    Tóm tắt nội dung
+                </label>
+                <textarea asp-for="Description" rows="2" class="form-control" placeholder="Mô tả cốt truyện ngắn gọn, diễn viên chính, đạo diễn..."></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
             </div>
         </div>
-    </div>
-</section>
+
+        <!-- 2. QUẢN LÝ MEDIA: POSTER & BANNER (UPLOAD FILE HOẶC URL TỪ XA) -->
+        <h6 class="fw-bold text-dark text-uppercase small mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
+            <i class="bi bi-images text-primary"></i> Hình Ảnh &amp; Banner Điện Ảnh
+            <span class="badge bg-light text-muted fw-normal" style="font-size:0.75rem;">Hỗ trợ JPG, PNG, WEBP, GIF (Tối đa 15MB)</span>
+        </h6>
+
+        <div class="row g-4 mb-4">
+            <!-- CỘT 1: POSTER PHIM (TỶ LỆ 2:3) -->
+            <div class="col-lg-6">
+                <div class="p-3 rounded-4 border bg-light h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="fw-bold text-dark small text-uppercase">
+                                <i class="bi bi-file-image me-1 text-danger"></i> 1. Ảnh Poster (Dọc 2:3)
+                            </span>
+                            <span class="badge bg-secondary-subtle text-secondary small" id="posterSourceBadge">Chưa chọn</span>
+                        </div>
+
+                        <!-- Chuyển tab giữa Tải file từ máy và Nhập URL từ xa -->
+                        <ul class="nav nav-pills nav-fill mb-3 p-1 bg-white rounded-3 border" id="posterTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active py-1 small fw-semibold" id="poster-file-tab" data-bs-toggle="pill" data-bs-target="#poster-file-pane" type="button" role="tab">
+                                    <i class="bi bi-upload me-1"></i> Tải tệp lên Server
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link py-1 small fw-semibold" id="poster-url-tab" data-bs-toggle="pill" data-bs-target="#poster-url-pane" type="button" role="tab">
+                                    <i class="bi bi-link-45deg me-1"></i> Liên kết URL từ xa
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content mb-3">
+                            <!-- Tab File -->
+                            <div class="tab-pane fade show active" id="poster-file-pane" role="tabpanel">
+                                <div class="mb-2">
+                                    <input type="file" name="posterFile" id="posterFileInput" class="form-control form-control-sm" accept="image/*" />
+                                    <div class="form-text small text-muted">Chọn file ảnh từ thiết bị của bạn để lưu trực tiếp lên server.</div>
+                                </div>
+                            </div>
+                            <!-- Tab URL -->
+                            <div class="tab-pane fade" id="poster-url-pane" role="tabpanel">
+                                <div class="mb-2">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-white"><i class="bi bi-globe"></i></span>
+                                        <input asp-for="PosterUrl" id="posterUrlInput" class="form-control" placeholder="https://domain.com/poster.jpg" />
+                                    </div>
+                                    <span asp-validation-for="PosterUrl" class="text-danger small"></span>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" name="downloadRemotePoster" id="downloadRemotePoster" value="true" checked />
+                                        <label class="form-check-label small text-muted" for="downloadRemotePoster">
+                                            Tải ảnh từ xa về lưu trữ trên server nội bộ (khuyên dùng)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khung Preview Poster -->
+                    <div class="text-center pt-2 border-top">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="small text-muted fw-semibold">Xem trước Poster:</span>
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none d-none" id="clearPosterBtn">
+                                <i class="bi bi-x-circle me-1"></i> Xoá chọn
+                            </button>
+                        </div>
+                        <div class="mx-auto rounded-3 border d-flex align-items-center justify-content-center bg-white shadow-sm overflow-hidden position-relative"
+                             style="width: 150px; height: 225px; border-style: dashed !important;">
+                            <img id="posterPreviewImg" src="" alt="Poster Preview" class="w-100 h-100 d-none" style="object-fit:cover;" />
+                            <div id="posterPreviewPlaceholder" class="text-center p-3 text-muted">
+                                <i class="bi bi-image fs-1 opacity-50"></i>
+                                <div style="font-size: 0.75rem;" class="mt-1">Tỷ lệ 2:3</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT 2: BANNER PHIM (TỶ LỆ 16:9 / PANORAMA) -->
+            <div class="col-lg-6">
+                <div class="p-3 rounded-4 border bg-light h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="fw-bold text-dark small text-uppercase">
+                                <i class="bi bi-aspect-ratio me-1 text-primary"></i> 2. Ảnh Banner (Ngang 16:9)
+                            </span>
+                            <span class="badge bg-secondary-subtle text-secondary small" id="bannerSourceBadge">Chưa chọn</span>
+                        </div>
+
+                        <!-- Chuyển tab giữa Tải file từ máy và Nhập URL từ xa -->
+                        <ul class="nav nav-pills nav-fill mb-3 p-1 bg-white rounded-3 border" id="bannerTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active py-1 small fw-semibold" id="banner-file-tab" data-bs-toggle="pill" data-bs-target="#banner-file-pane" type="button" role="tab">
+                                    <i class="bi bi-upload me-1"></i> Tải tệp lên Server
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link py-1 small fw-semibold" id="banner-url-tab" data-bs-toggle="pill" data-bs-target="#banner-url-pane" type="button" role="tab">
+                                    <i class="bi bi-link-45deg me-1"></i> Liên kết URL từ xa
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content mb-3">
+                            <!-- Tab File -->
+                            <div class="tab-pane fade show active" id="banner-file-pane" role="tabpanel">
+                                <div class="mb-2">
+                                    <input type="file" name="bannerFile" id="bannerFileInput" class="form-control form-control-sm" accept="image/*" />
+                                    <div class="form-text small text-muted">Ảnh phong nền nổi bật hiển thị ở Slider Trang chủ &amp; Chi tiết phim.</div>
+                                </div>
+                            </div>
+                            <!-- Tab URL -->
+                            <div class="tab-pane fade" id="banner-url-pane" role="tabpanel">
+                                <div class="mb-2">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-white"><i class="bi bi-globe"></i></span>
+                                        <input asp-for="BannerUrl" id="bannerUrlInput" class="form-control" placeholder="https://domain.com/banner-wide.jpg" />
+                                    </div>
+                                    <span asp-validation-for="BannerUrl" class="text-danger small"></span>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" name="downloadRemoteBanner" id="downloadRemoteBanner" value="true" checked />
+                                        <label class="form-check-label small text-muted" for="downloadRemoteBanner">
+                                            Tải banner từ xa về lưu trữ trên server nội bộ
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khung Preview Banner -->
+                    <div class="text-center pt-2 border-top">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="small text-muted fw-semibold">Xem trước Banner:</span>
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none d-none" id="clearBannerBtn">
+                                <i class="bi bi-x-circle me-1"></i> Xoá chọn
+                            </button>
+                        </div>
+                        <div class="w-100 rounded-3 border d-flex align-items-center justify-content-center bg-white shadow-sm overflow-hidden position-relative"
+                             style="height: 140px; border-style: dashed !important;">
+                            <img id="bannerPreviewImg" src="" alt="Banner Preview" class="w-100 h-100 d-none" style="object-fit:cover;" />
+                            <div id="bannerPreviewPlaceholder" class="text-center p-3 text-muted">
+                                <i class="bi bi-card-image fs-1 opacity-50"></i>
+                                <div style="font-size: 0.75rem;" class="mt-1">Tỷ lệ 16:9 Landscape</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. THỂ LOẠI PHIM -->
+        <div class="mb-4">
+            <label class="form-label small fw-bold text-uppercase text-secondary d-block mb-2">
+                <i class="bi bi-tags me-1"></i> Chọn thể loại phim
+            </label>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var g in genres)
+                {
+                    <label class="px-3 py-2 rounded-3 d-inline-flex align-items-center gap-2 border bg-light user-select-none" style="cursor:pointer;">
+                        <input type="checkbox" name="selectedGenres" value="@g.GenreId" class="form-check-input m-0" />
+                        <span class="text-dark small fw-semibold">@g.GenreName</span>
+                    </label>
+                }
+            </div>
+        </div>
+
+        <!-- 4. ACTION BUTTONS -->
+        <div class="pt-3 border-top d-flex gap-2">
+            <button type="submit" class="adm-btn-primary" id="saveMovieBtn">
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Lưu Phim Mới Vào Server
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-3 px-4">Hủy</a>
+        </div>
+    </form>
+</div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
     <script>
-        $('#movie-poster').on('input', function () {
-            var url = $(this).val().trim();
-            if (url) { $('#poster-preview').attr('src', url); $('#poster-preview-wrap').show(); }
-            else { $('#poster-preview-wrap').hide(); }
+        $(function () {
+            // ==========================================
+            // PREVIEW POSTER LOGIC
+            // ==========================================
+            const posterFileInput = document.getElementById('posterFileInput');
+            const posterUrlInput = document.getElementById('posterUrlInput');
+            const posterPreviewImg = document.getElementById('posterPreviewImg');
+            const posterPreviewPlaceholder = document.getElementById('posterPreviewPlaceholder');
+            const posterSourceBadge = document.getElementById('posterSourceBadge');
+            const clearPosterBtn = document.getElementById('clearPosterBtn');
+
+            function setPosterPreview(src, badgeText, badgeClass) {
+                if (src) {
+                    posterPreviewImg.src = src;
+                    posterPreviewImg.classList.remove('d-none');
+                    posterPreviewPlaceholder.classList.add('d-none');
+                    clearPosterBtn.classList.remove('d-none');
+                    posterSourceBadge.innerText = badgeText;
+                    posterSourceBadge.className = 'badge ' + badgeClass + ' small';
+                } else {
+                    posterPreviewImg.src = '';
+                    posterPreviewImg.classList.add('d-none');
+                    posterPreviewPlaceholder.classList.remove('d-none');
+                    clearPosterBtn.classList.add('d-none');
+                    posterSourceBadge.innerText = 'Chưa chọn';
+                    posterSourceBadge.className = 'badge bg-secondary-subtle text-secondary small';
+                }
+            }
+
+            posterFileInput.addEventListener('change', function () {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        setPosterPreview(e.target.result, 'Tệp tải lên: ' + file.name, 'bg-success-subtle text-success');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    if (posterUrlInput.value.trim()) {
+                        setPosterPreview(posterUrlInput.value.trim(), 'Liên kết URL từ xa', 'bg-info-subtle text-info');
+                    } else {
+                        setPosterPreview('', '', '');
+                    }
+                }
+            });
+
+            posterUrlInput.addEventListener('input', function () {
+                const url = this.value.trim();
+                if (url && (!posterFileInput.files || posterFileInput.files.length === 0)) {
+                    setPosterPreview(url, 'Liên kết URL từ xa', 'bg-info-subtle text-info');
+                } else if (!url && (!posterFileInput.files || posterFileInput.files.length === 0)) {
+                    setPosterPreview('', '', '');
+                }
+            });
+
+            clearPosterBtn.addEventListener('click', function () {
+                posterFileInput.value = '';
+                posterUrlInput.value = '';
+                setPosterPreview('', '', '');
+            });
+
+            // ==========================================
+            // PREVIEW BANNER LOGIC
+            // ==========================================
+            const bannerFileInput = document.getElementById('bannerFileInput');
+            const bannerUrlInput = document.getElementById('bannerUrlInput');
+            const bannerPreviewImg = document.getElementById('bannerPreviewImg');
+            const bannerPreviewPlaceholder = document.getElementById('bannerPreviewPlaceholder');
+            const bannerSourceBadge = document.getElementById('bannerSourceBadge');
+            const clearBannerBtn = document.getElementById('clearBannerBtn');
+
+            function setBannerPreview(src, badgeText, badgeClass) {
+                if (src) {
+                    bannerPreviewImg.src = src;
+                    bannerPreviewImg.classList.remove('d-none');
+                    bannerPreviewPlaceholder.classList.add('d-none');
+                    clearBannerBtn.classList.remove('d-none');
+                    bannerSourceBadge.innerText = badgeText;
+                    bannerSourceBadge.className = 'badge ' + badgeClass + ' small';
+                } else {
+                    bannerPreviewImg.src = '';
+                    bannerPreviewImg.classList.add('d-none');
+                    bannerPreviewPlaceholder.classList.remove('d-none');
+                    clearBannerBtn.classList.add('d-none');
+                    bannerSourceBadge.innerText = 'Chưa chọn';
+                    bannerSourceBadge.className = 'badge bg-secondary-subtle text-secondary small';
+                }
+            }
+
+            bannerFileInput.addEventListener('change', function () {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        setBannerPreview(e.target.result, 'Tệp tải lên: ' + file.name, 'bg-success-subtle text-success');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    if (bannerUrlInput.value.trim()) {
+                        setBannerPreview(bannerUrlInput.value.trim(), 'Liên kết URL từ xa', 'bg-info-subtle text-info');
+                    } else {
+                        setBannerPreview('', '', '');
+                    }
+                }
+            });
+
+            bannerUrlInput.addEventListener('input', function () {
+                const url = this.value.trim();
+                if (url && (!bannerFileInput.files || bannerFileInput.files.length === 0)) {
+                    setBannerPreview(url, 'Liên kết URL từ xa', 'bg-info-subtle text-info');
+                } else if (!url && (!bannerFileInput.files || bannerFileInput.files.length === 0)) {
+                    setBannerPreview('', '', '');
+                }
+            });
+
+            clearBannerBtn.addEventListener('click', function () {
+                bannerFileInput.value = '';
+                bannerUrlInput.value = '';
+                setBannerPreview('', '', '');
+            });
+
+            // Khi submit form, thêm trạng thái loading vào button
+            $('#createMovieForm').on('submit', function () {
+                const btn = $('#saveMovieBtn');
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang tải lên server...');
+                return true;
+            });
         });
     </script>
 }

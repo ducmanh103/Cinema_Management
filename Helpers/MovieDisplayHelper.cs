@@ -71,5 +71,37 @@ namespace CinemaManagement.Helpers
         {
             return 7.5 + (id % 13) * 0.16;
         }
+
+        /// <summary>
+        /// Lấy URL YouTube Embed Trailer dựa trên tên phim cho Modal Xem Trailer.
+        /// </summary>
+        public static string GetTrailerEmbedUrl(string title)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+                return "https://www.youtube.com/embed/Way9Dexny3w";
+
+            string t = title.ToLower();
+            if (t.Contains("dune"))
+                return "https://www.youtube.com/embed/Way9Dexny3w";
+            if (t.Contains("deadpool"))
+                return "https://www.youtube.com/embed/73_1biulkYk";
+            if (t.Contains("quật mộ") || t.Contains("exhuma"))
+                return "https://www.youtube.com/embed/ag5d9Su53nA";
+            if (t.Contains("võ sĩ giác đấu") || t.Contains("gladiator"))
+                return "https://www.youtube.com/embed/4rgYUipGJNo";
+            if (t.Contains("câm lặng") || t.Contains("quiet place"))
+                return "https://www.youtube.com/embed/YPY7J-flzE8";
+            if (t.Contains("mufasa"))
+                return "https://www.youtube.com/embed/o17MF9vnabg";
+            if (t.Contains("sonic"))
+                return "https://www.youtube.com/embed/qSu6i2iFMO0";
+            if (t.Contains("nhện") || t.Contains("spider"))
+                return "https://www.youtube.com/embed/shW9i6k8cB0";
+            if (t.Contains("avatar"))
+                return "https://www.youtube.com/embed/d9MyW72ELq0";
+            if (t.Contains("john wick"))
+                return "https://www.youtube.com/embed/qEVUtrk8_B4";
+            return "https://www.youtube.com/embed/Way9Dexny3w";
+        }
     }
 }

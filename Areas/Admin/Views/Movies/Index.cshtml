@@ -1,102 +1,134 @@
-@using CinemaManagement.Models.ViewModels
 @model List<MovieDto>
 @{
-    ViewData["Title"] = "Quản lý phim";
+    ViewData["Title"] = "Quản Lý Kho Phim";
+    var movies = Model ?? new List<MovieDto>();
 }
 
-<section class="content-header">
-    <h1>Phim <small>Danh sách phim trong hệ thống</small></h1>
-    <ol class="breadcrumb">
-        <li><a asp-controller="Dashboard" asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
-        <li class="active">Phim</li>
-    </ol>
-</section>
-
-<section class="content">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="box box-primary">
-                <div class="box-header with-border">
-                    <h3 class="box-title"><i class="fa fa-film"></i> Danh sách phim (@Model.Count)</h3>
-                    <div class="box-tools pull-right">
-                        <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
-                    </div>
-                </div>
-                <div class="box-body">
-                    <div class="margin-bottom">
-                       <a asp-controller="Movies" asp-action="Create" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm phim mới</a>
-                    </div>
-                    <table id="movies-table" class="table table-bordered table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th style="width: 50px;">Poster</th>
-                                <th>ID</th>
-                                <th>Tên phim</th>
-                                <th>Thể loại</th>
-                                <th>Thời lượng</th>
-                                <th>Khởi chiếu</th>
-                                <th>Trạng thái</th>
-                                <th>Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var movie in Model)
-                            {
-                                <tr>
-                                    <td>
-                                        @if (!string.IsNullOrEmpty(movie.PosterUrl))
-                                        {
-                                            <img src="@movie.PosterUrl" alt="@movie.Title" style="width: 40px; height: 60px; object-fit: cover;" onerror="this.src='/images/default-movie.jpg';" />
-                                        }
-                                        else
-                                        {
-                                            <div style="width: 40px; height: 60px; background: #ddd; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #777;">Trống</div>
-                                        }
-                                    </td>
-                                    <td class="vertical-align-middle">@movie.MovieId</td>
-                                    <td class="vertical-align-middle"><strong>@movie.Title</strong></td>
-                                    <td class="vertical-align-middle">@(string.Join(", ", movie.Genres))</td>
-                                    <td class="vertical-align-middle">@movie.Duration phút</td>
-                                    <td class="vertical-align-middle">@(movie.ReleaseDate?.ToString("dd/MM/yyyy") ?? "N/A")</td>
-                                    <td class="vertical-align-middle">
-                                        @if (movie.Status == "Now Showing")
-                                        {
-                                            <span class="label label-success">Đang chiếu</span>
-                                        }
-                                        else if (movie.Status == "Coming Soon")
-                                        {
-                                            <span class="label label-warning">Sắp chiếu</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="label label-default">Ngừng chiếu</span>
-                                        }
-                                    </td>
-                                    <td class="vertical-align-middle">
-                                        <a asp-controller="Movies" asp-action="Edit" asp-route-id="@movie.MovieId" class="btn btn-xs btn-info"><i class="fa fa-edit"></i> Sửa</a>
-                                        <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.MovieId" class="btn btn-xs btn-default"><i class="fa fa-eye"></i> Chi tiết</a>
-                                        <a asp-controller="Movies" asp-action="Delete" asp-route-id="@movie.MovieId" class="btn btn-xs btn-danger"><i class="fa fa-trash"></i> Xoá</a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show rounded-4 py-2 px-3 small mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-1"></i> @TempData["Success"]
+        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-</section>
+}
+
+<div class="adm-card">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h5 class="text-dark fw-bold mb-1"><i class="bi bi-film text-danger me-2"></i>Danh Sách Phim Điện Ảnh (@movies.Count)</h5>
+            <p class="text-muted small mb-0">Quản lý kho phim, upload tệp poster &amp; banner từ xa lên server, cập nhật thể loại và suất chiếu</p>
+        </div>
+        <a asp-action="Create" class="adm-btn-primary text-decoration-none">
+            <i class="bi bi-plus-lg me-1"></i> Thêm Phim Mới
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table id="adminMoviesTable" class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Poster &amp; Banner</th>
+                    <th>Tên Phim</th>
+                    <th>Thể Loại</th>
+                    <th>Thời Lượng</th>
+                    <th>Khởi Chiếu</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-end">Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in movies)
+                {
+                    <tr>
+                        <td class="font-monospace text-muted">#@m.MovieId</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="@m.PosterUrl"
+                                     alt="@m.Title"
+                                     title="Poster dọc (2:3)"
+                                     style="width:44px;height:62px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;"
+                                     onerror="this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=200'" />
+                                @if (!string.IsNullOrWhiteSpace(m.BannerUrl))
+                                {
+                                    <div title="Banner ngang (16:9)">
+                                        <img src="@m.BannerUrl"
+                                             alt="Banner @m.Title"
+                                             style="width:68px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #cbd5e1;"
+                                             onerror="this.style.display='none'" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted border small" style="font-size:0.68rem;" title="Chưa có banner ngang">Chưa có banner</span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">@m.Title</div>
+                            @if (!string.IsNullOrWhiteSpace(m.Description))
+                            {
+                                <div class="text-muted small text-truncate" style="max-width:240px;">@m.Description</div>
+                            }
+                        </td>
+                        <td>
+                            @if (m.Genres != null && m.Genres.Any())
+                            {
+                                foreach (var g in m.Genres)
+                                {
+                                    <span class="badge rounded-pill me-1 mb-1" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;font-weight:500;">@g</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
+                        </td>
+                        <td>@m.Duration phút</td>
+                        <td>@(m.ReleaseDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td>
+                            <span class="badge rounded-pill px-3 py-1 fw-semibold"
+                                  style="background:@(m.Status == "Now Showing" ? "#f0fdf4" : m.Status == "Coming Soon" ? "#fffbeb" : "#f8fafc");color:@(m.Status == "Now Showing" ? "#16a34a" : m.Status == "Coming Soon" ? "#d97706" : "#64748b");border:1px solid @(m.Status == "Now Showing" ? "#bbf7d0" : m.Status == "Coming Soon" ? "#fde68a" : "#e2e8f0");">
+                                @(m.Status == "Now Showing" ? "Đang chiếu" : m.Status == "Coming Soon" ? "Sắp chiếu" : "Ngừng chiếu")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1">
+                                <a asp-action="Details" asp-route-id="@m.MovieId" class="btn btn-sm btn-outline-info rounded-3" title="Chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a asp-action="Edit" asp-route-id="@m.MovieId" class="btn btn-sm btn-outline-warning rounded-3" title="Chỉnh sửa">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@m.MovieId" class="btn btn-sm btn-outline-danger rounded-3" title="Xóa phim">
+                                    <i class="bi bi-trash3"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 
 @section Scripts {
-    <style>.vertical-align-middle { vertical-align: middle !important; }</style>
     <script>
         $(function () {
-            $('#movies-table').DataTable({
-                "language": { "url": "/adminlte/plugins/datatables/Vietnamese.json" },
-                "order": [[1, "desc"]],
-                "pageLength": 10,
-                "responsive": true,
-                "columnDefs": [{ "orderable": false, "targets": [0, 7] }]
+            $('#adminMoviesTable').DataTable({
+                order: [[0, 'desc']],
+                pageLength: 10,
+                language: {
+                    search: "Tìm kiếm phim:",
+                    lengthMenu: "Hiển thị _MENU_ phim",
+                    info: "Đang hiển thị _START_ đến _END_ trong tổng số _TOTAL_ phim",
+                    paginate: {
+                        first: "Đầu",
+                        last: "Cuối",
+                        next: "Sau",
+                        previous: "Trước"
+                    }
+                }
             });
         });
     </script>

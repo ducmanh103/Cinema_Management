@@ -30,8 +30,8 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 
 COPY --from=build /app/publish .
 
-# Tạo thư mục lưu DataProtection keys & logs thuộc quyền sở hữu của appuser
-RUN mkdir -p /app/dp_keys /app/logs && chown -R appuser:appuser /app
+# Tạo thư mục lưu DataProtection keys, logs & uploads thuộc quyền sở hữu của appuser
+RUN mkdir -p /app/dp_keys /app/logs /app/wwwroot/uploads/movies && chown -R appuser:appuser /app
 
 # Chuyển sang non-root user
 USER appuser

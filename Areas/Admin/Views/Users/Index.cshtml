@@ -1,160 +1,234 @@
-@using CinemaManagement.Models.ViewModels
-@using CinemaManagement.Models
 @model List<UserDto>
 @{
-    ViewData["Title"] = "Quản lý người dùng";
-    var roles = ViewBag.Roles as List<Role> ?? new();
-    bool isAdmin = User.IsInRole("Admin");
+    ViewData["Title"] = "Phân Quyền & Quản Lý Người Dùng";
+    var users = Model ?? new List<UserDto>();
+    var roles = ViewBag.Roles as List<CinemaManagement.Models.Role> ?? new List<CinemaManagement.Models.Role>();
 }
 
-<!-- Content Header -->
-<section class="content-header">
-    <h1>
-        Quản lý người dùng
-        <small>Danh sách tài khoản</small>
-    </h1>
-    <ol class="breadcrumb">
-        <li><a asp-controller="Dashboard" asp-action="Index"><i class="fa fa-dashboard"></i> Dashboard</a></li>
-        <li class="active">Người dùng</li>
-    </ol>
-</section>
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success rounded-3 py-2 px-3 small mb-4 d-flex align-items-center gap-2">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>@TempData["Success"]</span>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger rounded-3 py-2 px-3 small mb-4 d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>@TempData["Error"]</span>
+    </div>
+}
 
-<!-- Main content -->
-<section class="content">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="box box-primary">
-                <div class="box-header with-border">
-                    <h3 class="box-title"><i class="fa fa-users"></i> Danh sách người dùng (@Model.Count)</h3>
-                    @if (!isAdmin)
-                    {
-                        <span class="label label-warning pull-right" style="margin-top:5px; font-size:12px">
-                            <i class="fa fa-info-circle"></i> Staff: chỉ xem và khoá Customer/Staff
-                        </span>
-                    }
-                    <div class="box-tools pull-right">
-                        <button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
-                    </div>
-                </div>
-                <div class="box-body">
-                    <table id="users-table" class="table table-bordered table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Username</th>
-                                <th>Họ tên</th>
-                                <th>Email</th>
-                                <th>Vai trò</th>
-                                <th>Trạng thái</th>
-                                <th>Đổi vai trò</th>
-                                <th>Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var user in Model)
-                            {
-                                bool isTargetAdmin = user.RoleName == "Admin";
-                                bool canToggle = isAdmin || !isTargetAdmin;
-                                <tr>
-                                    <td>@user.UserId</td>
-                                    <td><strong>@user.Username</strong></td>
-                                    <td>@user.FullName</td>
-                                    <td>@user.Email</td>
-                                    <td>
-                                        @if (user.RoleName == "Admin")
-                                        {
-                                            <span class="label label-danger">Admin</span>
-                                        }
-                                        else if (user.RoleName == "Staff")
-                                        {
-                                            <span class="label label-warning">Staff</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="label label-primary">Customer</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        @if (user.Status == "Active")
-                                        {
-                                            <span class="label label-success">Hoạt động</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="label label-default">Bị khoá</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        @if (isAdmin)
-                                        {
-                                            <form asp-action="ChangeRole" method="post" class="form-inline change-role-form">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="userId" value="@user.UserId" />
-                                                <select name="roleId" class="form-control input-sm" style="width:110px">
-                                                    @foreach (var role in roles)
-                                                    {
-                                                        if (role.RoleId == user.RoleId)
-                                                        {
-                                                            <option value="@role.RoleId" selected>@role.RoleName</option>
-                                                        }
-                                                        else
-                                                        {
-                                                            <option value="@role.RoleId">@role.RoleName</option>
-                                                        }
-                                                    }
-                                                </select>
-                                                <button type="submit" class="btn btn-xs btn-info" style="margin-left:4px">
-                                                    <i class="fa fa-save"></i>
-                                                </button>
-                                            </form>
-                                        }
-                                        else
-                                        {
-                                            <span>@user.RoleName</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        @if (canToggle)
-                                        {
-                                            <form asp-action="ToggleUserStatus" asp-route-id="@user.UserId" method="post" class="inline-form">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit"
-                                                        class="btn btn-xs @(user.Status == "Active" ? "btn-warning" : "btn-success")"
-                                                        onclick="return confirm('@(user.Status == "Active" ? "Khoá" : "Mở khoá") người dùng @user.Username?')">
-                                                    <i class="fa fa-@(user.Status == "Active" ? "lock" : "unlock")"></i>
-                                                    @(user.Status == "Active" ? "Khoá" : "Mở khoá")
-                                                </button>
-                                            </form>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted" title="Không có quyền khoá tài khoản Admin">
-                                                <i class="fa fa-ban"></i> Không có quyền
-                                            </span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<div class="adm-card">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h5 class="adm-card-title mb-1">
+                <i class="bi bi-people me-2"></i>Danh Sách Tài Khoản Hệ Thống (@users.Count)
+            </h5>
+            <p class="adm-card-sub mb-0">Quản trị phân quyền, kích hoạt, khóa hoặc xóa tài khoản thành viên</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge rounded-pill px-3 py-2" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:600;">
+                <i class="bi bi-shield-check me-1"></i> Quản Trị Viên &amp; Khách Hàng
+            </span>
         </div>
     </div>
-</section>
+
+    <div class="table-responsive">
+        <table id="adminUsersTable" class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width:70px;">ID</th>
+                    <th>Họ Tên / Username</th>
+                    <th>Email</th>
+                    <th>Vai Trò</th>
+                    <th>Trạng Thái</th>
+                    <th>Đổi Quyền Hạn</th>
+                    <th class="text-end" style="min-width:140px;">Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in users)
+                {
+                    bool isActive = u.Status == "Active";
+                    <tr>
+                        <td class="font-monospace text-muted fw-bold">#@u.UserId</td>
+                        <td>
+                            <div class="fw-bold text-dark">@(string.IsNullOrWhiteSpace(u.FullName) ? u.Username : u.FullName)</div>
+                            <div class="text-muted small">@@@u.Username</div>
+                        </td>
+                        <td class="text-secondary small">@u.Email</td>
+                        <td>
+                            <span class="badge rounded-pill px-3 py-1 fw-semibold"
+                                  style="background:@(u.RoleName == "Admin" ? "#fef2f2" : u.RoleName == "Staff" ? "#eff6ff" : "#f8fafc");color:@(u.RoleName == "Admin" ? "#dc2626" : u.RoleName == "Staff" ? "#2563eb" : "#475569");border:1px solid @(u.RoleName == "Admin" ? "#fecaca" : u.RoleName == "Staff" ? "#bfdbfe" : "#e2e8f0");">
+                                @u.RoleName
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill px-3 py-1 fw-semibold"
+                                  style="background:@(isActive ? "#f0fdf4" : "#fef2f2");color:@(isActive ? "#16a34a" : "#dc2626");border:1px solid @(isActive ? "#bbf7d0" : "#fecaca");">
+                                <span class="d-inline-block rounded-circle me-1" style="width:6px;height:6px;background:@(isActive ? "#16a34a" : "#dc2626");"></span>
+                                @(isActive ? "Hoạt động" : "Đã khóa")
+                            </span>
+                        </td>
+                        <td>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <form asp-action="ChangeRole" method="post" class="d-inline-flex align-items-center gap-1">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@u.UserId" />
+                                    <select name="roleId" class="form-select form-select-sm" style="width:120px;font-size:0.82rem;">
+                                        @foreach (var r in roles)
+                                        {
+                                            <option value="@r.RoleId" selected="@(r.RoleName == u.RoleName ? "selected" : null)">@r.RoleName</option>
+                                        }
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-light border px-2" title="Lưu vai trò">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">@u.RoleName</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <form asp-action="ToggleUserStatus" asp-route-id="@u.UserId" method="post" class="d-inline m-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit"
+                                            class="btn btn-sm @(isActive ? "btn-outline-warning text-dark" : "btn-outline-success")"
+                                            style="border-radius:8px;font-size:0.8rem;"
+                                            title="@(isActive ? "Khóa tài khoản" : "Mở khóa tài khoản")">
+                                        <i class="bi @(isActive ? "bi-lock" : "bi-unlock") me-1"></i>
+                                        @(isActive ? "Khóa" : "Mở")
+                                    </button>
+                                </form>
+
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    @if (string.Equals(u.RoleName, "Admin", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top" title="Tài khoản Quản trị viên (Admin) được bảo vệ, không thể xóa">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-light text-muted border"
+                                                    style="border-radius:8px;font-size:0.8rem;cursor:not-allowed;"
+                                                    disabled>
+                                                <i class="bi bi-shield-lock text-secondary"></i>
+                                            </button>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger js-open-delete-modal"
+                                                style="border-radius:8px;font-size:0.8rem;"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteUserModal"
+                                                data-user-id="@u.UserId"
+                                                data-user-name="@u.Username"
+                                                data-user-fullname="@(string.IsNullOrEmpty(u.FullName) ? u.Username : u.FullName)"
+                                                title="Xóa tài khoản thành viên">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    }
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- =========================================================================
+     MODAL XÁC NHẬN XÓA TÀI KHOẢN (CHUẨN FORM QUẢN TRỊ HIỆN ĐẠI)
+     ========================================================================= -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius:18px;overflow:hidden;">
+            <div class="modal-header border-bottom px-4 pt-3 pb-3" style="background:#fef2f2;">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-danger"
+                         style="width:36px;height:36px;background:#fee2e2;">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    </div>
+                    <h5 class="modal-title text-danger fw-bold mb-0" style="font-size:1.15rem;">
+                        Xác Nhận Xóa Tài Khoản
+                    </h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="deleteUserForm" method="post" asp-action="DeleteUser">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteUserIdInput" value="" />
+
+                <div class="modal-body p-4">
+                    <p class="text-secondary mb-3" style="font-size:0.92rem;line-height:1.6;">
+                        Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản:
+                    </p>
+                    <div class="p-3 rounded-3 mb-3" style="background:#f8fafc;border:1px solid #e2e8f0;">
+                        <div class="fw-bold text-dark" id="deleteUserFullname">...</div>
+                        <div class="text-muted small">Username: <span class="font-monospace text-primary" id="deleteUsername">...</span> (ID: <span id="deleteUserIdDisplay">...</span>)</div>
+                    </div>
+                    <div class="alert alert-warning py-2 px-3 small mb-0 d-flex align-items-center gap-2" style="border-radius:10px;">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>Thao tác này sẽ xóa tài khoản và dọn dẹp các vé liên quan. Hành động này <strong>không thể khôi phục</strong>.</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top px-4 py-3 bg-light">
+                    <button type="button" class="btn btn-outline-secondary px-3" data-bs-dismiss="modal" style="border-radius:10px;">
+                        Hủy Bỏ
+                    </button>
+                    <button type="submit" class="btn btn-danger px-4 fw-semibold" style="border-radius:10px;">
+                        <i class="bi bi-trash3 me-1"></i> Xác Nhận Xóa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
         $(function () {
-            $('#users-table').DataTable({
-                "language": {
-                    "url": "/adminlte/plugins/datatables/Vietnamese.json"
-                },
-                "pageLength": 25,
-                "responsive": true,
-                "columnDefs": [
-                    { "orderable": false, "targets": [6, 7] }
-                ]
+            $('#adminUsersTable').DataTable({
+                order: [[0, 'asc']],
+                pageLength: 10,
+                language: {
+                    search: "Tìm kiếm:",
+                    lengthMenu: "Hiển thị _MENU_ dòng",
+                    info: "Đang hiển thị _START_ đến _END_ trong tổng số _TOTAL_ tài khoản",
+                    paginate: {
+                        first: "Đầu",
+                        last: "Cuối",
+                        next: "Sau",
+                        previous: "Trước"
+                    },
+                    emptyTable: "Không có dữ liệu tài khoản"
+                }
+            });
+
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Handle delete modal population
+            $(document).on('click', '.js-open-delete-modal', function () {
+                var userId = $(this).data('user-id');
+                var username = $(this).data('user-name');
+                var fullname = $(this).data('user-fullname');
+
+                $('#deleteUserIdInput').val(userId);
+                $('#deleteUserIdDisplay').text(userId);
+                $('#deleteUsername').text(username);
+                $('#deleteUserFullname').text(fullname);
             });
         });
     </script>

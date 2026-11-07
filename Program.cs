@@ -133,7 +133,13 @@ try
             return $"{prefix}_ip_{ip}";
         }
 
-        // Toàn cục (Global): 120 requests / 10s
+        bool isDev = builder.Environment.IsDevelopment();
+        int globalPermit = isDev ? 1000 : 120;
+        int authPermit = isDev ? 500 : 10;
+        int chatPermit = isDev ? 500 : 15;
+        int bookingPermit = isDev ? 500 : 10;
+
+        // Toàn cục (Global): 120 requests / 10s (500 trong Development/Testing)
         options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         {
             var key = GetClientPartitionKey(httpContext, "global");
@@ -141,14 +147,14 @@ try
                 partitionKey: key,
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 120,
+                    PermitLimit = globalPermit,
                     Window = TimeSpan.FromSeconds(10),
                     QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                     QueueLimit = 0
                 });
         });
 
-        // Policy riêng cho Auth (Login/Register/ForgotPassword): tối đa 10 requests / phút
+        // Policy riêng cho Auth (Login/Register/ForgotPassword): tối đa 10 requests / phút (500 trong Development)
         options.AddPolicy("AuthLimit", httpContext =>
         {
             var key = GetClientPartitionKey(httpContext, "auth");
@@ -156,14 +162,14 @@ try
                 partitionKey: key,
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 10,
+                    PermitLimit = authPermit,
                     Window = TimeSpan.FromMinutes(1),
                     QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                     QueueLimit = 0
                 });
         });
 
-        // Policy riêng cho Chatbot Gemini API: 15 requests / phút
+        // Policy riêng cho Chatbot Gemini API: 15 requests / phút (500 trong Development)
         options.AddPolicy("ChatBotLimit", httpContext =>
         {
             var key = GetClientPartitionKey(httpContext, "chat");
@@ -171,14 +177,14 @@ try
                 partitionKey: key,
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 15,
+                    PermitLimit = chatPermit,
                     Window = TimeSpan.FromMinutes(1),
                     QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                     QueueLimit = 0
                 });
         });
 
-        // Policy riêng cho Booking/Thanh toán: 10 requests / 30s
+        // Policy riêng cho Booking/Thanh toán: 10 requests / 30s (500 trong Development)
         options.AddPolicy("BookingLimit", httpContext =>
         {
             var key = GetClientPartitionKey(httpContext, "booking");
@@ -186,7 +192,7 @@ try
                 partitionKey: key,
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 10,
+                    PermitLimit = bookingPermit,
                     Window = TimeSpan.FromSeconds(30),
                     QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                     QueueLimit = 0
@@ -334,6 +340,7 @@ try
     builder.Services.AddHostedService(sp => sp.GetRequiredService<TelegramSecurityAlertService>());
 
     builder.Services.AddScoped<IEmailService, EmailService>();
+    builder.Services.AddScoped<IFileStorageService, FileStorageService>();
     builder.Services.AddScoped<IMovieService, MovieService>();
     builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
     builder.Services.AddScoped<ITicketService, TicketService>();
@@ -400,12 +407,12 @@ try
         headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
         headers["Content-Security-Policy"] =
             "default-src 'self'; " +
-            "script-src 'self' https://cdn.jsdelivr.net https://www.google.com https://www.gstatic.com 'unsafe-inline'; " +
-            "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; " +
-            "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; " +
+            "script-src 'self' https://cdn.jsdelivr.net https://cdn.datatables.net https://code.jquery.com https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com 'unsafe-inline'; " +
+            "style-src 'self' https://cdn.jsdelivr.net https://cdn.datatables.net https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; " +
+            "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; " +
             "img-src 'self' data: https:; " +
-            "connect-src 'self' https://www.google.com; " +
-            "frame-src 'self' https://www.google.com https://recaptcha.google.com; " +
+            "connect-src 'self' https://www.google.com https://cdn.jsdelivr.net; " +
+            "frame-src 'self' https://www.google.com https://recaptcha.google.com https://www.youtube.com https://www.youtube-nocookie.com; " +
             "frame-ancestors 'self'; " +
             "form-action 'self' https://sandbox.vnpayment.vn https://accounts.google.com;";
 

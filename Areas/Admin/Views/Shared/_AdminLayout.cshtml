@@ -1,204 +1,560 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi" data-bs-theme="light">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>@ViewData["Title"] - 🎬 CinemaHub Admin</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — CinemaHub Quản Trị Hệ Thống</title>
 
-    <!-- Bootstrap 3 (AdminLTE) -->
-    <link rel="stylesheet" href="~/adminlte/bootstrap/css/bootstrap.min.css">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="~/adminlte/plugins/font-awesome/css/font-awesome.min.css">
-    <!-- Ionicons -->
-    <link rel="stylesheet" href="~/adminlte/plugins/ionicons/css/ionicons.min.css">
-    <!-- AdminLTE theme -->
-    <link rel="stylesheet" href="~/adminlte/dist/css/AdminLTE.min.css">
-    <link rel="stylesheet" href="~/adminlte/dist/css/skins/skin-blue.min.css">
-    <!-- DataTables -->
-    <link rel="stylesheet" href="~/adminlte/plugins/datatables/dataTables.bootstrap.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
 
     <style>
-        .logo-text { font-size: 18px; font-weight: 700; }
-        .sidebar-menu > li.active > a { border-left: 4px solid #fff; }
-        .content-wrapper { min-height: calc(100vh - 101px); }
-        .small-box .icon i { font-size: 70px; }
+        :root {
+            --adm-bg: #f8fafc;
+            --adm-surface: #ffffff;
+            --adm-card: #ffffff;
+            --adm-border: #e2e8f0;
+            --adm-border-focus: #ff2e55;
+            --adm-text: #0f172a;
+            --adm-text-muted: #64748b;
+            --adm-red: #FF2E55;
+            --adm-orange: #FF6B35;
+            --adm-gold: #F5B942;
+            --adm-cyan: #0284c7;
+            --adm-emerald: #10B981;
+            --adm-sidebar-w: 264px;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--adm-bg);
+            color: var(--adm-text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ─── Sidebar (Clean Modern Light Form) ─── */
+        .adm-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--adm-sidebar-w);
+            background: #ffffff;
+            border-right: 1px solid var(--adm-border);
+            display: flex;
+            flex-direction: column;
+            z-index: 1040;
+            transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 1px 0 3px rgba(0, 0, 0, 0.02);
+        }
+
+        .adm-brand {
+            padding: 20px 22px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--adm-border);
+            text-decoration: none;
+        }
+
+        .adm-brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--adm-red), var(--adm-orange));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.2rem;
+            box-shadow: 0 8px 18px rgba(255, 46, 85, 0.3);
+        }
+
+        .adm-brand-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 1.18rem;
+            color: var(--adm-text);
+            line-height: 1.1;
+        }
+
+        .adm-brand-sub {
+            font-size: 0.68rem;
+            color: var(--adm-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+        }
+
+        .adm-nav {
+            padding: 16px 12px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .adm-nav-section {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+            padding: 12px 12px 4px;
+        }
+
+        .adm-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .adm-nav-link i {
+            font-size: 1.05rem;
+            width: 20px;
+            text-align: center;
+            color: #64748b;
+            transition: color 0.2s ease;
+        }
+
+        .adm-nav-link:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .adm-nav-link:hover i {
+            color: #0f172a;
+        }
+
+        .adm-nav-link.active {
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            color: #e11d48;
+            font-weight: 700;
+        }
+
+        .adm-nav-link.active i {
+            color: #e11d48;
+        }
+
+        .adm-sidebar-footer {
+            padding: 14px 16px;
+            border-top: 1px solid var(--adm-border);
+            background: #f8fafc;
+        }
+
+        /* ─── Main Content Area ─── */
+        .adm-main {
+            margin-left: var(--adm-sidebar-w);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--adm-bg);
+        }
+
+        .adm-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: 14px 28px;
+            background: #ffffff;
+            border-bottom: 1px solid var(--adm-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+
+        .adm-content {
+            padding: 28px;
+            flex: 1;
+        }
+
+        /* ─── Modern Light Cards & Forms ─── */
+        .adm-card {
+            padding: 24px;
+            border-radius: 16px;
+            background: #ffffff;
+            border: 1px solid var(--adm-border);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+            color: var(--adm-text);
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .adm-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Modal Smooth Zoom Entrance */
+        .modal.fade .modal-dialog {
+            transform: scale(0.94) translateY(10px);
+            transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1) translateY(0);
+        }
+
+        /* Tactile Button Press */
+        .adm-btn-primary:active,
+        .btn:active {
+            transform: scale(0.97) !important;
+        }
+
+        table.dataTable tbody tr {
+            transition: background-color 0.18s ease;
+        }
+
+        .adm-card-title {
+            font-weight: 700;
+            color: var(--adm-text);
+            font-size: 1.15rem;
+        }
+
+        .adm-card-sub {
+            color: var(--adm-text-muted);
+            font-size: 0.85rem;
+        }
+
+        .adm-kpi-card {
+            padding: 20px;
+            border-radius: 16px;
+            background: #ffffff;
+            border: 1px solid var(--adm-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        }
+
+        .adm-kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+            border-color: #cbd5e1;
+        }
+
+        .adm-kpi-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        /* Modern Light Tables */
+        .table-dark-glass,
+        table.dataTable,
+        .table {
+            --bs-table-bg: transparent;
+            --bs-table-color: #1e293b;
+            --bs-table-border-color: var(--adm-border);
+            vertical-align: middle;
+        }
+
+        .table-dark-glass thead th,
+        table.dataTable thead th,
+        .table thead th {
+            background: #f8fafc !important;
+            color: #475569 !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            padding: 12px 14px !important;
+            border-bottom: 2px solid var(--adm-border) !important;
+        }
+
+        .table-dark-glass tbody td,
+        table.dataTable tbody td,
+        .table tbody td {
+            padding: 12px 14px !important;
+            color: #1e293b !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+        }
+
+        .table tbody tr:hover,
+        .table-hover tbody tr:hover {
+            background-color: #f8fafc !important;
+        }
+
+        /* Form Controls Standard Light Styling */
+        .adm-content .form-control,
+        .adm-content .form-select,
+        .modal-content .form-control,
+        .modal-content .form-select,
+        .adm-card .form-control,
+        .adm-card .form-select {
+            background-color: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a !important;
+            border-radius: 10px !important;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .adm-content .form-control:focus,
+        .adm-content .form-select:focus,
+        .modal-content .form-control:focus,
+        .modal-content .form-select:focus,
+        .adm-card .form-control:focus,
+        .adm-card .form-select:focus {
+            border-color: var(--adm-red) !important;
+            box-shadow: 0 0 0 3px rgba(255, 46, 85, 0.15) !important;
+            outline: none !important;
+        }
+
+        .adm-content label,
+        .adm-card label,
+        .modal-content label {
+            color: #475569 !important;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .adm-btn-primary {
+            background: linear-gradient(135deg, var(--adm-red), var(--adm-orange));
+            border: none;
+            color: #fff !important;
+            font-weight: 700;
+            border-radius: 10px;
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            box-shadow: 0 6px 16px rgba(255, 46, 85, 0.25);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .adm-btn-primary:hover {
+            box-shadow: 0 8px 22px rgba(255, 46, 85, 0.35);
+            transform: translateY(-1px);
+            color: #fff !important;
+        }
+
+        /* Overrides to adapt older dark-mode inline text classes to clean light theme */
+        .adm-main .text-white,
+        .adm-card .text-white,
+        .modal-content .text-white {
+            color: #0f172a !important;
+        }
+
+        .adm-main .text-white-50,
+        .adm-card .text-white-50,
+        .modal-content .text-white-50 {
+            color: #64748b !important;
+        }
+
+        .adm-content .btn-outline-light {
+            color: #475569 !important;
+            border-color: #cbd5e1 !important;
+            background: #ffffff !important;
+        }
+
+        .adm-content .btn-outline-light:hover {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+
+        .adm-content .bg-dark {
+            background-color: #ffffff !important;
+        }
+
+        .adm-content .border-secondary {
+            border-color: var(--adm-border) !important;
+        }
+
+        .adm-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(2px);
+            z-index: 1035;
+            display: none;
+        }
+
+        @@media (max-width: 991.98px) {
+            .adm-sidebar {
+                transform: translateX(-100%);
+            }
+            .adm-sidebar.show {
+                transform: translateX(0);
+            }
+            .adm-backdrop.show {
+                display: block;
+            }
+            .adm-main {
+                margin-left: 0;
+            }
+            .adm-topbar {
+                padding: 12px 16px;
+            }
+            .adm-content {
+                padding: 16px 12px;
+            }
+        }
     </style>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="hold-transition skin-blue sidebar-mini">
-<div class="wrapper">
+<body>
+    @{
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+        var userName = User.Identity?.Name ?? "Admin";
+        var userRole = User.IsInRole("Admin") ? "Quản Trị Viên" : "Nhân Viên";
+    }
 
-    <!-- Main Header -->
-    <header class="main-header">
-        <!-- Logo -->
-        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="logo">
-            <span class="logo-mini"><b>C</b>H</span>
-            <span class="logo-lg"><b>Cinema</b>Hub Admin</span>
+    <div class="adm-backdrop" id="admSidebarBackdrop"></div>
+
+    <!-- Sidebar -->
+    <aside class="adm-sidebar" id="admSidebar">
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="adm-brand">
+            <div class="adm-brand-icon">
+                <i class="bi bi-film"></i>
+            </div>
+            <div>
+                <div class="adm-brand-title">CinemaHub</div>
+                <div class="adm-brand-sub">Quản Trị Hệ Thống</div>
+            </div>
         </a>
-        <!-- Navbar -->
-        <nav class="navbar navbar-static-top" role="navigation">
-            <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
-                <span class="sr-only">Toggle navigation</span>
+
+        <nav class="adm-nav">
+            <div class="adm-nav-section">Điều Hành</div>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+               class="adm-nav-link @(currentController == "Dashboard" ? "active" : "")">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Tổng Quan</span>
             </a>
-            <div class="navbar-custom-menu">
-                <ul class="nav navbar-nav">
-                    <!-- User dropdown -->
-                    <li class="dropdown user user-menu">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                            <i class="fa fa-user-circle fa-lg"></i>
-                            <span class="hidden-xs">@(User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Admin")</span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li class="user-header" style="background:#3c8dbc">
-                                <i class="fa fa-user-circle fa-4x"></i>
-                                <p>
-                                    @(User.FindFirst("FullName")?.Value ?? User.Identity?.Name)
-                                    <small>@(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Admin")</small>
-                                </p>
-                            </li>
-                            <li class="user-footer">
-                                <div class="pull-left">
-                                    <a asp-area="" asp-controller="Home" asp-action="Index" class="btn btn-default btn-flat">
-                                        <i class="fa fa-home"></i> Trang chủ
-                                    </a>
-                                </div>
-                                <div class="pull-right">
-                                    <form asp-area="Admin" asp-controller="Account" asp-action="Logout" method="post" class="inline-form">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-danger btn-flat">
-                                            <i class="fa fa-sign-out"></i> Đăng xuất
-                                        </button>
-                                    </form>
-                                </div>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
+
+            <a asp-area="Admin" asp-controller="Movies" asp-action="Index"
+               class="adm-nav-link @(currentController == "Movies" ? "active" : "")">
+                <i class="bi bi-camera-reels"></i>
+                <span>Quản Lý Kho Phim</span>
+            </a>
+
+            <a asp-area="Admin" asp-controller="Showtimes" asp-action="Index"
+               class="adm-nav-link @(currentController == "Showtimes" ? "active" : "")">
+                <i class="bi bi-calendar2-week"></i>
+                <span>Điều Phối Suất Chiếu</span>
+            </a>
+
+            <a asp-area="Admin" asp-controller="Revenue" asp-action="Index"
+               class="adm-nav-link @(currentController == "Revenue" ? "active" : "")">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>Báo Cáo Doanh Thu</span>
+            </a>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="adm-nav-section mt-2">Quản Trị Cấp Cao</div>
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index"
+                   class="adm-nav-link @(currentController == "Users" ? "active" : "")">
+                    <i class="bi bi-people"></i>
+                    <span>Tài Khoản &amp; Phân Quyền</span>
+                </a>
+            }
+
+            <div class="adm-nav-section mt-2">Lối Tắt</div>
+            <a asp-area="" asp-controller="Home" asp-action="Index" class="adm-nav-link">
+                <i class="bi bi-globe2"></i>
+                <span>Xem Giao Diện Khách</span>
+            </a>
         </nav>
-    </header>
 
-    <!-- Left Sidebar -->
-    <aside class="main-sidebar">
-        <section class="sidebar">
-            <!-- Sidebar user info -->
-            <div class="user-panel">
-                <div class="pull-left image">
-                    <i class="fa fa-user-circle fa-3x" style="color:#aaa; margin-top:5px"></i>
+        <div class="adm-sidebar-footer">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                         style="width:34px;height:34px;background:linear-gradient(135deg,#FF2E55,#FF6B35);font-size:0.85rem;">
+                        @(userName.Length > 0 ? userName[0].ToString().ToUpper() : "A")
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark small" style="line-height:1.2;">@userName</div>
+                        <div class="text-muted" style="font-size:0.72rem;">@userRole</div>
+                    </div>
                 </div>
-                <div class="pull-left info">
-                    <p>@(User.FindFirst("FullName")?.Value ?? User.Identity?.Name)</p>
-                    <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
-                </div>
+                <form asp-area="Admin" asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:8px;padding:4px 8px;" title="Đăng xuất">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </form>
             </div>
-
-            <!-- Sidebar Menu -->
-            <ul class="sidebar-menu">
-                <li class="header">QUẢN TRỊ</li>
-
-                <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
-                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                        <i class="fa fa-dashboard"></i> <span>Dashboard</span>
-                    </a>
-                </li>
-
-                @if (User.IsInRole("Admin"))
-                {
-                    <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Movies" ? "active" : "")">
-                        <a asp-area="Admin" asp-controller="Movies" asp-action="Index">
-                            <i class="fa fa-film"></i> <span>Quản lý phim</span>
-                        </a>
-                    </li>
-                }
-
-                <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Showtimes" ? "active" : "")">
-                    <a asp-area="Admin" asp-controller="Showtimes" asp-action="Index">
-                        <i class="fa fa-calendar"></i> <span>Suất chiếu</span>
-                    </a>
-                </li>
-
-                <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
-                    <a asp-area="Admin" asp-controller="Users" asp-action="Index">
-                        <i class="fa fa-users"></i> <span>Quản lý người dùng</span>
-                    </a>
-                </li>
-
-                @if (User.IsInRole("Admin"))
-                {
-                    <li class="@(ViewContext.RouteData.Values["controller"]?.ToString() == "Revenue" ? "active" : "")">
-                        <a asp-area="Admin" asp-controller="Revenue" asp-action="Index">
-                            <i class="fa fa-bar-chart"></i> <span>Thống kê doanh thu</span>
-                            <small class="label pull-right bg-green">Admin</small>
-                        </a>
-                    </li>
-                }
-
-                <li class="header">CÔNG CỤ</li>
-
-                @if (User.IsInRole("Admin"))
-                {
-                    <li>
-                        <a href="/swagger" target="_blank">
-                            <i class="fa fa-code"></i> <span>Swagger API</span>
-                            <small class="label pull-right bg-green">API</small>
-                        </a>
-                    </li>
-                }
-
-                <li>
-                    <a asp-area="" asp-controller="Home" asp-action="Index">
-                        <i class="fa fa-home"></i> <span>Về trang chính</span>
-                    </a>
-                </li>
-            </ul>
-        </section>
+        </div>
     </aside>
 
-    <!-- Content Wrapper -->
-    <div class="content-wrapper">
-        <!-- Alerts -->
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success alert-dismissible" style="margin:15px 15px 0">
-                <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-                <i class="fa fa-check-circle"></i> @TempData["Success"]
+    <!-- Main Content -->
+    <div class="adm-main">
+        <header class="adm-topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary d-lg-none" id="admToggleBtn">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+                <h5 class="mb-0 fw-bold text-dark" style="font-family:'Space Grotesk',sans-serif;font-size:1.15rem;">
+                    @ViewData["Title"]
+                </h5>
             </div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible" style="margin:15px 15px 0">
-                <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-                <i class="fa fa-exclamation-triangle"></i> @TempData["Error"]
-            </div>
-        }
 
-        @RenderBody()
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge rounded-pill px-3 py-2 d-none d-sm-inline-flex align-items-center gap-2"
+                      style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-weight:600;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#10b981;"></span>
+                    Hệ thống trực tuyến
+                </span>
+                <a asp-area="" asp-controller="Showtimes" asp-action="Index" class="btn btn-sm rounded-pill px-3 text-secondary"
+                   style="background:#f1f5f9;border:1px solid #e2e8f0;font-weight:600;">
+                    <i class="bi bi-ticket-perforated me-1 text-danger"></i> Quầy Đặt Vé
+                </a>
+            </div>
+        </header>
+
+        <main class="adm-content">
+            @RenderBody()
+        </main>
     </div>
 
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="pull-right hidden-xs">
-            <b>CinemaHub</b> Admin Panel
-        </div>
-        <strong>&copy; 2026 CinemaHub.</strong> All rights reserved.
-    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 
-</div><!-- ./wrapper -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var toggleBtn = document.getElementById('admToggleBtn');
+            var sidebar = document.getElementById('admSidebar');
+            var backdrop = document.getElementById('admSidebarBackdrop');
 
-<!-- jQuery 2 -->
-<script src="~/adminlte/plugins/jQuery/jQuery-2.1.4.min.js"></script>
-<!-- Bootstrap 3 -->
-<script src="~/adminlte/bootstrap/js/bootstrap.min.js"></script>
-<!-- SlimScroll -->
-<script src="~/adminlte/plugins/slimScroll/jquery.slimscroll.min.js"></script>
-<!-- FastClick -->
-<script src="~/adminlte/plugins/fastclick/fastclick.min.js"></script>
-<!-- AdminLTE App -->
-<script src="~/adminlte/dist/js/app.min.js"></script>
-<!-- DataTables -->
-<script src="~/adminlte/plugins/datatables/jquery.dataTables.min.js"></script>
-<script src="~/adminlte/plugins/datatables/dataTables.bootstrap.min.js"></script>
-
-@await RenderSectionAsync("Scripts", required: false)
+            if (toggleBtn && sidebar && backdrop) {
+                toggleBtn.addEventListener('click', function () {
+                    sidebar.classList.toggle('show');
+                    backdrop.classList.toggle('show');
+                });
+                backdrop.addEventListener('click', function () {
+                    sidebar.classList.remove('show');
+                    backdrop.classList.remove('show');
+                });
+            }
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
