@@ -88,6 +88,10 @@ try
     {
         client.Timeout = TimeSpan.FromSeconds(10);
     });
+    builder.Services.AddHttpClient("GoogleRecaptcha", client =>
+    {
+        client.Timeout = TimeSpan.FromSeconds(10);
+    });
 
     // ================================
     // 4. Rate Limiting Policy (IP-first cho Anonymous, chống lách qua cookieless bot)
@@ -396,11 +400,12 @@ try
         headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
         headers["Content-Security-Policy"] =
             "default-src 'self'; " +
-            "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; " +
+            "script-src 'self' https://cdn.jsdelivr.net https://www.google.com https://www.gstatic.com 'unsafe-inline'; " +
             "style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; " +
             "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; " +
             "img-src 'self' data: https:; " +
-            "connect-src 'self'; " +
+            "connect-src 'self' https://www.google.com; " +
+            "frame-src 'self' https://www.google.com https://recaptcha.google.com; " +
             "frame-ancestors 'self'; " +
             "form-action 'self' https://sandbox.vnpayment.vn https://accounts.google.com;";
 

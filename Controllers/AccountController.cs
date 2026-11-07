@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using CinemaManagement.Data;
 using CinemaManagement.Helpers;
@@ -36,6 +38,7 @@ namespace CinemaManagement.Controllers
         private readonly ISecurityAlertService _securityAlert;
         private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public AccountController(
             CinemaDbContext context,
@@ -43,7 +46,8 @@ namespace CinemaManagement.Controllers
             IEmailService emailService,
             ISecurityAlertService securityAlert,
             IConfiguration config,
-            IMemoryCache cache)
+            IMemoryCache cache,
+            IHttpClientFactory httpClientFactory)
         {
             _context = context;
             _loginAttemptService = loginAttemptService;
@@ -51,6 +55,7 @@ namespace CinemaManagement.Controllers
             _securityAlert = securityAlert;
             _config = config;
             _cache = cache;
+            _httpClientFactory = httpClientFactory;
         }
 
         // GET: /Account/Login
@@ -250,14 +255,36 @@ namespace CinemaManagement.Controllers
 
         // GET: /Account/Register
         [HttpGet]
-        public IActionResult Register() => View();
+        public IActionResult Register()
+        {
+            ViewBag.RecaptchaSiteKey = GetRecaptchaSiteKey();
+            return View();
+        }
 
         // POST: /Account/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
+            ViewBag.RecaptchaSiteKey = GetRecaptchaSiteKey();
+
+            var (recaptchaValid, recaptchaError) = await VerifyRecaptchaAsync();
+            if (!recaptchaValid)
+            {
+                ModelState.AddModelError("", recaptchaError!);
+                return View(model);
+            }
+
             if (!ModelState.IsValid) return View(model);
+
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var ipOtpRateKey = $"reg_otp_ip_{ip}";
+            var ipOtpCount = _cache.Get<int?>(ipOtpRateKey) ?? 0;
+            if (ipOtpCount >= 5)
+            {
+                ModelState.AddModelError("", "Thiết bị của bạn đã yêu cầu gửi mã xác thực quá nhiều lần. Vui lòng thử lại sau 15 phút.");
+                return View(model);
+            }
 
             var usernameTrimmed = model.Username.Trim();
             var usernameLower = usernameTrimmed.ToLowerInvariant();
@@ -347,6 +374,7 @@ namespace CinemaManagement.Controllers
 
             _cache.Set(pendingCacheKey, pendingEntry, TimeSpan.FromMinutes(15));
             _cache.Set(userReservationKey, emailLower, TimeSpan.FromMinutes(15));
+            _cache.Set(ipOtpRateKey, ipOtpCount + 1, TimeSpan.FromMinutes(15));
 
             TempData["Success"] = $"Đã gửi mã xác thực 6 chữ số tới Gmail {emailLower}. Vui lòng xác thực để hoàn tất tạo tài khoản!";
             return RedirectToAction(nameof(VerifyRegistrationEmail), new { email = emailLower });
@@ -963,6 +991,70 @@ namespace CinemaManagement.Controllers
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
                 new AuthenticationProperties { IsPersistent = isPersistent });
+        }
+
+        private string? GetRecaptchaSiteKey()
+        {
+            var val = _config["Recaptcha:SiteKey"];
+            if (string.IsNullOrWhiteSpace(val))
+                val = Environment.GetEnvironmentVariable("RECAPTCHA_SITE_KEY");
+            return string.IsNullOrWhiteSpace(val) ? null : val.Trim();
+        }
+
+        private string? GetRecaptchaSecretKey()
+        {
+            var val = _config["Recaptcha:SecretKey"];
+            if (string.IsNullOrWhiteSpace(val))
+                val = Environment.GetEnvironmentVariable("RECAPTCHA_SECRET_KEY");
+            return string.IsNullOrWhiteSpace(val) ? null : val.Trim();
+        }
+
+        private async Task<(bool IsValid, string? ErrorMessage)> VerifyRecaptchaAsync()
+        {
+            var siteKey = GetRecaptchaSiteKey();
+            var secretKey = GetRecaptchaSecretKey();
+
+            if (string.IsNullOrEmpty(siteKey) || string.IsNullOrEmpty(secretKey))
+            {
+                return (false, "Hệ thống chưa cấu hình Google reCAPTCHA (thiếu RECAPTCHA_SITE_KEY / RECAPTCHA_SECRET_KEY).");
+            }
+
+            var recaptchaResponse = Request.Form["g-recaptcha-response"].ToString();
+            if (string.IsNullOrWhiteSpace(recaptchaResponse))
+            {
+                return (false, "Vui lòng tích chọn xác nhận 'Tôi không phải là người máy' (Google reCAPTCHA).");
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("GoogleRecaptcha");
+                var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+                var formContent = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["secret"] = secretKey,
+                    ["response"] = recaptchaResponse,
+                    ["remoteip"] = ip
+                });
+
+                var response = await client.PostAsync("https://www.google.com/recaptcha/api/siteverify", formContent);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return (false, "Không thể kết nối tới dịch vụ xác thực Google reCAPTCHA. Vui lòng thử lại.");
+                }
+
+                await using var stream = await response.Content.ReadAsStreamAsync();
+                using var doc = await JsonDocument.ParseAsync(stream);
+                if (doc.RootElement.TryGetProperty("success", out var successProp) && successProp.GetBoolean())
+                {
+                    return (true, null);
+                }
+
+                return (false, "Xác thực Google reCAPTCHA không hợp lệ hoặc đã hết hạn. Vui lòng tích chọn lại.");
+            }
+            catch
+            {
+                return (false, "Lỗi xác thực Google reCAPTCHA. Vui lòng thử lại.");
+            }
         }
 
         private static string ComputeSha256Hex(string input)

@@ -79,6 +79,8 @@ services:
       - Smtp__FromEmail=${SMTP_FROM:-}
       - Telegram__BotToken=${TELEGRAM_BOT_TOKEN:-}
       - Telegram__ChatId=${TELEGRAM_ALERT_CHAT_ID:-}
+      - Recaptcha__SiteKey=${RECAPTCHA_SITE_KEY:-}
+      - Recaptcha__SecretKey=${RECAPTCHA_SECRET_KEY:-}
       - ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]

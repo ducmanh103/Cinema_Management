@@ -52,6 +52,20 @@
                         <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                     </div>
 
+                    <div class="mb-3 d-flex flex-column align-items-center">
+                        @if (!string.IsNullOrEmpty(ViewBag.RecaptchaSiteKey as string))
+                        {
+                            <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey" data-theme="dark"></div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning small w-100 mb-0 text-center">
+                                <i class="bi bi-shield-exclamation me-1"></i>
+                                Chưa cấu hình <code>RECAPTCHA_SITE_KEY</code> / <code>RECAPTCHA_SECRET_KEY</code>.
+                            </div>
+                        }
+                    </div>
+
                     <div class="d-grid">
                         <button type="submit" class="btn btn-danger fw-bold py-2" id="register-btn">
                             <i class="bi bi-envelope-check me-1"></i> Gửi mã xác thực Gmail
@@ -86,6 +100,10 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    @if (!string.IsNullOrEmpty(ViewBag.RecaptchaSiteKey as string))
+    {
+        <script src="https://www.google.com/recaptcha/api.js?hl=vi" async defer></script>
+    }
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const vs = document.querySelector('[data-valmsg-summary]');
