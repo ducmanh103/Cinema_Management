@@ -135,6 +135,8 @@ namespace CinemaManagement.Models.ViewModels
 
         public string? ReturnUrl { get; set; }
         public string? MaskedEmail { get; set; }
+        public int RemainingSeconds { get; set; } = 300;
+        public int ResendCooldownSeconds { get; set; } = 0;
     }
 
     public class AdminMfaSession
@@ -150,6 +152,8 @@ namespace CinemaManagement.Models.ViewModels
         public string OtpHash { get; set; } = string.Empty;
         public int AttemptsLeft { get; set; } = 5;
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+        public DateTime ExpiresAtUtc { get; set; } = DateTime.UtcNow.AddMinutes(5);
         public DateTime LastResentAtUtc { get; set; } = DateTime.UtcNow;
+        public int ResendCount { get; set; } = 0;
     }
 }

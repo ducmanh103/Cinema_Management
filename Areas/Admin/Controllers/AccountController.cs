@@ -144,7 +144,9 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 OtpHash = otpHash,
                 AttemptsLeft = 5,
                 CreatedAtUtc = DateTime.UtcNow,
-                LastResentAtUtc = DateTime.UtcNow
+                ExpiresAtUtc = DateTime.UtcNow.AddMinutes(5),
+                LastResentAtUtc = DateTime.UtcNow,
+                ResendCount = 0
             };
 
             // Lưu phiên xác thực tạm thời vào cache (hết hạn sau 5 phút)
@@ -185,10 +187,23 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Login));
             }
 
+            var remaining = (int)Math.Max(0, (session.ExpiresAtUtc - DateTime.UtcNow).TotalSeconds);
+            if (remaining <= 0)
+            {
+                _cache.Remove($"admin_mfa_{mfaSessionId}");
+                HttpContext.Session.Remove("AdminMfaSessionId");
+                TempData["Error"] = "Mã xác thực đã hết hạn hiệu lực 5 phút. Vui lòng đăng nhập lại.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            var cooldown = (int)Math.Max(0, 45 - (DateTime.UtcNow - session.LastResentAtUtc).TotalSeconds);
+
             var model = new VerifyAdminMfaViewModel
             {
                 ReturnUrl = returnUrl ?? session.ReturnUrl,
-                MaskedEmail = MaskEmail(session.Email)
+                MaskedEmail = MaskEmail(session.Email),
+                RemainingSeconds = remaining,
+                ResendCooldownSeconds = cooldown
             };
 
             return View(model);
@@ -207,6 +222,21 @@ namespace CinemaManagement.Areas.Admin.Controllers
             }
 
             model.MaskedEmail = MaskEmail(session.Email);
+
+            var remainingTime = session.ExpiresAtUtc - DateTime.UtcNow;
+            var remainingSeconds = (int)Math.Max(0, remainingTime.TotalSeconds);
+
+            if (remainingSeconds <= 0)
+            {
+                _cache.Remove($"admin_mfa_{mfaSessionId}");
+                HttpContext.Session.Remove("AdminMfaSessionId");
+                TempData["Error"] = "Mã xác thực đã hết hạn hiệu lực 5 phút. Vui lòng đăng nhập lại.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            model.RemainingSeconds = remainingSeconds;
+            model.ResendCooldownSeconds = (int)Math.Max(0, 45 - (DateTime.UtcNow - session.LastResentAtUtc).TotalSeconds);
+
             if (!ModelState.IsValid) return View(model);
 
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -237,7 +267,8 @@ namespace CinemaManagement.Areas.Admin.Controllers
                     return RedirectToAction(nameof(Login));
                 }
 
-                _cache.Set($"admin_mfa_{mfaSessionId}", session, TimeSpan.FromMinutes(5));
+                // QUAN TRỌNG: Giữ nguyên hạn dùng cũ (remainingTime), KHÔNG reset về 5 phút!
+                _cache.Set($"admin_mfa_{mfaSessionId}", session, remainingTime);
                 ModelState.Remove(nameof(model.OtpCode));
                 ModelState.AddModelError("OtpCode", $"Mã OTP không chính xác. Bạn còn {session.AttemptsLeft} lần thử.");
                 model.OtpCode = string.Empty;
@@ -301,10 +332,17 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 return RedirectToAction(nameof(VerifyMfa));
             }
 
+            if (session.ResendCount >= 3)
+            {
+                TempData["Error"] = "Bạn đã gửi lại mã tối đa 3 lần. Vui lòng kiểm tra lại Email & Telegram hoặc đăng nhập lại.";
+                return RedirectToAction(nameof(VerifyMfa));
+            }
+
             var newOtp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString("D6");
             session.OtpHash = ComputeSha256Hex(newOtp);
             session.LastResentAtUtc = now;
-            session.AttemptsLeft = 5;
+            session.ExpiresAtUtc = now.AddMinutes(5); // Mã mới có hiệu lực 5 phút mới
+            session.ResendCount++;
 
             _cache.Set($"admin_mfa_{mfaSessionId}", session, TimeSpan.FromMinutes(5));
 
@@ -325,7 +363,7 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 SecurityAlertLevel.High,
                 "ADMIN_MFA_OTP_RESENT",
                 $"🔐 Mã xác thực MFA gửi lại: {newOtp}",
-                $"Tài khoản '{session.Username}' yêu cầu gửi lại mã OTP từ IP {ip}.",
+                $"Tài khoản '{session.Username}' yêu cầu gửi lại mã OTP từ IP {ip} (Lần {session.ResendCount}/3).",
                 IpAddress: ip,
                 Username: session.Username,
                 Path: "/Admin/Account/ResendMfaOtp"));

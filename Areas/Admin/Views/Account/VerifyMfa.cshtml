@@ -206,8 +206,8 @@
                 });
             }
 
-            // Đếm lùi thời gian hiệu lực 5 phút (300 giây)
-            var timeLeft = 300;
+            // Đếm lùi thời gian hiệu lực còn lại thực tế từ server
+            var timeLeft = @Model.RemainingSeconds;
             var countdownEl = document.getElementById('countdownText');
             function updateTimer() {
                 var m = Math.floor(timeLeft / 60);
@@ -221,9 +221,33 @@
                 } else if (countdownEl) {
                     countdownEl.textContent = 'Đã hết hạn';
                     countdownEl.classList.add('text-danger');
+                    if (input) input.disabled = true;
+                    var submitBtn = document.querySelector('.btn-mfa-submit');
+                    if (submitBtn) submitBtn.disabled = true;
                 }
             }
             updateTimer();
+
+            // Đếm ngược thời gian chờ gửi lại mã OTP (cooldown)
+            var cooldown = @Model.ResendCooldownSeconds;
+            var btnResend = document.getElementById('btnResend');
+            if (btnResend && cooldown > 0) {
+                btnResend.disabled = true;
+                btnResend.classList.add('opacity-50', 'pe-none');
+                var origText = '<i class="bi bi-arrow-clockwise me-1"></i> Gửi lại mã OTP';
+                function updateCooldown() {
+                    if (cooldown > 0) {
+                        btnResend.innerHTML = '<i class="bi bi-clock me-1"></i> Gửi lại sau ' + cooldown + 's';
+                        cooldown--;
+                        setTimeout(updateCooldown, 1000);
+                    } else {
+                        btnResend.disabled = false;
+                        btnResend.classList.remove('opacity-50', 'pe-none');
+                        btnResend.innerHTML = origText;
+                    }
+                }
+                updateCooldown();
+            }
         });
     </script>
 </body>
