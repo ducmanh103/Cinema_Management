@@ -118,9 +118,11 @@
                        class="form-control otp-input py-2" 
                        placeholder="••••••" 
                        maxlength="6" 
+                       minlength="6"
                        inputmode="numeric" 
-                       pattern="[0-9]*" 
+                       pattern="[0-9]{6}" 
                        autocomplete="one-time-code" 
+                       value=""
                        autofocus />
                 <span asp-validation-for="OtpCode" class="text-danger small"></span>
                 <div class="text-white-50 small mt-2 d-flex justify-content-between align-items-center">
@@ -153,13 +155,53 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var input = document.getElementById('mfaOtpInput');
+            var form = document.getElementById('mfaForm');
+            var isSubmitting = false;
+
             if (input) {
+                // Tự động làm sạch ô nhập khi tải trang và focus
+                input.value = '';
                 input.focus();
-                // Chỉ cho phép nhập ký tự số
+
+                // Chặn bàn phím không cho nhập quá 6 ký tự
+                input.addEventListener('keydown', function (e) {
+                    var allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'];
+                    if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) {
+                        return;
+                    }
+                    // Chặn phím không phải chữ số 0-9
+                    if (!/^[0-9]$/.test(e.key)) {
+                        e.preventDefault();
+                        return;
+                    }
+                    // Nếu đã đủ 6 số, chặn không cho gõ thêm
+                    if (this.value.length >= 6) {
+                        e.preventDefault();
+                    }
+                });
+
+                // Xử lý sự kiện input: ép kiểu chỉ nhận số và CẮT TỐI ĐA 6 SỐ
                 input.addEventListener('input', function (e) {
-                    this.value = this.value.replace(/[^0-9]/g, '');
-                    if (this.value.length === 6) {
-                        document.getElementById('mfaForm').submit();
+                    var sanitized = this.value.replace(/\D/g, '').slice(0, 6);
+                    if (this.value !== sanitized) {
+                        this.value = sanitized;
+                    }
+                    // Tự động submit khi nhập đủ đúng 6 chữ số
+                    if (this.value.length === 6 && !isSubmitting && form) {
+                        isSubmitting = true;
+                        form.submit();
+                    }
+                });
+
+                // Xử lý khi paste văn bản vào ô
+                input.addEventListener('paste', function (e) {
+                    e.preventDefault();
+                    var paste = (e.clipboardData || window.clipboardData).getData('text') || '';
+                    var digitsOnly = paste.replace(/\D/g, '').slice(0, 6);
+                    this.value = digitsOnly;
+                    if (this.value.length === 6 && !isSubmitting && form) {
+                        isSubmitting = true;
+                        form.submit();
                     }
                 });
             }

@@ -238,7 +238,9 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 }
 
                 _cache.Set($"admin_mfa_{mfaSessionId}", session, TimeSpan.FromMinutes(5));
+                ModelState.Remove(nameof(model.OtpCode));
                 ModelState.AddModelError("OtpCode", $"Mã OTP không chính xác. Bạn còn {session.AttemptsLeft} lần thử.");
+                model.OtpCode = string.Empty;
                 return View(model);
             }
 
