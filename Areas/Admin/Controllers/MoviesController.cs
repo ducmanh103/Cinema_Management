@@ -1,4 +1,5 @@
 using CinemaManagement.Data;
+using CinemaManagement.Helpers;
 using CinemaManagement.Models;
 using CinemaManagement.Models.ViewModels;
 using CinemaManagement.Services;
@@ -157,6 +158,7 @@ namespace CinemaManagement.Areas.Admin.Controllers
             {
                 movie.Status = "Now Showing";
             }
+            movie.TrailerUrl = MovieDisplayHelper.NormalizeYouTubeEmbedUrl(movie.TrailerUrl);
 
             if (ModelState.IsValid)
             {
@@ -306,6 +308,7 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 existingMovie.Description = movie.Description;
                 existingMovie.ReleaseDate = movie.ReleaseDate;
                 existingMovie.Status = string.IsNullOrWhiteSpace(movie.Status) ? "Now Showing" : movie.Status;
+                existingMovie.TrailerUrl = MovieDisplayHelper.NormalizeYouTubeEmbedUrl(movie.TrailerUrl);
 
                 // Cập nhật thể loại
                 _context.MovieGenres.RemoveRange(existingMovie.MovieGenres);

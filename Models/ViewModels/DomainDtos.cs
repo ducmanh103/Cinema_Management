@@ -16,6 +16,7 @@ namespace CinemaManagement.Models.ViewModels
         public DateTime? ReleaseDate { get; set; }
         public string? PosterUrl { get; set; }
         public string? BannerUrl { get; set; }
+        public string? TrailerUrl { get; set; }
         public string Status { get; set; } = string.Empty;
         public List<string> Genres { get; set; } = new();
         public bool HasShowtimes { get; set; }
@@ -32,6 +33,7 @@ namespace CinemaManagement.Models.ViewModels
         public DateTime? ReleaseDate { get; set; }
         public string? PosterUrl { get; set; }
         public string? BannerUrl { get; set; }
+        public string? TrailerUrl { get; set; }
         public string Status { get; set; } = "Now Showing";
         public List<int> GenreIds { get; set; } = new();
         public bool DownloadRemoteImages { get; set; } = false;

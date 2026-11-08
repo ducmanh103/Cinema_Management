@@ -22,7 +22,7 @@
         ageBadgeClass = MovieDisplayHelper.GetAgeBadgeClass(m.Title),
         format = MovieDisplayHelper.GetMovieFormat(m.Title),
         rating = MovieDisplayHelper.GetMovieRating(m.MovieId).ToString("0.0"),
-        trailerUrl = MovieDisplayHelper.GetTrailerEmbedUrl(m.Title),
+        trailerUrl = MovieDisplayHelper.GetTrailerEmbedUrl(m.Title, m.TrailerUrl),
         genres = m.Genres ?? new List<string>()
     }).ToList();
 
@@ -151,7 +151,7 @@
                     <button type="button"
                             id="heroTrailerBtn"
                             class="lp-btn-glass"
-                            data-trailer="@(firstHero != null ? MovieDisplayHelper.GetTrailerEmbedUrl(firstHero.Title) : "https://www.youtube.com/embed/YoHD9XEInc0")"
+                            data-trailer="@(firstHero != null ? MovieDisplayHelper.GetTrailerEmbedUrl(firstHero.Title, firstHero.TrailerUrl) : "https://www.youtube.com/embed/_inKs4eeHiI")"
                             data-title="@(firstHero?.Title ?? "Trailer")">
                         <span class="lp-play-ring"><i class="bi bi-play-fill"></i></span>
                         <span>Trailer Official</span>
@@ -348,7 +348,7 @@
                 var ageText = MovieDisplayHelper.GetAgeBadgeText(m.Title);
                 var format = MovieDisplayHelper.GetMovieFormat(m.Title);
                 var rating = MovieDisplayHelper.GetMovieRating(m.MovieId).ToString("0.0");
-                var trailer = MovieDisplayHelper.GetTrailerEmbedUrl(m.Title);
+                var trailer = MovieDisplayHelper.GetTrailerEmbedUrl(m.Title, m.TrailerUrl);
                 var genreStr = m.Genres != null ? string.Join("|", m.Genres) : "";
 
                 <article class="lp-movie-card cinema-spotlight" data-genres="@genreStr" data-animate="fade-up">
@@ -406,7 +406,7 @@
                     var ageClass = MovieDisplayHelper.GetAgeBadgeClass(m.Title);
                     var ageText = MovieDisplayHelper.GetAgeBadgeText(m.Title);
                     var format = MovieDisplayHelper.GetMovieFormat(m.Title);
-                    var trailer = MovieDisplayHelper.GetTrailerEmbedUrl(m.Title);
+                    var trailer = MovieDisplayHelper.GetTrailerEmbedUrl(m.Title, m.TrailerUrl);
                     var genreStr = m.Genres != null ? string.Join("|", m.Genres) : "";
 
                     <article class="lp-movie-card cinema-spotlight" data-genres="@genreStr">

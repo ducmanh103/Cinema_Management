@@ -22,6 +22,9 @@ namespace CinemaManagement.Models
         public string? PosterUrl { get; set; }
         public string? BannerUrl { get; set; }
 
+        [StringLength(500)]
+        public string? TrailerUrl { get; set; }
+
         public string Status { get; set; } = "Now Showing"; // Now Showing, Coming Soon, Ended
 
         public virtual ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();

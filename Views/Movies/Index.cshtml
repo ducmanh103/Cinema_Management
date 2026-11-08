@@ -337,7 +337,7 @@
             var ageText = MovieDisplayHelper.GetAgeBadgeText(m.Title);
             var format = MovieDisplayHelper.GetMovieFormat(m.Title);
             var rating = MovieDisplayHelper.GetMovieRating(m.MovieId).ToString("0.0");
-            var trailer = MovieDisplayHelper.GetTrailerEmbedUrl(m.Title);
+            var trailer = MovieDisplayHelper.GetTrailerEmbedUrl(m.Title, m.TrailerUrl);
             var genrePipe = m.Genres != null ? string.Join("|", m.Genres) : "";
             var genreDisplay = m.Genres != null && m.Genres.Any() ? string.Join(", ", m.Genres.Take(2)) : "Điện ảnh";
 

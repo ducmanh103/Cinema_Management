@@ -357,26 +357,35 @@
        5. OFFICIAL YOUTUBE TRAILER MODAL
        ---------------------------------------------------------------------- */
     function initTrailerModal() {
-        var modalEl = document.getElementById('trailerModal');
-        var iframe = document.getElementById('trailerIframe');
-        var titleEl = document.getElementById('trailerModalTitle');
+        var modalEl = document.getElementById('landingTrailerModal') || document.getElementById('trailerModal');
+        var iframe = document.getElementById('landingTrailerIframe') || document.getElementById('trailerIframe');
+        var titleEl = document.getElementById('landingTrailerTitle') || document.getElementById('trailerModalTitle');
         if (!modalEl || !iframe) return;
 
-        document.addEventListener('click', function (e) {
-            var btn = e.target.closest('[data-trailer]');
-            if (!btn) return;
-            var url = btn.getAttribute('data-trailer');
-            var title = btn.getAttribute('data-title') || 'Trailer Phim';
-
-            if (url) {
-                if (url.indexOf('autoplay=1') === -1) {
-                    url += (url.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1';
-                }
-                iframe.src = url;
-                if (titleEl) titleEl.textContent = title;
+        function openTrailer(url, title) {
+            if (!url) return;
+            // Đảm bảo link YouTube có cờ autoplay mượt mà
+            var cleanUrl = url;
+            if (cleanUrl.indexOf('autoplay=1') === -1) {
+                cleanUrl += (cleanUrl.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&rel=0';
+            }
+            iframe.src = cleanUrl;
+            if (titleEl) {
+                titleEl.innerHTML = '<i class="bi bi-play-circle-fill text-danger me-2"></i>' + (title ? 'Trailer: ' + title : 'Trailer Chính Thức');
+            }
+            if (window.bootstrap && bootstrap.Modal) {
                 var bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 bsModal.show();
             }
+        }
+
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-trailer], .js-open-trailer, #heroTrailerBtn');
+            if (!btn) return;
+            e.preventDefault();
+            var url = btn.getAttribute('data-trailer');
+            var title = btn.getAttribute('data-title') || btn.getAttribute('aria-label') || '';
+            openTrailer(url, title);
         });
 
         modalEl.addEventListener('hidden.bs.modal', function () {

@@ -1,0 +1,21 @@
+ALTER TABLE "Movies" ADD COLUMN IF NOT EXISTS "TrailerUrl" VARCHAR(500) NULL;
+
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/_inKs4eeHiI' WHERE "Title" ILIKE '%Kung Fu Panda%' OR "Title" ILIKE '%Panda 4%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/Way9Dexny3w' WHERE "Title" ILIKE '%Dune%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/W8VekFsJKZc' WHERE "Title" ILIKE 'Mai%' OR "Title" ILIKE '%phim mai%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/ag5d9Su53nA' WHERE "Title" ILIKE '%Quật Mộ%' OR "Title" ILIKE '%Exhuma%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/lV1OOlGwExM' WHERE "Title" ILIKE '%Godzilla%' OR "Title" ILIKE '%Kong%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/a8Gx8wiNbs8' WHERE "Title" ILIKE '%Avatar 3%' OR "Title" ILIKE '%Tro Tàn%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/d9MyW72ELq0' WHERE "Title" = 'Avatar';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/73_1biulkYk' WHERE "Title" ILIKE '%Deadpool%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/32RAq6JzguY' WHERE "Title" ILIKE '%Fast%' OR "Title" ILIKE '%Furious%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/AbkYj4X_9g4' WHERE "Title" ILIKE '%Săn Ma%' OR "Title" ILIKE '%Ghostbusters%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/4rgYUipGJNo' WHERE "Title" ILIKE '%Giác Đấu%' OR "Title" ILIKE '%Gladiator%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/qEVUtrk8_B4' WHERE "Title" ILIKE '%John Wick%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/o17MF9vnabg' WHERE "Title" ILIKE '%Mufasa%' OR "Title" ILIKE '%Vua Sư Tử%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/YPY7J-flzE8' WHERE "Title" ILIKE '%Câm Lặng%' OR "Title" ILIKE '%Quiet Place%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/qSu6i2iFMO0' WHERE "Title" ILIKE '%Sonic%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/shW9i6k8cB0' WHERE "Title" ILIKE '%Nhện%' OR "Title" ILIKE '%Spider%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/I10q6fj4n3U' WHERE "Title" ILIKE '%Titanic%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/_Z3QKkl1WyM' WHERE "Title" ILIKE '%Wakanda%' OR "Title" ILIKE '%Báo Đen%';
+UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/jWM0ct-OLsM' WHERE "Title" ILIKE '%Zootopia%';

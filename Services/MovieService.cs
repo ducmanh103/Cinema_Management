@@ -37,6 +37,7 @@ namespace CinemaManagement.Services
                     ReleaseDate = m.ReleaseDate,
                     PosterUrl = m.PosterUrl,
                     BannerUrl = m.BannerUrl,
+                    TrailerUrl = m.TrailerUrl,
                     Status = m.Status,
                     Genres = m.MovieGenres.Select(mg => mg.Genre != null ? mg.Genre.GenreName : "").ToList(),
                     HasShowtimes = m.Showtimes.Any(s => s.StartTime >= now),
@@ -74,6 +75,7 @@ namespace CinemaManagement.Services
                     ReleaseDate = m.ReleaseDate,
                     PosterUrl = m.PosterUrl,
                     BannerUrl = m.BannerUrl,
+                    TrailerUrl = m.TrailerUrl,
                     Status = m.Status,
                     Genres = m.MovieGenres.Select(mg => mg.Genre != null ? mg.Genre.GenreName : "").ToList()
                 })
@@ -90,6 +92,7 @@ namespace CinemaManagement.Services
                 ReleaseDate = dto.ReleaseDate,
                 PosterUrl = dto.PosterUrl,
                 BannerUrl = dto.BannerUrl,
+                TrailerUrl = dto.TrailerUrl,
                 Status = dto.Status
             };
 
@@ -117,6 +120,7 @@ namespace CinemaManagement.Services
             movie.ReleaseDate = dto.ReleaseDate;
             movie.PosterUrl = dto.PosterUrl;
             movie.BannerUrl = dto.BannerUrl;
+            movie.TrailerUrl = dto.TrailerUrl;
             movie.Status = dto.Status;
 
             await _context.MovieGenres.Where(mg => mg.MovieId == id).ExecuteDeleteAsync();

@@ -13,7 +13,7 @@
     var ageDesc = MovieDisplayHelper.GetAgeBadgeDesc(Model.Title);
     var format = MovieDisplayHelper.GetMovieFormat(Model.Title);
     var rating = MovieDisplayHelper.GetMovieRating(Model.MovieId).ToString("0.0");
-    var trailerUrl = MovieDisplayHelper.GetTrailerEmbedUrl(Model.Title);
+    var trailerUrl = MovieDisplayHelper.GetTrailerEmbedUrl(Model.Title, Model.TrailerUrl);
     var poster = string.IsNullOrWhiteSpace(Model.PosterUrl)
         ? "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800"
         : Model.PosterUrl;
