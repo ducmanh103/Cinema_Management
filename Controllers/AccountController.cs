@@ -1272,8 +1272,8 @@ namespace CinemaManagement.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
-        // GET & POST: /Account/Logout (Hỗ trợ cả POST và GET trực tiếp qua URL hoặc reload)
-        [AcceptVerbs("GET", "POST")]
+        // GET & POST: /Account/Logout (Hỗ trợ cả POST, GET trực tiếp qua URL hoặc reload, và HEAD)
+        [AcceptVerbs("GET", "POST", "HEAD")]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Logout()
         {

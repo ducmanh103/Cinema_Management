@@ -105,7 +105,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.prod.yml,nginx/*,DB/CinemaManagement_PostgreSQL.sql"
+          source: "docker-compose.yml,nginx/*,DB/CinemaManagement_PostgreSQL.sql"
           target: "/opt/cinemahub"
 
       - name: Deploy via SSH
@@ -125,8 +125,8 @@ jobs:
               sed -i '/^[[:space:]]*$/N;/^\n$/D' .env.prod
             fi
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker compose --env-file .env.prod -f docker-compose.prod.yml pull
-            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose --env-file .env.prod pull
+            docker compose --env-file .env.prod up -d --remove-orphans
             docker exec cinemahub_nginx nginx -s reload || true
             docker image prune -f
             echo "✅ Deployed $(date)"

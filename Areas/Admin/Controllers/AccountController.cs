@@ -372,8 +372,8 @@ namespace CinemaManagement.Areas.Admin.Controllers
             return RedirectToAction(nameof(VerifyMfa));
         }
 
-        // GET & POST: /Admin/Account/Logout (Hỗ trợ cả POST và GET trực tiếp qua URL hoặc reload)
-        [AcceptVerbs("GET", "POST")]
+        // GET & POST: /Admin/Account/Logout (Hỗ trợ cả POST, GET trực tiếp qua URL hoặc reload, và HEAD)
+        [AcceptVerbs("GET", "POST", "HEAD")]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Logout()
         {

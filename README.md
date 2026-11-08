@@ -162,7 +162,8 @@ Cinema_Management/
 │   ├── TelegramSecurityAlertService.cs # Gửi thông báo an ninh thời gian thực
 │   └── VnPayLibrary.cs         # Thư viện kiểm tra chữ ký số chống Timing Attack
 ├── nginx/                      # Cấu hình Nginx Reverse Proxy, SSL & Rate Limit
-├── docker-compose.prod.yml     # Khởi chạy cụm dịch vụ Production (Web, DB, Nginx, Certbot)
+├── docker-compose.yml          # Khởi chạy cụm dịch vụ phân tán (Web, DB, Nginx, Certbot)
+├── .env.example                # Template cấu hình biến môi trường bảo mật
 └── Dockerfile                  # Đóng gói Multi-stage build container .NET 8 siêu nhẹ
 ```
 

@@ -1,39 +1,145 @@
-version: '3.8'
+# ==========================================
+# CinemaHub - Docker Compose (Production & Staging)
+# ==========================================
+# Sử dụng: docker compose --env-file .env.prod up -d
+# Cấu hình tối ưu cho VPS 2 vCPU / 2 GB RAM (Tách biệt 4 container)
 
 services:
-  # 1. PostgreSQL Database Service
+  # ── 1. PostgreSQL 16 Database (Tuned cho 2GB RAM) ──
   postgres_db:
     image: postgres:16-alpine
     container_name: cinemahub_postgres
-    restart: always
+    restart: unless-stopped
+    env_file:
+      - ${ENV_FILE:-.env.prod}
     environment:
-      POSTGRES_DB: CinemaManagement
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: SecretPassword123!
+      TZ: Asia/Ho_Chi_Minh
+      POSTGRES_DB: ${DB_NAME:-CinemaManagement}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    command: >
+      postgres
+      -c max_connections=40
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=64MB
+      -c min_wal_size=128MB
+      -c max_wal_size=512MB
+      -c checkpoint_completion_target=0.9
+      -c random_page_cost=1.1
+      -c timezone=Asia/Ho_Chi_Minh
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./DB/CinemaManagement_PostgreSQL.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-CinemaManagement}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 640M
+    networks:
+      - cinemahub_net
 
-  # 2. CinemaHub Web Application (.NET 8)
+  # ── 2. CinemaHub Web Application (.NET 8 Workstation GC) ──
   web_app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/ducmanh103/cinema_management:latest
     container_name: cinemahub_web
-    restart: always
+    restart: unless-stopped
     depends_on:
-      - postgres_db
-    ports:
-      - "8080:8080"
+      postgres_db:
+        condition: service_healthy
+    expose:
+      - "8080"
+    volumes:
+      - dp_keys:/app/dp_keys
+      - uploads_data:/app/wwwroot/uploads
+    env_file:
+      - ${ENV_FILE:-.env.prod}
     environment:
+      - TZ=Asia/Ho_Chi_Minh
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=postgres_db;Port=5432;Database=CinemaManagement;Username=postgres;Password=SecretPassword123!
-      - Gemini__ApiKey=${GEMINI_API_KEY}
-      - Gemini__Model=gemini-2.5-flash
-      - VnPay__TmnCode=${VNPAY_TMN_CODE}
-      - VnPay__HashSecret=${VNPAY_HASH_SECRET}
+      - DOTNET_GCHeapHardLimit=0x1C000000
+      - ConnectionStrings__DefaultConnection=Host=postgres_db;Port=5432;Database=${DB_NAME:-CinemaManagement};Username=${DB_USER:-postgres};Password=${DB_PASSWORD};Maximum Pool Size=20;Minimum Pool Size=2;Connection Idle Lifetime=60;
+      - Gemini__ApiKey=${GEMINI_API_KEY:-}
+      - Gemini__Model=${GEMINI_MODEL:-gemini-2.5-flash}
+      - VnPay__TmnCode=${VNPAY_TMN_CODE:-}
+      - VnPay__HashSecret=${VNPAY_HASH_SECRET:-}
+      - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID:-}
+      - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
+      - Smtp__Host=${SMTP_HOST:-}
+      - Smtp__Port=${SMTP_PORT:-587}
+      - Smtp__Username=${SMTP_USER:-}
+      - Smtp__Password=${SMTP_PASS:-}
+      - Smtp__FromEmail=${SMTP_FROM:-}
+      - Telegram__BotToken=${TELEGRAM_BOT_TOKEN:-}
+      - Telegram__ChatId=${TELEGRAM_ALERT_CHAT_ID:-}
+      - Recaptcha__SiteKey=${RECAPTCHA_SITE_KEY:-}
+      - Recaptcha__SecretKey=${RECAPTCHA_SECRET_KEY:-}
+      - ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 640M
+    networks:
+      - cinemahub_net
+
+  # ── 3. Nginx Reverse Proxy (SSL Termination + HTTP/2 + Security Headers) ──
+  nginx:
+    image: nginx:alpine
+    container_name: cinemahub_nginx
+    restart: unless-stopped
+    depends_on:
+      web_app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - certbot_webroot:/var/www/certbot:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 96M
+    networks:
+      - cinemahub_net
+
+  # ── 4. Certbot (Let's Encrypt SSL Tự động gia hạn) ──
+  certbot:
+    image: certbot/certbot
+    container_name: cinemahub_certbot
+    volumes:
+      - ./nginx/certs:/etc/letsencrypt
+      - certbot_webroot:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - cinemahub_net
 
 volumes:
   pgdata:
+  dp_keys:
+  uploads_data:
+  certbot_webroot:
+
+networks:
+  cinemahub_net:
+    driver: bridge
