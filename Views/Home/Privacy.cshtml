@@ -1,0 +1,146 @@
+@{
+    ViewData["Title"] = "Chính sách Bảo vệ Dữ liệu Cá nhân";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            <!-- Header Card -->
+            <div class="text-center mb-5">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" style="background:rgba(245,185,66,0.12);border:1px solid rgba(245,185,66,0.3);color:#F5B942;">
+                    <i class="bi bi-shield-check"></i>
+                    <span class="small fw-semibold">Tuân thủ Nghị định 13/2023/NĐ-CP của Chính phủ Việt Nam</span>
+                </div>
+                <h1 class="fw-bold text-white mb-3" style="font-family:var(--font-display);font-size:clamp(1.8rem,3.5vw,2.4rem);">
+                    Chính Sách Bảo Vệ Dữ Liệu Cá Nhân
+                </h1>
+                <p class="text-secondary small mb-0">
+                    Hiệu lực thi hành: Từ ngày 01/07/2023 | Phiên bản cập nhật: Tháng 11/2026
+                </p>
+            </div>
+
+            <!-- Content Body (Glassmorphism dark style) -->
+            <div class="p-4 p-md-5 rounded-4" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(16px);line-height:1.8;color:#cbd5e1;">
+                
+                <section class="mb-5">
+                    <h3 class="fw-bold text-white mb-3 h5 d-flex align-items-center gap-2">
+                        <span class="badge rounded-pill bg-warning text-dark">1</span>
+                        Giới Thiệu &amp; Cam Kết
+                    </h3>
+                    <p>
+                        Hệ thống rạp chiếu phim <strong>CinemaHub</strong> (gọi tắt là "Chúng tôi") cam kết bảo vệ tuyệt đối quyền riêng tư và dữ liệu cá nhân của Quý khách hàng. Chính sách này quy định cách thức chúng tôi thu thập, sử dụng, lưu trữ, mã hóa và bảo vệ dữ liệu cá nhân của bạn khi sử dụng trang web và các dịch vụ trực tuyến của CinemaHub, phù hợp theo <strong>Nghị định số 13/2023/NĐ-CP</strong> ngày 17/04/2023 của Chính phủ về Bảo vệ Dữ liệu Cá nhân (PDPD).
+                    </p>
+                </section>
+
+                <section class="mb-5">
+                    <h3 class="fw-bold text-white mb-3 h5 d-flex align-items-center gap-2">
+                        <span class="badge rounded-pill bg-warning text-dark">2</span>
+                        Các Loại Dữ Liệu Cá Nhân Thu Thập
+                    </h3>
+                    <p>Chúng tôi chỉ thu thập các dữ liệu cần thiết phục vụ cho việc cung cấp dịch vụ đặt vé và quản lý tài khoản:</p>
+                    <ul class="ps-3">
+                        <li><strong>Dữ liệu danh tính:</strong> Họ và tên đầy đủ, ảnh đại diện (nếu đăng nhập thông qua Google OAuth).</li>
+                        <li><strong>Dữ liệu liên hệ:</strong> Địa chỉ email đã xác thực (dùng để gửi mã vé điện tử, OTP bảo mật, xác thực tài khoản).</li>
+                        <li><strong>Dữ liệu giao dịch &amp; sử dụng:</strong> Lịch sử đặt vé, suất chiếu đã chọn, thông tin thanh toán VNPay (mã giao dịch, trạng thái thành công/thất bại, không lưu trữ thông tin thẻ ngân hàng của khách hàng).</li>
+                        <li><strong>Dữ liệu kỹ thuật &amp; an ninh:</strong> Địa chỉ IP, nhật ký kiểm toán (Audit Logs), loại trình duyệt phục vụ phòng chống gian lận và tấn công mạng.</li>
+                    </ul>
+                </section>
+
+                <section class="mb-5">
+                    <h3 class="fw-bold text-white mb-3 h5 d-flex align-items-center gap-2">
+                        <span class="badge rounded-pill bg-warning text-dark">3</span>
+                        Biện Pháp Kỹ Thuật Bảo Vệ Dữ Liệu (Security Posture)
+                    </h3>
+                    <p>CinemaHub áp dụng các tiêu chuẩn an toàn thông tin khắt khe nhất để bảo vệ dữ liệu khỏi rò rỉ, truy cập trái phép hoặc mất mát:</p>
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 h-100" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);">
+                                <div class="text-warning fw-bold mb-1"><i class="bi bi-key-fill me-2"></i>Mã hóa PII chuẩn AES-256-GCM</div>
+                                <div class="small text-secondary">Toàn bộ Họ tên và Email được mã hoá tự động ở tầng ORM trước khi lưu vào cơ sở dữ liệu PostgreSQL. Không lưu PII dạng văn bản rõ.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 h-100" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);">
+                                <div class="text-warning fw-bold mb-1"><i class="bi bi-shield-lock-fill me-2"></i>Blind Index (HMAC-SHA256)</div>
+                                <div class="small text-secondary">Truy vấn tìm kiếm email sử dụng hàm băm một chiều có khoá bí mật, giúp ngăn ngừa tấn công Rainbow Table và rò rỉ khi dump dữ liệu.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 h-100" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);">
+                                <div class="text-warning fw-bold mb-1"><i class="bi bi-person-check-fill me-2"></i>Xác thực 2 lớp (MFA) cho Admin</div>
+                                <div class="small text-secondary">Tất cả tài khoản Quản trị viên và Nhân viên đều bắt buộc vượt qua bước xác thực mã OTP thời gian thực qua Email và Telegram Alert trước khi truy cập CMS.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 h-100" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);">
+                                <div class="text-warning fw-bold mb-1"><i class="bi bi-journal-text me-2"></i>Audit Log Bất Biến</div>
+                                <div class="small text-secondary">Ghi lại toàn bộ hành vi quản trị (thay đổi vai trò, khoá tài khoản, xoá dữ liệu, cấu hình lịch chiếu) kèm địa chỉ IP và dấu thời gian phục vụ hậu kiểm.</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <h3 class="fw-bold text-white mb-3 h5 d-flex align-items-center gap-2">
+                        <span class="badge rounded-pill bg-warning text-dark">4</span>
+                        Quyền Của Quý Khách Đối Với Dữ Liệu Cá Nhân
+                    </h3>
+                    <p>Theo <strong>Điều 9 Nghị định 13/2023/NĐ-CP</strong>, Quý khách với tư cách là Chủ thể dữ liệu có đầy đủ các quyền sau:</p>
+                    <div class="table-responsive mt-2">
+                        <table class="table table-dark table-bordered table-striped border-secondary border-opacity-25 small mb-0">
+                            <thead>
+                                <tr class="text-warning">
+                                    <th style="width:30%;">Quyền hạn</th>
+                                    <th>Mô tả &amp; Phương thức thực hiện trên CinemaHub</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold">1. Quyền được biết &amp; Truy cập</td>
+                                    <td>Quý khách có thể xem toàn bộ thông tin tài khoản và lịch sử vé đã đặt tại mục <em><a asp-controller="Booking" asp-action="MyTickets" class="text-warning">Vé của tôi</a></em> hoặc <em><a asp-controller="Account" asp-action="Profile" class="text-warning">Hồ sơ cá nhân</a></em>.</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">2. Quyền chỉnh sửa dữ liệu</td>
+                                    <td>Cập nhật trực tiếp họ tên, số điện thoại hoặc mật khẩu trong mục Cài đặt tài khoản bất kỳ lúc nào.</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">3. Quyền yêu cầu xóa dữ liệu (Right to Erasure)</td>
+                                    <td>Khi Quý khách yêu cầu xóa tài khoản, hệ thống sẽ thực hiện <strong>Xóa mềm (Soft Delete)</strong> và lập tức <strong>ẩn danh hóa vĩnh viễn (Anonymization)</strong> toàn bộ Họ tên, Email, Mật khẩu. Dữ liệu lịch sử vé và tài chính được giữ lại dưới dạng ẩn danh theo quy định kiểm toán kế toán.</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">4. Quyền rút lại sự đồng ý &amp; Phản đối xử lý</td>
+                                    <td>Quý khách có quyền dừng sử dụng dịch vụ và liên hệ bộ phận hỗ trợ để thu hồi sự đồng ý xử lý dữ liệu.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="mb-4">
+                    <h3 class="fw-bold text-white mb-3 h5 d-flex align-items-center gap-2">
+                        <span class="badge rounded-pill bg-warning text-dark">5</span>
+                        Thông Tin Liên Hệ &amp; Bộ Phận Bảo Vệ Dữ Liệu (DPO)
+                    </h3>
+                    <p>Mọi câu hỏi, khiếu nại hoặc yêu cầu thực thi quyền đối với dữ liệu cá nhân xin vui lòng gửi về:</p>
+                    <div class="p-3 rounded-3" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);">
+                        <p class="mb-1"><strong>Đơn vị:</strong> Hệ Thống Rạp Chiếu Phim CinemaHub Vietnam</p>
+                        <p class="mb-1"><strong>Cán bộ Phụ trách Bảo vệ Dữ liệu (DPO):</strong> Ban An Toàn Thông Tin CinemaHub</p>
+                        <p class="mb-1"><strong>Địa chỉ:</strong> 235 Hoàng Quốc Việt, phường Cổ Nhuế 1, quận Bắc Từ Liêm, Hà Nội</p>
+                        <p class="mb-1"><strong>Hotline hỗ trợ:</strong> <span class="text-white">0344 596 643</span> (08:00 – 23:30 hàng ngày)</p>
+                        <p class="mb-0"><strong>Email tiếp nhận xử lý dữ liệu:</strong> <span class="text-warning">privacy@cinemahubvn.io.vn</span> / <span class="text-warning">ducmanh2005vt@gmail.com</span></p>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Back to Home Button -->
+            <div class="text-center mt-4">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-warning rounded-pill px-4 py-2">
+                    <i class="bi bi-arrow-left me-2"></i>Quay lại Trang Chủ
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+

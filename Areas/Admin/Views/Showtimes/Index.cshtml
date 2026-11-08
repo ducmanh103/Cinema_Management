@@ -4,55 +4,231 @@
     var showtimes = Model ?? new List<ShowtimeDto>();
     var movies = ViewBag.Movies as List<CinemaManagement.Models.Movie> ?? new List<CinemaManagement.Models.Movie>();
     var rooms = ViewBag.Rooms as List<CinemaManagement.Models.Room> ?? new List<CinemaManagement.Models.Room>();
+    var theaters = ViewBag.Theaters as List<CinemaManagement.Models.Theater> ?? new List<CinemaManagement.Models.Theater>();
+
+    var selectedMovieId = (int?)ViewBag.SelectedMovieId;
+    var selectedTheaterId = (int?)ViewBag.SelectedTheaterId;
+    var selectedDateFilter = (string)(ViewBag.SelectedDateFilter ?? "all");
+    var searchTerm = (string?)ViewBag.SearchTerm;
+
+    int totalUpcoming = ViewBag.TotalUpcoming ?? 0;
+    int totalToday = ViewBag.TotalToday ?? 0;
+    var nowVn = CinemaManagement.Helpers.VietnamTime.Now;
 }
 
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success rounded-4 py-2 px-3 small mb-4">
-        <i class="bi bi-check-circle-fill me-1"></i> @TempData["Success"]
+    <div class="alert alert-success rounded-4 py-2 px-3 small mb-4 d-flex align-items-center gap-2">
+        <i class="bi bi-check-circle-fill fs-5"></i>
+        <div>@TempData["Success"]</div>
     </div>
 }
 @if (TempData["Error"] != null)
 {
-    <div class="alert alert-danger rounded-4 py-2 px-3 small mb-4">
-        <i class="bi bi-exclamation-triangle-fill me-1"></i> @TempData["Error"]
+    <div class="alert alert-danger rounded-4 py-2 px-3 small mb-4 d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+        <div>@TempData["Error"]</div>
     </div>
 }
 
-<div class="adm-card">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+<!-- Statistical Overview Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="adm-card py-3 px-3 d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-white" style="background:rgba(2,132,199,0.15);color:#0284c7!important;">
+                <i class="bi bi-film fs-3"></i>
+            </div>
+            <div>
+                <div class="text-white-50 small fw-bold text-uppercase">Tổng số suất</div>
+                <div class="text-white fw-bold fs-4">@showtimes.Count</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="adm-card py-3 px-3 d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-white" style="background:rgba(16,185,129,0.15);color:#10b981!important;">
+                <i class="bi bi-clock-history fs-3"></i>
+            </div>
+            <div>
+                <div class="text-white-50 small fw-bold text-uppercase">Sắp tới</div>
+                <div class="text-white fw-bold fs-4">@totalUpcoming</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="adm-card py-3 px-3 d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-white" style="background:rgba(245,185,66,0.15);color:#f5b942!important;">
+                <i class="bi bi-calendar-event fs-3"></i>
+            </div>
+            <div>
+                <div class="text-white-50 small fw-bold text-uppercase">Hôm nay</div>
+                <div class="text-white fw-bold fs-4">@totalToday</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="adm-card py-3 px-3 d-flex align-items-center gap-3">
+            <div class="rounded-3 p-3 text-white" style="background:rgba(255,46,85,0.15);color:#ff2e55!important;">
+                <i class="bi bi-geo-alt fs-3"></i>
+            </div>
+            <div>
+                <div class="text-white-50 small fw-bold text-uppercase">Cụm rạp</div>
+                <div class="text-white fw-bold fs-4">@theaters.Count</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="adm-card mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
         <div>
-            <h5 class="text-white fw-bold mb-1"><i class="bi bi-calendar2-week text-info me-2"></i>Quản Lý Lịch Chiếu (@showtimes.Count suất)</h5>
-            <p class="text-white-50 small mb-0">Tạo lịch chiếu mới, điều chỉnh giờ chiếu, phòng chiếu và giá vé tiêu chuẩn</p>
+            <h5 class="text-white fw-bold mb-1"><i class="bi bi-calendar2-week text-info me-2"></i>Điều Phối Lịch Chiếu Phim</h5>
+            <p class="text-white-50 small mb-0">Bộ lọc thông minh theo ngày, cụm rạp và tên phim hỗ trợ sắp xếp suất chiếu chính xác</p>
         </div>
         <button type="button" class="adm-btn-primary" data-bs-toggle="modal" data-bs-target="#createShowtimeModal">
-            <i class="bi bi-plus-lg me-1"></i> Tạo Suất Chiếu Mới
+            <i class="bi bi-plus-lg me-1"></i> Thêm Suất Chiếu
         </button>
     </div>
+
+    <!-- Quick Date Filter Tabs -->
+    <div class="d-flex flex-wrap gap-2 mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+        <a asp-action="Index" 
+           asp-route-dateFilter="all" 
+           asp-route-movieId="@selectedMovieId" 
+           asp-route-theaterId="@selectedTheaterId"
+           class="btn btn-sm @(selectedDateFilter == "all" ? "btn-danger fw-bold" : "btn-outline-secondary text-white-50") rounded-pill px-3">
+            Tất cả
+        </a>
+        <a asp-action="Index" 
+           asp-route-dateFilter="today" 
+           asp-route-movieId="@selectedMovieId" 
+           asp-route-theaterId="@selectedTheaterId"
+           class="btn btn-sm @(selectedDateFilter == "today" ? "btn-danger fw-bold" : "btn-outline-secondary text-white-50") rounded-pill px-3">
+            Hôm nay (@totalToday)
+        </a>
+        <a asp-action="Index" 
+           asp-route-dateFilter="tomorrow" 
+           asp-route-movieId="@selectedMovieId" 
+           asp-route-theaterId="@selectedTheaterId"
+           class="btn btn-sm @(selectedDateFilter == "tomorrow" ? "btn-danger fw-bold" : "btn-outline-secondary text-white-50") rounded-pill px-3">
+            Ngày mai
+        </a>
+        <a asp-action="Index" 
+           asp-route-dateFilter="next7days" 
+           asp-route-movieId="@selectedMovieId" 
+           asp-route-theaterId="@selectedTheaterId"
+           class="btn btn-sm @(selectedDateFilter == "next7days" ? "btn-danger fw-bold" : "btn-outline-secondary text-white-50") rounded-pill px-3">
+            7 ngày tới
+        </a>
+        <a asp-action="Index" 
+           asp-route-dateFilter="upcoming" 
+           asp-route-movieId="@selectedMovieId" 
+           asp-route-theaterId="@selectedTheaterId"
+           class="btn btn-sm @(selectedDateFilter == "upcoming" ? "btn-danger fw-bold" : "btn-outline-secondary text-white-50") rounded-pill px-3">
+            Sắp chiếu (@totalUpcoming)
+        </a>
+        <a asp-action="Index" 
+           asp-route-dateFilter="past" 
+           asp-route-movieId="@selectedMovieId" 
+           asp-route-theaterId="@selectedTheaterId"
+           class="btn btn-sm @(selectedDateFilter == "past" ? "btn-danger fw-bold" : "btn-outline-secondary text-white-50") rounded-pill px-3">
+            Đã kết thúc
+        </a>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="get" asp-action="Index" class="row g-2 mb-4 align-items-center">
+        <input type="hidden" name="dateFilter" value="@selectedDateFilter" />
+        <div class="col-12 col-md-3">
+            <select name="movieId" class="form-select bg-dark text-white border-secondary border-opacity-25 py-2">
+                <option value="">-- Tất cả phim --</option>
+                @foreach (var m in movies)
+                {
+                    <option value="@m.MovieId" selected="@(selectedMovieId == m.MovieId)">@m.Title (@m.Duration')</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-3">
+            <select name="theaterId" class="form-select bg-dark text-white border-secondary border-opacity-25 py-2">
+                <option value="">-- Tất cả cụm rạp --</option>
+                @foreach (var t in theaters)
+                {
+                    <option value="@t.TheaterId" selected="@(selectedTheaterId == t.TheaterId)">@t.TheaterName</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary border-opacity-25 text-white-50">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" name="search" value="@searchTerm" class="form-control bg-dark text-white border-secondary border-opacity-25 py-2" placeholder="Tìm tên phim, phòng, rạp..." />
+            </div>
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                <i class="bi bi-funnel me-1"></i> Lọc
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary py-2" title="Xóa bộ lọc">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        </div>
+    </form>
 
     <div class="table-responsive">
         <table id="adminShowtimesTable" class="table table-dark-glass align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Mã Suất</th>
+                    <th style="width:70px;">Mã</th>
                     <th>Tên Phim</th>
-                    <th>Cụm Rạp</th>
-                    <th>Phòng Chiếu</th>
+                    <th>Cụm Rạp &amp; Phòng</th>
                     <th>Thời Gian Chiếu</th>
-                    <th>Giá Tiêu Chuẩn</th>
-                    <th class="text-end">Thao Tác</th>
+                    <th>Trạng Thái</th>
+                    <th>Giá Vé</th>
+                    <th class="text-end" style="width:110px;">Thao Tác</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var s in showtimes)
                 {
+                    var isUpcoming = s.StartTime > nowVn;
+                    var isHappening = s.StartTime <= nowVn && s.StartTime.AddMinutes(s.MovieDuration) >= nowVn;
+
                     <tr id="showtime-row-@s.ShowtimeId">
                         <td class="font-monospace text-info fw-bold">#@s.ShowtimeId</td>
-                        <td class="fw-bold text-white">@s.MovieTitle</td>
-                        <td>@s.TheaterName</td>
-                        <td><span class="badge bg-info bg-opacity-25 text-info">@s.RoomName</span></td>
-                        <td class="font-monospace">@s.StartTime.ToString("HH:mm - dd/MM/yyyy")</td>
-                        <td class="fw-bold text-warning">@s.Price.ToString("N0") ₫</td>
+                        <td>
+                            <div class="fw-bold text-white">@s.MovieTitle</div>
+                            <div class="text-white-50 small"><i class="bi bi-clock me-1"></i>@s.MovieDuration phút</div>
+                        </td>
+                        <td>
+                            <div class="text-white">@s.TheaterName</div>
+                            <span class="badge bg-info bg-opacity-25 text-info mt-1">@s.RoomName</span>
+                        </td>
+                        <td>
+                            <div class="font-monospace text-warning fw-bold fs-6">@s.StartTime.ToString("HH:mm")</div>
+                            <div class="text-white-50 small font-monospace">@s.StartTime.ToString("dd/MM/yyyy")</div>
+                        </td>
+                        <td>
+                            @if (isHappening)
+                            {
+                                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 px-2 py-1">
+                                    <i class="bi bi-play-circle-fill me-1"></i> Đang chiếu
+                                </span>
+                            }
+                            else if (isUpcoming)
+                            {
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-2 py-1">
+                                    <i class="bi bi-calendar-check me-1"></i> Sắp chiếu
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary bg-opacity-25 text-white-50 px-2 py-1">
+                                    <i class="bi bi-check2-all me-1"></i> Đã kết thúc
+                                </span>
+                            }
+                        </td>
+                        <td class="fw-bold text-white">@s.Price.ToString("N0") ₫</td>
                         <td class="text-end">
                             <div class="d-inline-flex gap-1">
                                 <button type="button"
@@ -61,12 +237,14 @@
                                         data-movie="@s.MovieId"
                                         data-room="@s.RoomId"
                                         data-time="@s.StartTime.ToString("yyyy-MM-ddTHH:mm")"
-                                        data-price="@s.Price">
+                                        data-price="@s.Price"
+                                        title="Chỉnh sửa suất chiếu">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
                                 <button type="button"
                                         class="btn btn-sm btn-outline-danger rounded-3 js-delete-showtime"
-                                        data-id="@s.ShowtimeId">
+                                        data-id="@s.ShowtimeId"
+                                        title="Xóa suất chiếu">
                                     <i class="bi bi-trash3"></i>
                                 </button>
                             </div>
@@ -85,7 +263,7 @@
             <form asp-action="CreateShowtime" method="post">
                 @Html.AntiForgeryToken()
                 <div class="modal-header border-bottom border-light-subtle">
-                    <h5 class="modal-title text-dark fw-bold"><i class="bi bi-plus-circle text-danger me-2"></i>Tạo Suất Chiếu Mới</h5>
+                    <h5 class="modal-title text-dark fw-bold"><i class="bi bi-plus-circle text-info me-2"></i>Thêm Suất Chiếu Mới</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -99,11 +277,11 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-secondary small fw-bold text-uppercase">Chọn Phòng Chiếu</label>
+                        <label class="form-label text-secondary small fw-bold text-uppercase">Chọn Phòng Chiếu &amp; Rạp</label>
                         <select name="roomId" class="form-select" required>
                             @foreach (var r in rooms)
                             {
-                                <option value="@r.RoomId">@r.RoomName (@(r.Theater?.TheaterName ?? "CinemaHub"))</option>
+                                <option value="@r.RoomId">@r.RoomName — @(r.Theater?.TheaterName ?? "CinemaHub")</option>
                             }
                         </select>
                     </div>
@@ -142,16 +320,16 @@
                         <select name="movieId" id="editMovieId" class="form-select" required>
                             @foreach (var m in movies)
                             {
-                                <option value="@m.MovieId">@m.Title</option>
+                                <option value="@m.MovieId">@m.Title (@m.Duration phút)</option>
                             }
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label text-secondary small fw-bold text-uppercase">Chọn Phòng Chiếu</label>
+                        <label class="form-label text-secondary small fw-bold text-uppercase">Chọn Phòng Chiếu &amp; Rạp</label>
                         <select name="roomId" id="editRoomId" class="form-select" required>
                             @foreach (var r in rooms)
                             {
-                                <option value="@r.RoomId">@r.RoomName (@(r.Theater?.TheaterName ?? "CinemaHub"))</option>
+                                <option value="@r.RoomId">@r.RoomName — @(r.Theater?.TheaterName ?? "CinemaHub")</option>
                             }
                         </select>
                     </div>
@@ -181,8 +359,21 @@
     <script>
         $(function () {
             $('#adminShowtimesTable').DataTable({
-                order: [[0, 'desc']],
-                pageLength: 10
+                pageLength: 15,
+                language: {
+                    search: "Tìm nhanh bảng:",
+                    lengthMenu: "Hiện _MENU_ dòng",
+                    info: "Hiển thị _START_ đến _END_ trên tổng số _TOTAL_ suất",
+                    infoEmpty: "Không có suất chiếu nào",
+                    infoFiltered: "(lọc từ _MAX_ suất)",
+                    zeroRecords: "Không tìm thấy suất chiếu phù hợp",
+                    paginate: {
+                        first: "Đầu",
+                        last: "Cuối",
+                        next: "Sau",
+                        previous: "Trước"
+                    }
+                }
             });
 
             var editModal = new bootstrap.Modal(document.getElementById('editShowtimeModal'));
@@ -199,17 +390,15 @@
 
             $(document).on('click', '.js-delete-showtime', function () {
                 var id = $(this).data('id');
-                if (!confirm('Xóa suất chiếu #' + id + '?')) return;
+                if (!confirm('Bạn có chắc chắn muốn xóa suất chiếu #' + id + '?')) return;
                 var token = $('#delete-showtime-form input[name="__RequestVerificationToken"]').val();
                 $.post('@Url.Action("DeleteShowtime", "Showtimes", new { area = "Admin" })', {
                     id: id,
                     __RequestVerificationToken: token
                 }, function (res) {
-                    if (res && res.success) {
-                        $('#showtime-row-' + id).fadeOut(250, function () { $(this).remove(); });
-                    } else {
-                        alert(res.message || 'Không thể xóa suất chiếu này.');
-                    }
+                    location.reload();
+                }).fail(function () {
+                    alert('Lỗi khi xóa suất chiếu.');
                 });
             });
         });

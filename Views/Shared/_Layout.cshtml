@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="csrf-token" content="@(Context.RequestServices.GetService<Microsoft.AspNetCore.Antiforgery.IAntiforgery>()?.GetAndStoreTokens(Context).RequestToken)" />
     <title>@ViewData["Title"] — CinemaHub | Trải Nghiệm Điện Ảnh Thế Hệ Mới</title>
     <!-- Bootstrap 5 & Bootstrap Icons -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -517,6 +518,7 @@
                     <ul class="list-unstyled mb-0">
                         <li><a asp-controller="Booking" asp-action="MyTickets" class="ch-footer-link"><i class="bi bi-ticket-perforated"></i> Quản lý &amp; hoàn vé online</a></li>
                         <li><a asp-controller="Account" asp-action="Profile" class="ch-footer-link"><i class="bi bi-shield-check"></i> Bảo mật tài khoản</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy" class="ch-footer-link"><i class="bi bi-shield-lock"></i> Chính sách Bảo vệ Dữ liệu (NĐ 13)</a></li>
                     </ul>
                 </div>
 
@@ -584,6 +586,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/security.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         window.addEventListener('scroll', function () {

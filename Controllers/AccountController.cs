@@ -39,6 +39,7 @@ namespace CinemaManagement.Controllers
         private readonly IConfiguration _config;
         private readonly IMemoryCache _cache;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IPiiEncryptionService _piiService;
 
         public AccountController(
             CinemaDbContext context,
@@ -47,7 +48,8 @@ namespace CinemaManagement.Controllers
             ISecurityAlertService securityAlert,
             IConfiguration config,
             IMemoryCache cache,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            IPiiEncryptionService piiService)
         {
             _context = context;
             _loginAttemptService = loginAttemptService;
@@ -56,6 +58,7 @@ namespace CinemaManagement.Controllers
             _config = config;
             _cache = cache;
             _httpClientFactory = httpClientFactory;
+            _piiService = piiService;
         }
 
         // GET: /Account/Login
@@ -89,11 +92,12 @@ namespace CinemaManagement.Controllers
                 return View(model);
             }
 
+            var emailHash = _piiService.ComputeEmailHash(normalizedUsername);
             var user = await _context.Users
                 .AsNoTracking()
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u =>
-                    (u.Username.ToLower() == normalizedUsername || (u.Email != null && u.Email.ToLower() == normalizedUsername))
+                    (u.Username.ToLower() == normalizedUsername || (u.EmailHash != null && u.EmailHash == emailHash))
                     && u.Status == "Active");
 
             // Nếu tài khoản tạo bằng Google (không đăng ký mật khẩu riêng)
@@ -181,9 +185,10 @@ namespace CinemaManagement.Controllers
                 return RedirectToAction(nameof(Login));
             }
 
+            var emailHash = _piiService.ComputeEmailHash(email);
             var user = await _context.Users
                 .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.GoogleSubjectId == googleSubjectId || (u.Email != null && u.Email.ToLower() == email));
+                .FirstOrDefaultAsync(u => u.GoogleSubjectId == googleSubjectId || (u.EmailHash != null && u.EmailHash == emailHash));
 
             if (user != null)
             {
@@ -233,6 +238,7 @@ namespace CinemaManagement.Controllers
                     PasswordHash = null,
                     FullName = string.IsNullOrWhiteSpace(fullName) ? candidateUsername : fullName,
                     Email = email,
+                    EmailHash = emailHash,
                     GoogleSubjectId = googleSubjectId,
                     EmailConfirmed = true,
                     SecurityStamp = Guid.NewGuid().ToString("N"),
@@ -302,7 +308,8 @@ namespace CinemaManagement.Controllers
                 return View(model);
             }
 
-            if (await _context.Users.AnyAsync(u => u.Email != null && u.Email.ToLower() == emailLower))
+            var emailHash = _piiService.ComputeEmailHash(emailLower);
+            if (await _context.Users.AnyAsync(u => u.EmailHash != null && u.EmailHash == emailHash))
             {
                 ModelState.AddModelError("Email", "Địa chỉ Gmail này đã được sử dụng.");
                 return View(model);
@@ -588,7 +595,8 @@ namespace CinemaManagement.Controllers
                 return (false, "Tên đăng nhập đã được sử dụng. Vui lòng đăng ký lại.");
             }
 
-            if (await _context.Users.AnyAsync(u => u.Email != null && u.Email.ToLower() == emailLower))
+            var emailHash = _piiService.ComputeEmailHash(emailLower);
+            if (await _context.Users.AnyAsync(u => u.EmailHash != null && u.EmailHash == emailHash))
             {
                 _cache.Remove($"pending_reg_email_{emailLower}");
                 _cache.Remove($"pending_reg_user_{usernameLower}");
@@ -601,6 +609,7 @@ namespace CinemaManagement.Controllers
                 PasswordHash = pending.PasswordHash,
                 FullName = pending.FullName,
                 Email = emailLower,
+                EmailHash = emailHash,
                 EmailConfirmed = true,
                 SecurityStamp = Guid.NewGuid().ToString("N"),
                 Status = "Active",
@@ -630,8 +639,9 @@ namespace CinemaManagement.Controllers
             var emailLower = model.Email.Trim().ToLowerInvariant();
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
+            var emailHash = _piiService.ComputeEmailHash(emailLower);
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == emailLower && u.Status == "Active");
+                .FirstOrDefaultAsync(u => u.EmailHash != null && u.EmailHash == emailHash && u.Status == "Active");
 
             if (user != null)
             {
@@ -692,9 +702,10 @@ namespace CinemaManagement.Controllers
             }
 
             var emailLower = email.Trim().ToLowerInvariant();
+            var emailHash = _piiService.ComputeEmailHash(emailLower);
             var user = await _context.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == emailLower && u.Status == "Active");
+                .FirstOrDefaultAsync(u => u.EmailHash != null && u.EmailHash == emailHash && u.Status == "Active");
 
             if (user == null || string.IsNullOrEmpty(user.PasswordHash))
             {
@@ -741,8 +752,9 @@ namespace CinemaManagement.Controllers
 
             var emailLower = model.Email.Trim().ToLowerInvariant();
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var emailHash = _piiService.ComputeEmailHash(emailLower);
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == emailLower && u.Status == "Active");
+                .FirstOrDefaultAsync(u => u.EmailHash != null && u.EmailHash == emailHash && u.Status == "Active");
 
             if (user == null || string.IsNullOrEmpty(user.PasswordHash))
             {
@@ -896,13 +908,15 @@ namespace CinemaManagement.Controllers
                 var newEmail = model.Email.Trim().ToLowerInvariant();
                 if (!string.Equals(user.Email, newEmail, StringComparison.OrdinalIgnoreCase))
                 {
-                    bool emailExists = await _context.Users.AnyAsync(u => u.UserId != userId && u.Email != null && u.Email.ToLower() == newEmail);
+                    var newEmailHash = _piiService.ComputeEmailHash(newEmail);
+                    bool emailExists = await _context.Users.AnyAsync(u => u.UserId != userId && u.EmailHash != null && u.EmailHash == newEmailHash);
                     if (emailExists)
                     {
                         TempData["Error"] = "Địa chỉ email này đã được sử dụng bởi tài khoản khác.";
                         return RedirectToAction(nameof(Profile));
                     }
                     user.Email = newEmail;
+                    user.EmailHash = newEmailHash;
                 }
             }
 

@@ -74,11 +74,26 @@ namespace CinemaManagement.Areas.Admin.Controllers
 
             targetUser.Status = targetUser.Status == "Active" ? "Inactive" : "Active";
             targetUser.SecurityStamp = Guid.NewGuid().ToString("N");
+
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            // Ghi Audit Log vào cơ sở dữ liệu
+            _context.AuditLogs.Add(new CinemaManagement.Models.AuditLog
+            {
+                TimestampUtc = DateTime.UtcNow,
+                ActorUsername = User.Identity?.Name,
+                ActorRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value,
+                Action = "TOGGLE_USER_STATUS",
+                EntityName = "User",
+                EntityId = targetUser.UserId.ToString(),
+                Details = $"Đổi trạng thái tài khoản '{targetUser.Username}' thành {targetUser.Status}",
+                IpAddress = ip,
+                Path = "/Admin/Users/ToggleUserStatus"
+            });
+
             await _context.SaveChangesAsync();
 
             _cache.Remove($"auth_stamp_{targetUser.UserId}");
-
-            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
             _securityAlert.EnqueueAlert(new SecurityAlert(
                 SecurityAlertLevel.Medium,
                 "ADMIN_USER_STATUS_CHANGED",
@@ -105,11 +120,25 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 var oldRole = user.Role?.RoleName ?? user.RoleId.ToString();
                 user.RoleId = roleId;
                 user.SecurityStamp = Guid.NewGuid().ToString("N");
+
+                var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+                _context.AuditLogs.Add(new CinemaManagement.Models.AuditLog
+                {
+                    TimestampUtc = DateTime.UtcNow,
+                    ActorUsername = User.Identity?.Name,
+                    ActorRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value,
+                    Action = "CHANGE_USER_ROLE",
+                    EntityName = "User",
+                    EntityId = user.UserId.ToString(),
+                    Details = $"Thay đổi vai trò của '{user.Username}': {oldRole} -> {role.RoleName}",
+                    IpAddress = ip,
+                    Path = "/Admin/Users/ChangeRole"
+                });
+
                 await _context.SaveChangesAsync();
 
                 _cache.Remove($"auth_stamp_{user.UserId}");
-
-                var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
                 _securityAlert.EnqueueAlert(new SecurityAlert(
                     SecurityAlertLevel.High,
                     "ADMIN_ROLE_CHANGED",
@@ -144,7 +173,8 @@ namespace CinemaManagement.Areas.Admin.Controllers
             }
 
             var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (currentUserId != null && int.TryParse(currentUserId, out int currentId) && currentId == targetUser.UserId)
+            int? currentId = int.TryParse(currentUserId, out int parsedId) ? parsedId : null;
+            if (currentId.HasValue && currentId.Value == targetUser.UserId)
             {
                 TempData["Error"] = "Bạn không thể tự xóa tài khoản của chính mình.";
                 return RedirectToAction(nameof(Index));
@@ -158,39 +188,55 @@ namespace CinemaManagement.Areas.Admin.Controllers
             }
 
             int ticketCount = targetUser.Tickets.Count;
-            if (targetUser.Tickets.Any())
-            {
-                foreach (var ticket in targetUser.Tickets)
-                {
-                    if (ticket.Payment != null)
-                    {
-                        _context.Payments.Remove(ticket.Payment);
-                    }
-                }
-                _context.Tickets.RemoveRange(targetUser.Tickets);
-            }
+
+            // Xóa mềm (Soft Delete) & Ẩn danh hoá dữ liệu cá nhân theo Nghị định 13/2023/NĐ-CP
+            // Giữ lại toàn bộ dữ liệu Vé & Thanh toán để bảo toàn báo cáo tài chính kế toán
+            targetUser.IsDeleted = true;
+            targetUser.DeletedAt = CinemaManagement.Helpers.VietnamTime.UtcNow;
+            targetUser.Status = "Deleted";
+            targetUser.SecurityStamp = Guid.NewGuid().ToString("N");
+            targetUser.PasswordHash = null;
+            targetUser.GoogleSubjectId = null;
+            targetUser.FullName = "Người dùng đã xóa";
+            targetUser.Email = $"deleted_{targetUser.UserId}@deleted.cinemahub.vn";
+            targetUser.EmailHash = $"deleted_{targetUser.UserId}_{Guid.NewGuid():N}";
 
             if (targetUser.PasswordResetTokens.Any())
             {
                 _context.PasswordResetTokens.RemoveRange(targetUser.PasswordResetTokens);
             }
 
-            _context.Users.Remove(targetUser);
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            // Ghi nhật ký kiểm toán bất biến (Audit Log) vào cơ sở dữ liệu
+            _context.AuditLogs.Add(new CinemaManagement.Models.AuditLog
+            {
+                TimestampUtc = DateTime.UtcNow,
+                ActorUsername = User.Identity?.Name,
+                ActorUserId = currentId,
+                ActorRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value,
+                Action = "SOFT_DELETE_USER",
+                EntityName = "User",
+                EntityId = targetUser.UserId.ToString(),
+                Details = $"Xóa mềm tài khoản '{targetUser.Username}' (Id={targetUser.UserId}). Đã ẩn danh hóa PII và bảo lưu {ticketCount} vé lịch sử giao dịch.",
+                IpAddress = ip,
+                Path = "/Admin/Users/DeleteUser"
+            });
+
             await _context.SaveChangesAsync();
 
             _cache.Remove($"auth_stamp_{targetUser.UserId}");
 
-            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
             _securityAlert.EnqueueAlert(new SecurityAlert(
                 SecurityAlertLevel.High,
-                "ADMIN_USER_DELETED",
-                $"Tài khoản '{targetUser.Username}' đã bị xóa vĩnh viễn khỏi hệ thống",
-                $"Thực hiện bởi Admin '{User.Identity?.Name}'. Đã dọn dẹp {ticketCount} vé liên quan.",
+                "ADMIN_USER_SOFT_DELETED",
+                $"Tài khoản '{targetUser.Username}' đã được xóa mềm và ẩn danh hóa",
+                $"Thực hiện bởi Admin '{User.Identity?.Name}'. Đã bảo lưu toàn vẹn {ticketCount} vé giao dịch phục vụ đối soát.",
                 IpAddress: ip,
                 Username: User.Identity?.Name,
                 Path: "/Admin/Users/DeleteUser"));
 
-            TempData["Success"] = $"Đã xóa tài khoản '{targetUser.Username}' thành công.";
+            TempData["Success"] = $"Đã xóa mềm và ẩn danh hoá tài khoản '{targetUser.Username}' thành công. Lịch sử giao dịch được bảo lưu an toàn.";
             return RedirectToAction(nameof(Index));
         }
     }

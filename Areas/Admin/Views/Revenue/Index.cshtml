@@ -101,8 +101,8 @@
             var ctx = document.getElementById('revenueChartCanvas');
             if (!ctx) return;
 
-            var labels = @Html.Raw(ViewBag.ChartLabels ?? "[]");
-            var revData = @Html.Raw(ViewBag.ChartRevenue ?? "[]");
+            var labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartLabels ?? Array.Empty<string>()));
+            var revData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartRevenue ?? Array.Empty<decimal>()));
 
             new Chart(ctx, {
                 type: 'bar',

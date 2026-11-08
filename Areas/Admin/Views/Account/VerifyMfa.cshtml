@@ -1,0 +1,189 @@
+@model VerifyAdminMfaViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Xác Thực Bảo Mật 2 Lớp (MFA) — CinemaHub Quản Trị";
+}
+<!DOCTYPE html>
+<html lang="vi" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            background:
+                radial-gradient(circle at 80% 20%, rgba(255, 46, 85, 0.16), transparent 45%),
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.12), transparent 50%),
+                #070a14;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+            color: #f8fafc;
+        }
+        .adm-mfa-box {
+            width: 100%;
+            max-width: 460px;
+            padding: 38px 32px;
+            border-radius: 24px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            animation: fadeIn 0.4s ease-out;
+        }
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .otp-input {
+            letter-spacing: 14px;
+            font-size: 2rem;
+            font-family: monospace;
+            text-align: center;
+            font-weight: 800;
+            color: #FF2E55 !important;
+            background: rgba(0, 0, 0, 0.35) !important;
+            border: 2px solid rgba(255, 46, 85, 0.3) !important;
+            border-radius: 14px;
+        }
+        .otp-input:focus {
+            border-color: #FF2E55 !important;
+            box-shadow: 0 0 0 4px rgba(255, 46, 85, 0.25) !important;
+        }
+        .btn-mfa-submit {
+            background: linear-gradient(135deg, #FF2E55 0%, #FF6B35 100%);
+            border: none;
+            color: #ffffff;
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 10px 24px rgba(255, 46, 85, 0.35);
+            transition: all 0.2s ease;
+        }
+        .btn-mfa-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(255, 46, 85, 0.45);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="adm-mfa-box">
+        <div class="text-center mb-4">
+            <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-4 text-white"
+                 style="width:58px;height:58px;background:linear-gradient(135deg,#FF2E55,#FF6B35);font-size:1.6rem;box-shadow:0 12px 28px rgba(255,46,85,0.4);">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h3 class="text-white fw-bold mb-1" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;">Bảo Mật 2 Lớp (MFA)</h3>
+            <p class="text-white-50 small mb-0">Xác thực tài khoản quản trị viên trước khi vào hệ thống</p>
+        </div>
+
+        <div class="alert alert-dark border-secondary border-opacity-25 py-2 px-3 small text-white-50 mb-4 rounded-3 d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle-fill text-info fs-5 flex-shrink-0"></i>
+            <div>
+                Mã OTP 6 chữ số đã được gửi tới Email: <strong class="text-white font-monospace">@Model.MaskedEmail</strong> và kênh <strong class="text-white">Telegram Bot</strong> quản trị.
+            </div>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success py-2 px-3 small mb-3 rounded-3">
+                <i class="bi bi-check-circle-fill me-1"></i> @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger py-2 px-3 small mb-3 rounded-3">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i> @TempData["Error"]
+            </div>
+        }
+
+        <form asp-area="Admin" asp-controller="Account" asp-action="VerifyMfa" method="post" id="mfaForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+            <div class="mb-4">
+                <label asp-for="OtpCode" class="form-label text-white-50 small fw-bold text-uppercase" style="letter-spacing:0.04em;">Nhập mã OTP 6 số</label>
+                <input asp-for="OtpCode" 
+                       id="mfaOtpInput"
+                       class="form-control otp-input py-2" 
+                       placeholder="••••••" 
+                       maxlength="6" 
+                       inputmode="numeric" 
+                       pattern="[0-9]*" 
+                       autocomplete="one-time-code" 
+                       autofocus />
+                <span asp-validation-for="OtpCode" class="text-danger small"></span>
+                <div class="text-white-50 small mt-2 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock me-1"></i> Hiệu lực trong 5 phút</span>
+                    <span id="countdownText" class="text-warning small font-monospace"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-mfa-submit w-100 py-3 mb-3 d-flex align-items-center justify-content-center gap-2">
+                <span>Xác Thực &amp; Đăng Nhập</span>
+                <i class="bi bi-arrow-right"></i>
+            </button>
+        </form>
+
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top border-secondary border-opacity-25 mt-3">
+            <form asp-area="Admin" asp-controller="Account" asp-action="ResendMfaOtp" method="post" id="resendForm">
+                @Html.AntiForgeryToken()
+                <button type="submit" id="btnResend" class="btn btn-link text-decoration-none text-info p-0 small">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Gửi lại mã OTP
+                </button>
+            </form>
+
+            <a asp-area="Admin" asp-controller="Account" asp-action="Login" class="text-decoration-none text-white-50 small hover-white">
+                <i class="bi bi-box-arrow-left me-1"></i> Đăng nhập lại
+            </a>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var input = document.getElementById('mfaOtpInput');
+            if (input) {
+                input.focus();
+                // Chỉ cho phép nhập ký tự số
+                input.addEventListener('input', function (e) {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    if (this.value.length === 6) {
+                        document.getElementById('mfaForm').submit();
+                    }
+                });
+            }
+
+            // Đếm lùi thời gian hiệu lực 5 phút (300 giây)
+            var timeLeft = 300;
+            var countdownEl = document.getElementById('countdownText');
+            function updateTimer() {
+                var m = Math.floor(timeLeft / 60);
+                var s = timeLeft % 60;
+                if (countdownEl) {
+                    countdownEl.textContent = (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+                }
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    setTimeout(updateTimer, 1000);
+                } else if (countdownEl) {
+                    countdownEl.textContent = 'Đã hết hạn';
+                    countdownEl.classList.add('text-danger');
+                }
+            }
+            updateTimer();
+        });
+    </script>
+</body>
+</html>
+

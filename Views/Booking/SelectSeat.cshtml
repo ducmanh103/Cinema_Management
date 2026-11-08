@@ -587,9 +587,16 @@
 
                 // Cash booking via REST API for Staff/Admin
                 try {
+                    var csrfToken = (window.CinemaSecurity && window.CinemaSecurity.getCsrfToken)
+                        ? window.CinemaSecurity.getCsrfToken()
+                        : (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+
                     var res = await fetch('/api/TicketsApi/book', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': csrfToken
+                        },
                         body: JSON.stringify({
                             showtimeId: showtimeId,
                             seatId: selectedSeat.id,

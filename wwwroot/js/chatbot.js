@@ -152,10 +152,15 @@ document.addEventListener("DOMContentLoaded", function () {
         addMessageToChat("user", text, true);
         showTypingIndicator();
 
+        var csrfToken = (window.CinemaSecurity && window.CinemaSecurity.getCsrfToken) 
+            ? window.CinemaSecurity.getCsrfToken() 
+            : (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+
         fetch("/api/chatbot/message", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "RequestVerificationToken": csrfToken
             },
             body: JSON.stringify({
                 message: text,
@@ -210,6 +215,10 @@ document.addEventListener("DOMContentLoaded", function () {
         bubbleDiv.innerHTML = formatMarkdown(text);
         wrapperDiv.appendChild(bubbleDiv);
 
+        var esc = (window.CinemaSecurity && window.CinemaSecurity.escapeHtml)
+            ? window.CinemaSecurity.escapeHtml
+            : function (s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+
         // 1. Render movies (Carousel)
         if (movies && movies.length > 0) {
             const carouselContainer = document.createElement("div");
@@ -222,15 +231,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 const card = document.createElement("div");
                 card.className = "chatbot-movie-card";
                 
-                const posterUrl = movie.posterUrl || "/img/placeholder.jpg";
-                const genresText = movie.genres && movie.genres.length > 0 ? movie.genres.join(", ") : "Chưa phân loại";
+                const posterUrl = esc(movie.posterUrl || "/img/placeholder.jpg");
+                const safeTitle = esc(movie.title);
+                const genresText = esc(movie.genres && movie.genres.length > 0 ? movie.genres.join(", ") : "Chưa phân loại");
+                const safeDuration = esc(movie.duration);
+                const safeMovieId = encodeURIComponent(movie.movieId);
                 
                 card.innerHTML = `
-                    <img class="chatbot-movie-poster" src="${posterUrl}" alt="${movie.title}" onerror="this.src='/img/placeholder.jpg'" />
+                    <img class="chatbot-movie-poster" src="${posterUrl}" alt="${safeTitle}" onerror="this.src='/img/placeholder.jpg'" />
                     <div class="chatbot-movie-info">
-                        <div class="chatbot-movie-title" title="${movie.title}">${movie.title}</div>
-                        <div class="chatbot-movie-meta">${movie.duration}m | ${genresText}</div>
-                        <a href="/Movies/Details/${movie.movieId}" class="chatbot-movie-btn">Đặt vé</a>
+                        <div class="chatbot-movie-title" title="${safeTitle}">${safeTitle}</div>
+                        <div class="chatbot-movie-meta">${safeDuration}m | ${genresText}</div>
+                        <a href="/Movies/Details/${safeMovieId}" class="chatbot-movie-btn">Đặt vé</a>
                     </div>
                 `;
                 carousel.appendChild(card);
@@ -283,11 +295,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     theatersObj[theaterName].forEach(st => {
                         const pill = document.createElement("a");
                         pill.className = "chatbot-showtime-pill";
-                        pill.href = `/Booking/SelectSeat/${st.showtimeId}`;
+                        pill.href = `/Booking/SelectSeat/${encodeURIComponent(st.showtimeId)}`;
                         pill.innerHTML = `
-                            <span class="chatbot-showtime-time">${st.startTime}</span>
-                            <span class="chatbot-showtime-room">${st.roomName}</span>
-                            <span class="chatbot-showtime-price">${st.price.toLocaleString('vi-VN')}đ</span>
+                            <span class="chatbot-showtime-time">${esc(st.startTime)}</span>
+                            <span class="chatbot-showtime-room">${esc(st.roomName)}</span>
+                            <span class="chatbot-showtime-price">${Number(st.price).toLocaleString('vi-VN')}đ</span>
                         `;
                         pillsDiv.appendChild(pill);
                     });
@@ -314,35 +326,35 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 ticketCard.innerHTML = `
                     <div class="chatbot-ticket-header">
-                        <span class="chatbot-ticket-id">#${booking.ticketId}</span>
-                        <span class="chatbot-ticket-status ${statusClass}">${booking.status === "Paid" ? "Đã thanh toán" : booking.status}</span>
+                        <span class="chatbot-ticket-id">#${esc(booking.ticketId)}</span>
+                        <span class="chatbot-ticket-status ${statusClass}">${booking.status === "Paid" ? "Đã thanh toán" : esc(booking.status)}</span>
                     </div>
                     <div class="chatbot-ticket-body">
-                        <div class="chatbot-ticket-title">${booking.movieTitle}</div>
+                        <div class="chatbot-ticket-title">${esc(booking.movieTitle)}</div>
                         <div class="chatbot-ticket-row">
                             <div class="chatbot-ticket-col">
                                 <span class="chatbot-ticket-label">Rạp</span>
-                                <span class="chatbot-ticket-value">${booking.theaterName || "CinemaHub"}</span>
+                                <span class="chatbot-ticket-value">${esc(booking.theaterName || "CinemaHub")}</span>
                             </div>
                             <div class="chatbot-ticket-col">
                                 <span class="chatbot-ticket-label">Phòng</span>
-                                <span class="chatbot-ticket-value">${booking.roomName}</span>
+                                <span class="chatbot-ticket-value">${esc(booking.roomName)}</span>
                             </div>
                         </div>
                         <div class="chatbot-ticket-row">
                             <div class="chatbot-ticket-col">
                                 <span class="chatbot-ticket-label">Suất chiếu</span>
-                                <span class="chatbot-ticket-value">${booking.startTime}</span>
+                                <span class="chatbot-ticket-value">${esc(booking.startTime)}</span>
                             </div>
                             <div class="chatbot-ticket-col">
                                 <span class="chatbot-ticket-label">Ghế</span>
-                                <span class="chatbot-ticket-value">${booking.seatName}</span>
+                                <span class="chatbot-ticket-value">${esc(booking.seatName)}</span>
                             </div>
                         </div>
                     </div>
                     <div class="chatbot-ticket-divider"></div>
                     <div class="chatbot-ticket-footer">
-                        Đặt lúc: ${booking.bookingTime}
+                        Đặt lúc: ${esc(booking.bookingTime)}
                     </div>
                 `;
                 ticketsContainer.appendChild(ticketCard);
@@ -417,10 +429,13 @@ document.addEventListener("DOMContentLoaded", function () {
     function formatMarkdown(text) {
         if (!text) return "";
         
+        // Bước 1: Encode toàn bộ ký tự nguy hiểm thành HTML entity an toàn
         let escaped = text
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
 
         // 1. Chữ đậm: **text** -> <strong>text</strong>
         escaped = escaped.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
@@ -429,16 +444,21 @@ document.addEventListener("DOMContentLoaded", function () {
         escaped = escaped.replace(/\*(.*?)\*/g, "<em>$1</em>");
 
         // 3. Liên kết hành động tự định nghĩa: [text](query:từ_khóa) -> <a href="#" class="chat-action-link" data-query="từ_khóa">text</a>
-        escaped = escaped.replace(/\[(.*?)\]\(query:(.*?)\)/g, '<a href="#" class="chat-action-link" data-query="$2">$1</a>');
+        escaped = escaped.replace(/\[([^\]]+)\]\(query:([a-zA-Z0-9_\s\u00C0-\u1EF9\-]+)\)/g, function (match, label, q) {
+            return '<a href="#" class="chat-action-link" data-query="' + q.trim() + '">' + label + '</a>';
+        });
 
         // 4. Đường dẫn/Liên kết thông thường: [text](url) -> <a href="url" target="_blank">text</a>
-        escaped = escaped.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
+        escaped = escaped.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (match, label, url) {
+            var trimmed = url.trim();
+            if (/^https?:\/\//i.test(trimmed) || (trimmed.startsWith('/') && !trimmed.startsWith('//'))) {
+                return '<a href="' + trimmed + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
+            }
+            return label;
+        });
 
         // Phục hồi ký tự HTML cho các thẻ a và strong đã format
-        escaped = escaped
-            .replace(/&lt;strong&gt;/g, "<strong>").replace(/&lt;\/strong&gt;/g, "</strong>")
-            .replace(/&lt;em&gt;/g, "<em>").replace(/&lt;\/em&gt;/g, "</em>")
-            .replace(/&lt;a href=(.*?)&gt;/g, '<a href=$1>').replace(/&lt;\/a&gt;/g, "</a>");
+
 
         // 4. Danh sách gạch đầu dòng và số thứ tự
         const lines = escaped.split("\n");

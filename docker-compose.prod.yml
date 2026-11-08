@@ -34,11 +34,13 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./DB/CinemaManagement_PostgreSQL.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-CinemaManagement} && psql -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-CinemaManagement} -c \"ALTER USER \\\"$${POSTGRES_USER:-postgres}\\\" WITH PASSWORD '$${POSTGRES_PASSWORD}';\" >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-CinemaManagement}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:

@@ -27,6 +27,7 @@ namespace CinemaManagement.Data
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -166,20 +167,39 @@ namespace CinemaManagement.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             // ==================== Performance & Security Indexes ====================
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Username)
-                .IsUnique()
-                .HasDatabaseName("IX_User_Username");
+            var encryptedConverter = new EncryptedStringConverter();
 
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email)
-                .HasDatabaseName("IX_User_Email");
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasQueryFilter(u => !u.IsDeleted);
 
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.GoogleSubjectId)
-                .IsUnique()
-                .HasFilter("\"GoogleSubjectId\" IS NOT NULL")
-                .HasDatabaseName("UX_User_GoogleSubjectId");
+                entity.Property(u => u.Email)
+                    .HasMaxLength(500)
+                    .HasConversion(encryptedConverter);
+
+                entity.Property(u => u.FullName)
+                    .HasMaxLength(500)
+                    .HasConversion(encryptedConverter);
+
+                entity.HasIndex(u => u.Username)
+                    .IsUnique()
+                    .HasDatabaseName("IX_User_Username");
+
+                entity.HasIndex(u => u.EmailHash)
+                    .HasDatabaseName("IX_User_EmailHash");
+
+                entity.HasIndex(u => u.GoogleSubjectId)
+                    .IsUnique()
+                    .HasFilter("\"GoogleSubjectId\" IS NOT NULL")
+                    .HasDatabaseName("UX_User_GoogleSubjectId");
+            });
+
+            modelBuilder.Entity<AuditLog>(entity =>
+            {
+                entity.HasIndex(a => a.TimestampUtc).HasDatabaseName("IX_AuditLog_TimestampUtc");
+                entity.HasIndex(a => a.Action).HasDatabaseName("IX_AuditLog_Action");
+                entity.HasIndex(a => a.ActorUsername).HasDatabaseName("IX_AuditLog_ActorUsername");
+            });
 
             modelBuilder.Entity<Showtime>()
                 .HasIndex(s => new { s.MovieId, s.StartTime })

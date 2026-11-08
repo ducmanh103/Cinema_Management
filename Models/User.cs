@@ -17,9 +17,14 @@ namespace CinemaManagement.Models
 
         public string? FullName { get; set; }
 
-        [EmailAddress]
-        [StringLength(150)]
+        [StringLength(500)]
         public string? Email { get; set; }
+
+        [StringLength(64)]
+        public string? EmailHash { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
 
         [StringLength(100)]
         public string? GoogleSubjectId { get; set; }

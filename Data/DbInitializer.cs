@@ -15,6 +15,7 @@ namespace CinemaManagement.Data
             using var scope = app.ApplicationServices.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
             var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var piiService = scope.ServiceProvider.GetRequiredService<CinemaManagement.Services.IPiiEncryptionService>();
 
             try
             {
@@ -38,7 +39,31 @@ namespace CinemaManagement.Data
                     @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""GoogleSubjectId"" VARCHAR(100) NULL;",
                     @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""EmailConfirmed"" BOOLEAN NOT NULL DEFAULT FALSE;",
                     @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""SecurityStamp"" VARCHAR(64) NOT NULL DEFAULT md5(random()::text || clock_timestamp()::text);",
+                    @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""EmailHash"" VARCHAR(64) NULL;",
+                    @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""IsDeleted"" BOOLEAN NOT NULL DEFAULT FALSE;",
+                    @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""DeletedAt"" TIMESTAMPTZ NULL;",
+                    @"ALTER TABLE ""Users"" ALTER COLUMN ""Email"" TYPE VARCHAR(500);",
+                    @"ALTER TABLE ""Users"" ALTER COLUMN ""FullName"" TYPE VARCHAR(500);",
+                    @"CREATE INDEX IF NOT EXISTS ""IX_User_EmailHash"" ON ""Users""(""EmailHash"");",
                     @"ALTER TABLE ""Payments"" ADD COLUMN IF NOT EXISTS ""TransactionId"" VARCHAR(100) NULL;",
+
+                    @"CREATE TABLE IF NOT EXISTS ""AuditLogs"" (
+                        ""Id"" BIGSERIAL PRIMARY KEY,
+                        ""TimestampUtc"" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        ""ActorUsername"" VARCHAR(100) NULL,
+                        ""ActorUserId"" INT NULL,
+                        ""ActorRole"" VARCHAR(50) NULL,
+                        ""Action"" VARCHAR(100) NOT NULL,
+                        ""EntityName"" VARCHAR(100) NULL,
+                        ""EntityId"" VARCHAR(50) NULL,
+                        ""Details"" TEXT NULL,
+                        ""IpAddress"" VARCHAR(45) NULL,
+                        ""Path"" VARCHAR(200) NULL
+                    );",
+
+                    @"CREATE INDEX IF NOT EXISTS ""IX_AuditLog_TimestampUtc"" ON ""AuditLogs""(""TimestampUtc"");",
+                    @"CREATE INDEX IF NOT EXISTS ""IX_AuditLog_Action"" ON ""AuditLogs""(""Action"");",
+                    @"CREATE INDEX IF NOT EXISTS ""IX_AuditLog_ActorUsername"" ON ""AuditLogs""(""ActorUsername"");",
 
                     @"CREATE TABLE IF NOT EXISTS ""PasswordResetTokens"" (
                         ""Id"" SERIAL PRIMARY KEY,
@@ -119,6 +144,7 @@ namespace CinemaManagement.Data
                         Username = "admin",
                         FullName = "Quản Trị Viên CinemaHub",
                         Email = "admin@cinemahub.vn",
+                        EmailHash = piiService.ComputeEmailHash("admin@cinemahub.vn"),
                         PasswordHash = BCrypt.Net.BCrypt.HashPassword(targetAdminPassword),
                         RoleId = adminRole.RoleId,
                         Status = "Active",
@@ -127,19 +153,32 @@ namespace CinemaManagement.Data
                     };
                     context.Users.Add(adminUser);
                     context.SaveChanges();
-                    Log.Information("🔐 Đã khởi tạo tài khoản admin mặc định (Username: admin).");
+                    Log.Information("🔐 Đã khởi tạo tài khoản admin ban đầu (Username: admin).");
                 }
-                else if (!string.IsNullOrWhiteSpace(adminInitPassword)
-                         || string.IsNullOrEmpty(adminUser.PasswordHash)
-                         || adminUser.Status != "Active"
-                         || !BCrypt.Net.BCrypt.Verify(targetAdminPassword, adminUser.PasswordHash))
+                else if (string.IsNullOrEmpty(adminUser.PasswordHash))
                 {
+                    // Chỉ gán mật khẩu nếu tài khoản admin chưa từng có PasswordHash
                     adminUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(targetAdminPassword);
-                    adminUser.Status = "Active";
-                    adminUser.RoleId = adminRole.RoleId;
+                    if (string.IsNullOrEmpty(adminUser.EmailHash)) adminUser.EmailHash = piiService.ComputeEmailHash(adminUser.Email);
                     adminUser.SecurityStamp = Guid.NewGuid().ToString("N");
                     context.SaveChanges();
-                    Log.Information("🔐 Đã đồng bộ mật khẩu và trạng thái Active cho tài khoản admin.");
+                    Log.Information("🔐 Đã gán mật khẩu khởi tạo cho tài khoản admin vì chưa có mật khẩu.");
+                }
+                else
+                {
+                    Log.Information("ℹ️ Tài khoản admin đã tồn tại. Bảo lưu toàn vẹn mật khẩu và trạng thái quản trị viên.");
+                }
+
+                // Tự động tính toán EmailHash cho các tài khoản cũ trong DB
+                var usersMissingHash = context.Users.Where(u => u.EmailHash == null && u.Email != null).ToList();
+                if (usersMissingHash.Count > 0)
+                {
+                    foreach (var u in usersMissingHash)
+                    {
+                        u.EmailHash = piiService.ComputeEmailHash(u.Email);
+                    }
+                    context.SaveChanges();
+                    Log.Information("🔐 Đã đồng bộ EmailHash mã hóa cho {Count} tài khoản người dùng.", usersMissingHash.Count);
                 }
 
                 Log.Information("✅ PostgreSQL schema (TIMESTAMPTZ + Auth + DataProtection) đã sẵn sàng.");

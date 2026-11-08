@@ -125,4 +125,15 @@ namespace CinemaManagement.Models.ViewModels
         [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
+
+    public class VerifyAdminMfaViewModel
+    {
+        [Required(ErrorMessage = "Vui lòng nhập mã OTP")]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "Mã xác thực gồm đúng 6 chữ số")]
+        [RegularExpression(@"^\d{6}$", ErrorMessage = "Mã xác thực gồm đúng 6 chữ số")]
+        public string OtpCode { get; set; } = string.Empty;
+
+        public string? ReturnUrl { get; set; }
+        public string? MaskedEmail { get; set; }
+    }
 }

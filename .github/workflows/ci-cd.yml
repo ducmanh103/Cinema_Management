@@ -26,8 +26,17 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore "CINEMA_MANAGEMENT.csproj"
 
+      - name: Security scan: Check package vulnerabilities
+        run: dotnet list "CINEMA_MANAGEMENT.csproj" package --vulnerable --include-transitive
+
       - name: Build
         run: dotnet build "CINEMA_MANAGEMENT.csproj" --no-restore --configuration Release
+
+      - name: Security scan: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
       # Nếu có Unit Test project thì bật dòng dưới
       # - name: Test

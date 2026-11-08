@@ -60,13 +60,16 @@ namespace CinemaManagement.Services
         }
 
         /// <summary>
-        /// Validate chữ ký đối chiếu với HashSecret.
+        /// Validate chữ ký đối chiếu với HashSecret sử dụng so sánh FixedTimeEquals chống Timing Attack.
         /// </summary>
         public bool ValidateSignature(string inputHash, string secretKey)
         {
+            if (string.IsNullOrEmpty(inputHash)) return false;
             string rspRaw = GetResponseRaw();
             string myChecksum = HmacSHA512(secretKey, rspRaw);
-            return myChecksum.Equals(inputHash, StringComparison.InvariantCultureIgnoreCase);
+            return CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(myChecksum.ToLowerInvariant()),
+                Encoding.UTF8.GetBytes(inputHash.ToLowerInvariant()));
         }
 
         private string GetResponseRaw()

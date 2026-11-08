@@ -39,7 +39,11 @@ try
     // ================================
     // 1. MVC + API + Swagger + Antiforgery
     // ================================
-    builder.Services.AddControllersWithViews();
+    builder.Services.AddControllersWithViews(options =>
+    {
+        // Chống CSRF tự động cho toàn bộ ứng dụng (MVC + API Controllers)
+        options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+    });
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>
     {
@@ -211,6 +215,12 @@ try
     {
         rawConnStr = rawConnStr.TrimEnd(';') + ";Maximum Pool Size=20;Minimum Pool Size=2;Connection Idle Lifetime=60;";
     }
+
+    // Khởi tạo dịch vụ mã hoá PII (AES-256-GCM) bảo vệ Email và FullName trong cơ sở dữ liệu
+    builder.Services.AddSingleton<IPiiEncryptionService, PiiEncryptionService>();
+    var piiBootstrapLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<PiiEncryptionService>();
+    var piiInstance = new PiiEncryptionService(builder.Configuration, piiBootstrapLogger);
+    CinemaManagement.Data.EncryptedStringConverter.EncryptionService = piiInstance;
 
     builder.Services.AddDbContextPool<CinemaDbContext>(options =>
         options.UseNpgsql(rawConnStr), poolSize: 64);
@@ -396,7 +406,7 @@ try
     }
 
     // ================================
-    // Security Headers Middleware (Xử lý triệt để báo cáo OWASP ZAP: CSP, Anti-Clickjacking, nosniff)
+    // Security Headers Middleware (Xử lý triệt để báo cáo OWASP ZAP: CSP, Anti-Clickjacking, nosniff, COOP, CORP)
     // ================================
     app.Use(async (context, next) =>
     {
@@ -405,8 +415,13 @@ try
         headers["X-Frame-Options"] = "SAMEORIGIN";
         headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
         headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+        headers["X-Permitted-Cross-Domain-Policies"] = "none";
+        headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups";
+        headers["Cross-Origin-Resource-Policy"] = "same-origin";
         headers["Content-Security-Policy"] =
             "default-src 'self'; " +
+            "object-src 'none'; " +
+            "base-uri 'self'; " +
             "script-src 'self' https://cdn.jsdelivr.net https://cdn.datatables.net https://code.jquery.com https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com 'unsafe-inline'; " +
             "style-src 'self' https://cdn.jsdelivr.net https://cdn.datatables.net https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; " +
             "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; " +
@@ -422,7 +437,19 @@ try
     app.UseSerilogRequestLogging();
 
     app.UseHttpsRedirection();
-    app.UseStaticFiles();
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = ctx =>
+        {
+            var path = ctx.Context.Request.Path.Value ?? string.Empty;
+            if (path.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+            {
+                // Cách ly tệp do người dùng tải lên bằng CSP sandbox và ép nosniff (chống Stored XSS)
+                ctx.Context.Response.Headers["Content-Security-Policy"] = "sandbox; default-src 'none'";
+                ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            }
+        }
+    });
     app.UseRouting();
 
     // Middleware Order: Session -> RateLimiter -> Auth

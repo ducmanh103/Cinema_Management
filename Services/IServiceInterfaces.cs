@@ -62,6 +62,7 @@ namespace CinemaManagement.Services
     {
         Task SendPasswordResetEmailAsync(string toEmail, string fullName, string resetUrl);
         Task<bool> SendRegistrationVerificationEmailAsync(string toEmail, string fullName, string otpCode, string verifyUrl);
+        Task<bool> SendAdminMfaOtpEmailAsync(string toEmail, string fullName, string otpCode, string ipAddress);
     }
 
     public enum SecurityAlertLevel

@@ -159,6 +159,80 @@ namespace CinemaManagement.Services
             }
         }
 
+        public async Task<bool> SendAdminMfaOtpEmailAsync(string toEmail, string fullName, string otpCode, string ipAddress)
+        {
+            var smtpHost = GetConfigValue("Smtp:Host", "SMTP_HOST");
+            var smtpPortStr = GetConfigValue("Smtp:Port", "SMTP_PORT") ?? "587";
+            var smtpUser = GetConfigValue("Smtp:Username", "SMTP_USER");
+            var smtpPass = GetConfigValue("Smtp:Password", "SMTP_PASS");
+            var fromEmail = GetConfigValue("Smtp:FromEmail", "SMTP_FROM") ?? smtpUser ?? "security@cinemahubvn.io.vn";
+
+            if (fromEmail.Contains('<') && fromEmail.Contains('>'))
+            {
+                var start = fromEmail.IndexOf('<') + 1;
+                var end = fromEmail.IndexOf('>', start);
+                if (end > start)
+                    fromEmail = fromEmail[start..end].Trim();
+            }
+            fromEmail = fromEmail.Trim('"').Trim();
+
+            if (string.IsNullOrWhiteSpace(smtpHost) || string.IsNullOrWhiteSpace(smtpUser) || string.IsNullOrWhiteSpace(smtpPass))
+            {
+                _logger.LogWarning("📧 [SMTP chưa cấu hình] Mã OTP đăng nhập quản trị (MFA) cho {Email}: {OtpCode} (IP: {Ip})", toEmail, otpCode, ipAddress);
+                return false;
+            }
+
+            int smtpPort = int.TryParse(smtpPortStr, out var p) ? p : 587;
+            var safeName = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(fullName) ? toEmail : fullName);
+            var safeOtp = WebUtility.HtmlEncode(otpCode);
+            var safeIp = WebUtility.HtmlEncode(ipAddress);
+            var nowStr = DateTime.UtcNow.AddHours(7).ToString("HH:mm:ss dd/MM/yyyy (GMT+7)");
+
+            string htmlBody = $@"
+<div style='font-family:Segoe UI,Arial,sans-serif;max-width:560px;margin:0 auto;background:#0d1117;color:#f0f6fc;padding:32px;border-radius:16px;border:1px solid rgba(255,46,85,0.4);box-shadow:0 12px 36px rgba(0,0,0,0.6);'>
+    <div style='text-align:center;margin-bottom:24px;'>
+        <div style='display:inline-block;padding:6px 16px;background:rgba(255,46,85,0.15);border:1px solid #FF2E55;color:#FF2E55;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;'>
+            BẢO MẬT QUẢN TRỊ 2 LỚP (MFA)
+        </div>
+    </div>
+    <h2 style='color:#ffffff;text-align:center;margin:0 0 16px 0;font-size:22px;'>Mã xác thực đăng nhập Quản Trị Viên</h2>
+    <p style='color:#8b949e;line-height:1.6;'>Xin chào <strong>{safeName}</strong>,</p>
+    <p style='color:#8b949e;line-height:1.6;'>Hệ thống vừa ghi nhận một yêu cầu đăng nhập vào Khu vực Quản trị CinemaHub từ địa chỉ IP: <code style='background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;color:#58a6ff;'>{safeIp}</code> vào lúc <strong>{nowStr}</strong>.</p>
+    
+    <div style='background:#161b22;border:2px dashed #FF2E55;border-radius:12px;padding:24px;text-align:center;margin:28px 0;'>
+        <div style='font-size:12px;color:#8b949e;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;'>Mã OTP của bạn:</div>
+        <div style='font-size:38px;font-weight:800;letter-spacing:10px;color:#FF2E55;font-family:monospace;margin:6px 0;'>{safeOtp}</div>
+        <div style='font-size:12px;color:#e3b341;margin-top:8px;'>⏱ Mã này có hiệu lực trong vòng 5 phút (hết hạn sau 5 phút)</div>
+    </div>
+
+    <div style='border-top:1px solid #30363d;padding-top:18px;margin-top:24px;font-size:12px;color:#8b949e;line-height:1.5;'>
+        <p style='margin:0 0 8px 0;'>⚠️ <strong>Cảnh báo bảo mật:</strong> Tuyệt đối không cung cấp mã OTP này cho bất kỳ ai. Quản trị viên hệ thống sẽ không bao giờ hỏi mã của bạn.</p>
+        <p style='margin:0;'>Nếu bạn không thực hiện yêu cầu đăng nhập này, tài khoản của bạn có thể đang bị lộ mật khẩu. Vui lòng đổi mật khẩu ngay lập tức.</p>
+    </div>
+</div>";
+
+            try
+            {
+                await SendSmtpAuthPlainAsync(
+                    smtpHost,
+                    smtpPort,
+                    smtpUser,
+                    smtpPass,
+                    fromEmail,
+                    toEmail.Trim(),
+                    $"[CinemaHub] Mã xác thực 2 lớp (MFA) Đăng nhập Quản trị: {otpCode}",
+                    htmlBody);
+
+                _logger.LogInformation("📧 Đã gửi mã MFA Admin thành công tới {Email} (IP: {Ip})", toEmail, ipAddress);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Lỗi khi gửi email MFA Admin tới {Email}", toEmail);
+                return false;
+            }
+        }
+
         /// <summary>
         /// Gửi email qua giao thức SMTP (hỗ trợ cả STARTTLS cổng 587 và Implicit SSL cổng 465)
         /// với cơ chế xác thực chuẩn RFC 4616 AUTH PLAIN & fallback AUTH LOGIN 2 bước
