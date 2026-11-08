@@ -362,20 +362,4 @@ namespace CinemaManagement.Areas.Admin.Controllers
             return Convert.ToHexString(bytes).ToLowerInvariant();
         }
     }
-
-    public class AdminMfaSession
-    {
-        public int UserId { get; set; }
-        public string Username { get; set; } = string.Empty;
-        public string RoleName { get; set; } = string.Empty;
-        public string FullName { get; set; } = string.Empty;
-        public string SecurityStamp { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public bool RememberMe { get; set; }
-        public string? ReturnUrl { get; set; }
-        public string OtpHash { get; set; } = string.Empty;
-        public int AttemptsLeft { get; set; } = 5;
-        public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
-        public DateTime LastResentAtUtc { get; set; } = DateTime.UtcNow;
-    }
 }

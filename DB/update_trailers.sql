@@ -19,3 +19,4 @@ UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/shW9i6k8cB0' W
 UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/I10q6fj4n3U' WHERE "Title" ILIKE '%Titanic%';
 UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/_Z3QKkl1WyM' WHERE "Title" ILIKE '%Wakanda%' OR "Title" ILIKE '%Báo Đen%';
 UPDATE "Movies" SET "TrailerUrl" = 'https://www.youtube.com/embed/jWM0ct-OLsM' WHERE "Title" ILIKE '%Zootopia%';
+
