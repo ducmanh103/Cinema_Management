@@ -29,7 +29,7 @@
             <p class="adm-card-sub mb-0">Quản trị phân quyền, kích hoạt, khóa hoặc xóa tài khoản thành viên</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <span class="badge rounded-pill px-3 py-2" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:600;">
+            <span class="badge px-3 py-2" style="background:rgba(212,163,89,0.14);color:#D4A359;border:1px solid rgba(212,163,89,0.45);border-radius:2px;font-family:'JetBrains Mono',monospace;font-weight:700;">
                 <i class="bi bi-shield-check me-1"></i> Quản Trị Viên &amp; Khách Hàng
             </span>
         </div>
@@ -60,15 +60,15 @@
                         </td>
                         <td class="text-secondary small">@u.Email</td>
                         <td>
-                            <span class="badge rounded-pill px-3 py-1 fw-semibold"
-                                  style="background:@(u.RoleName == "Admin" ? "#fef2f2" : u.RoleName == "Staff" ? "#eff6ff" : "#f8fafc");color:@(u.RoleName == "Admin" ? "#dc2626" : u.RoleName == "Staff" ? "#2563eb" : "#475569");border:1px solid @(u.RoleName == "Admin" ? "#fecaca" : u.RoleName == "Staff" ? "#bfdbfe" : "#e2e8f0");">
+                            <span class="badge px-3 py-1 fw-semibold"
+                                  style="border-radius:2px;font-family:'JetBrains Mono',monospace;background:@(u.RoleName == "Admin" ? "rgba(217,56,41,0.16)" : u.RoleName == "Staff" ? "rgba(212,163,89,0.16)" : "#0d0c0a");color:@(u.RoleName == "Admin" ? "#fca5a5" : u.RoleName == "Staff" ? "#D4A359" : "#B5AEA2");border:1px solid @(u.RoleName == "Admin" ? "rgba(217,56,41,0.5)" : u.RoleName == "Staff" ? "rgba(212,163,89,0.45)" : "rgba(243,239,230,0.18)");">
                                 @u.RoleName
                             </span>
                         </td>
                         <td>
-                            <span class="badge rounded-pill px-3 py-1 fw-semibold"
-                                  style="background:@(isActive ? "#f0fdf4" : "#fef2f2");color:@(isActive ? "#16a34a" : "#dc2626");border:1px solid @(isActive ? "#bbf7d0" : "#fecaca");">
-                                <span class="d-inline-block rounded-circle me-1" style="width:6px;height:6px;background:@(isActive ? "#16a34a" : "#dc2626");"></span>
+                            <span class="badge px-3 py-1 fw-semibold"
+                                  style="border-radius:2px;font-family:'JetBrains Mono',monospace;background:@(isActive ? "rgba(46,158,91,0.16)" : "rgba(217,56,41,0.16)");color:@(isActive ? "#6ee7b7" : "#fca5a5");border:1px solid @(isActive ? "rgba(46,158,91,0.45)" : "rgba(217,56,41,0.5)");">
+                                <span class="d-inline-block rounded-circle me-1" style="width:6px;height:6px;background:@(isActive ? "#2e9e5b" : "#D93829");"></span>
                                 @(isActive ? "Hoạt động" : "Đã khóa")
                             </span>
                         </td>

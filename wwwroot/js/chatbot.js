@@ -5,11 +5,13 @@
 document.addEventListener("DOMContentLoaded", function () {
     const triggerBtn = document.getElementById("chatbot-trigger");
     const panel = document.getElementById("chatbot-panel");
+    const backdrop = document.getElementById("chatbot-backdrop");
     const closeBtn = document.getElementById("chatbot-close-btn");
     const clearBtn = document.getElementById("chatbot-clear-btn");
     const sendBtn = document.getElementById("chatbot-send-btn");
     const chatInput = document.getElementById("chatbot-input");
     const chatBody = document.getElementById("chatbot-body");
+    const quickBar = document.getElementById("chatbot-quick-bar");
 
     let chatHistory = [];
 
@@ -20,8 +22,15 @@ document.addEventListener("DOMContentLoaded", function () {
     createAndShowTooltip();
 
     // Sự kiện mở/đóng khung chat
-    triggerBtn.addEventListener("click", toggleChatPanel);
-    closeBtn.addEventListener("click", toggleChatPanel);
+    if (triggerBtn) triggerBtn.addEventListener("click", toggleChatPanel);
+    if (closeBtn) closeBtn.addEventListener("click", closeChatPanel);
+    if (backdrop) backdrop.addEventListener("click", closeChatPanel);
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && panel && panel.classList.contains("active")) {
+            closeChatPanel();
+        }
+    });
 
     const mobileDockChatBtn = document.getElementById("mobileDockChatBtn");
     if (mobileDockChatBtn) {
@@ -39,25 +48,43 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Sự kiện gửi tin nhắn
-    sendBtn.addEventListener("click", handleSend);
-    chatInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-        }
-    });
+    if (sendBtn) sendBtn.addEventListener("click", handleSend);
+    if (chatInput) {
+        chatInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
+    }
 
     // Sự kiện click các liên kết hành động trong tin nhắn (Chat Action Links)
-    chatBody.addEventListener("click", function (e) {
-        const actionLink = e.target.closest(".chat-action-link");
-        if (actionLink) {
-            e.preventDefault();
-            const queryText = actionLink.getAttribute("data-query");
-            if (queryText) {
-                sendUserMessage(queryText);
+    if (chatBody) {
+        chatBody.addEventListener("click", function (e) {
+            const actionLink = e.target.closest(".chat-action-link");
+            if (actionLink) {
+                e.preventDefault();
+                const queryText = actionLink.getAttribute("data-query");
+                if (queryText) {
+                    sendUserMessage(queryText);
+                }
             }
-        }
-    });
+        });
+    }
+
+    // Sự kiện click các chip gợi ý nhanh ở thanh dưới
+    if (quickBar) {
+        quickBar.addEventListener("click", function (e) {
+            const chip = e.target.closest(".chatbot-quick-chip");
+            if (chip) {
+                e.preventDefault();
+                const queryText = chip.getAttribute("data-query");
+                if (queryText) {
+                    sendUserMessage(queryText);
+                }
+            }
+        });
+    }
 
     // Khởi động chatbot, load lịch sử hoặc hiển thị tin chào mừng
     function initChatbot() {
@@ -113,22 +140,59 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Toggle đóng mở khung chat
-    function toggleChatPanel() {
-        panel.classList.toggle("active");
-        
-        // Thay đổi chữ ở nút Trigger
-        if (panel.classList.contains("active")) {
-            triggerBtn.innerText = "Đóng";
+    function openChatPanel(prefillOrSendPrompt) {
+        if (!panel) return;
+        panel.classList.add("active");
+        if (backdrop) backdrop.classList.add("active");
+        if (triggerBtn) {
+            triggerBtn.innerHTML = '<i class="bi bi-x-lg"></i><span>Đóng chat</span>';
             triggerBtn.classList.add("active");
-            if (mobileDockChatBtn) mobileDockChatBtn.classList.add("active");
-            chatInput.focus();
-            setTimeout(scrollToBottom, 100);
-        } else {
-            triggerBtn.innerText = "Hỗ trợ";
-            triggerBtn.classList.remove("active");
-            if (mobileDockChatBtn) mobileDockChatBtn.classList.remove("active");
+        }
+        if (mobileDockChatBtn) mobileDockChatBtn.classList.add("active");
+        setTimeout(() => {
+            if (chatInput && window.innerWidth >= 992) chatInput.focus();
+            scrollToBottom();
+        }, 120);
+
+        if (typeof prefillOrSendPrompt === "string" && prefillOrSendPrompt.trim() !== "") {
+            sendUserMessage(prefillOrSendPrompt.trim());
         }
     }
+
+    function closeChatPanel() {
+        if (!panel) return;
+        panel.classList.remove("active");
+        if (backdrop) backdrop.classList.remove("active");
+        if (triggerBtn) {
+            triggerBtn.innerHTML = '<span class="chatbot-trigger-dot"></span><i class="bi bi-chat-dots-fill"></i><span>Hỗ trợ đặt vé</span>';
+            triggerBtn.classList.remove("active");
+        }
+        if (mobileDockChatBtn) mobileDockChatBtn.classList.remove("active");
+    }
+
+    function toggleChatPanel(e) {
+        if (e && typeof e.preventDefault === "function") {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        if (!panel) return;
+        if (panel.classList.contains("active")) {
+            closeChatPanel();
+        } else {
+            openChatPanel();
+        }
+    }
+
+    // Expose global API for any page button or prompt card (works on both Mobile & Desktop)
+    window.toggleCinemaChat = toggleChatPanel;
+    window.CinemaCurator = {
+        open: openChatPanel,
+        close: closeChatPanel,
+        toggle: toggleChatPanel,
+        ask: function (promptText) {
+            openChatPanel(promptText);
+        }
+    };
 
     // Xóa lịch sử trò chuyện
     function clearChatHistory() {
@@ -204,7 +268,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const messageDiv = document.createElement("div");
         messageDiv.className = `chat-message ${sender}`;
 
-        // Không sử dụng avatar để giao diện gọn gàng hơn
+        if (sender === "bot") {
+            const avatarDiv = document.createElement("div");
+            avatarDiv.className = "chat-bot-avatar";
+            avatarDiv.setAttribute("aria-hidden", "true");
+            avatarDiv.innerHTML = '<i class="bi bi-headset"></i>';
+            messageDiv.appendChild(avatarDiv);
+        }
 
         // Tạo wrapper chứa bubble & time
         const wrapperDiv = document.createElement("div");
@@ -388,7 +458,11 @@ document.addEventListener("DOMContentLoaded", function () {
         indicatorDiv.className = "chat-message bot typing-indicator-container";
         indicatorDiv.id = "chatbot-typing-indicator";
 
-        // Không sử dụng avatar để giao diện gọn gàng hơn
+        const avatarDiv = document.createElement("div");
+        avatarDiv.className = "chat-bot-avatar";
+        avatarDiv.setAttribute("aria-hidden", "true");
+        avatarDiv.innerHTML = '<i class="bi bi-headset"></i>';
+        indicatorDiv.appendChild(avatarDiv);
 
         const wrapperDiv = document.createElement("div");
         wrapperDiv.className = "message-wrapper";

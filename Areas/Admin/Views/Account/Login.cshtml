@@ -1,7 +1,7 @@
 @model LoginViewModel
 @{
     Layout = null;
-    ViewData["Title"] = "Cổng Quản Trị Hệ Thống — CinemaHub";
+    ViewData["Title"] = "Đăng nhập quản trị — CinemaHub";
 }
 <!DOCTYPE html>
 <html lang="vi" data-bs-theme="dark">
@@ -11,96 +11,172 @@
     <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
     <style>
+        :root {
+            --bg-void: #0F1117;
+            --bg-surface: #171B26;
+            --bg-carbon: #121620;
+            --ivory: #F8FAFC;
+            --stone: #CBD5E1;
+            --muted: #94A3B8;
+            --vermilion: #E53935;
+            --gold: #F59E0B;
+            --border-line: rgba(255, 255, 255, 0.09);
+            --border-strong: rgba(255, 255, 255, 0.16);
+        }
         body {
             background:
-                radial-gradient(circle at 80% 20%, rgba(255, 46, 85, 0.14), transparent 45%),
-                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.12), transparent 50%),
-                #070a14;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+                radial-gradient(circle at 80% 18%, rgba(245, 158, 11, 0.08), transparent 48%),
+                radial-gradient(circle at 18% 82%, rgba(229, 57, 53, 0.1), transparent 50%),
+                var(--bg-void);
+            font-family: 'Be Vietnam Pro', sans-serif;
             min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
             margin: 0;
-            color: #f8fafc;
+            color: var(--ivory);
         }
         .adm-login-box {
             width: 100%;
-            max-width: 440px;
-            padding: 36px 30px;
-            border-radius: 24px;
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
+            max-width: 470px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-strong);
+            border-radius: 18px;
+            box-shadow: 0 28px 64px rgba(0, 0, 0, 0.65);
+            overflow: hidden;
         }
-        .form-control:focus {
-            border-color: #FF2E55;
-            box-shadow: 0 0 0 3px rgba(255, 46, 85, 0.2);
+        .adm-plate-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 22px;
+            background: var(--bg-carbon);
+            border-bottom: 1px solid var(--border-line);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--gold);
+        }
+        .adm-login-body {
+            padding: 32px 28px;
+        }
+        .adm-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--stone);
+            margin-bottom: 6px;
+        }
+        .adm-input-wrap {
+            display: flex;
+            align-items: stretch;
+            background: var(--bg-carbon);
+            border: 1px solid var(--border-strong);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        .adm-input-wrap:focus-within {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+        }
+        .adm-input-prefix {
+            display: inline-flex;
+            align-items: center;
+            padding: 0 14px;
+            color: var(--gold);
+            border-right: 1px solid var(--border-line);
+        }
+        .adm-input {
+            flex: 1;
+            background: var(--bg-carbon) !important;
+            border: none !important;
+            color: var(--ivory) !important;
+            padding: 11px 14px;
+            font-size: 0.92rem;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        .adm-submit-btn {
+            width: 100%;
+            min-height: 48px;
+            background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
+            border: none;
+            border-radius: 10px;
+            color: var(--ivory);
+            font-size: 0.92rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 24px rgba(229, 57, 53, 0.28);
+        }
+        .adm-submit-btn:hover {
+            background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+            transform: translateY(-2px);
+            color: var(--ivory);
         }
     </style>
 </head>
 <body>
     <div class="adm-login-box">
-        <div class="text-center mb-4">
-            <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-4 text-white"
-                 style="width:52px;height:52px;background:linear-gradient(135deg,#FF2E55,#FF6B35);font-size:1.4rem;box-shadow:0 10px 24px rgba(255,46,85,0.35);">
-                <i class="bi bi-shield-lock"></i>
-            </div>
-            <h3 class="text-white fw-bold mb-1" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;">Cổng Quản Trị CinemaHub</h3>
-            <p class="text-white-50 small mb-0">Hệ thống phân quyền dành riêng cho Admin &amp; Staff</p>
+        <div class="adm-plate-header">
+            <span><i class="bi bi-film me-1"></i> Hệ thống quản trị CinemaHub</span>
+            <span>Dành cho Quản trị viên &amp; Nhân viên</span>
         </div>
 
-        <form asp-area="Admin" asp-controller="Account" asp-action="Login" method="post" id="adminLoginForm">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="returnUrl" value="@(ViewBag.ReturnUrl ?? ViewData["ReturnUrl"])" />
-            <div asp-validation-summary="All" class="text-danger small mb-3"></div>
-
-            <div class="mb-3">
-                <label asp-for="Username" class="form-label text-white-50 small fw-bold text-uppercase" style="letter-spacing:0.04em;">Tài khoản quản trị</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-transparent border-secondary border-opacity-25 text-white-50">
-                        <i class="bi bi-person"></i>
-                    </span>
-                    <input asp-for="Username" id="admUsername" class="form-control bg-transparent border-secondary border-opacity-25 text-white py-2" placeholder="Nhập tên đăng nhập" autocomplete="username" />
+        <div class="adm-login-body">
+            <div class="text-center mb-4">
+                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center"
+                     style="width:52px;height:52px;border-radius:14px;background:rgba(229,57,53,0.16);border:1px solid var(--vermilion);color:var(--gold);font-size:1.45rem;">
+                    <i class="bi bi-shield-lock"></i>
                 </div>
+                <h3 class="fw-bold mb-1" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.45rem;color:var(--ivory);">Đăng Nhập Quản Trị</h3>
+                <p class="small mb-0" style="color:var(--stone);">Quản lý phim, lịch chiếu và doanh thu phòng vé</p>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Password" class="form-label text-white-50 small fw-bold text-uppercase" style="letter-spacing:0.04em;">Mật khẩu</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-transparent border-secondary border-opacity-25 text-white-50">
-                        <i class="bi bi-lock"></i>
-                    </span>
-                    <input asp-for="Password" id="admPassword" type="password" class="form-control bg-transparent border-secondary border-opacity-25 text-white py-2" placeholder="••••••••" autocomplete="current-password" />
-                    <button type="button" class="btn btn-outline-secondary border-secondary border-opacity-25 text-white-50"
-                            onclick="var p=document.getElementById('admPassword');p.type=p.type==='password'?'text':'password';">
-                        <i class="bi bi-eye"></i>
-                    </button>
+            <form asp-area="Admin" asp-controller="Account" asp-action="Login" method="post" id="adminLoginForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@(ViewBag.ReturnUrl ?? ViewData["ReturnUrl"])" />
+                <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Username" class="adm-label">Tài khoản quản trị</label>
+                    <div class="adm-input-wrap">
+                        <span class="adm-input-prefix"><i class="bi bi-person"></i></span>
+                        <input asp-for="Username" id="admUsername" class="adm-input" placeholder="Nhập tên đăng nhập" autocomplete="username" />
+                    </div>
                 </div>
-            </div>
 
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <div class="form-check">
-                    <input asp-for="RememberMe" class="form-check-input bg-transparent border-secondary" id="admRemember" />
-                    <label asp-for="RememberMe" class="form-check-label text-white-50 small" for="admRemember">Duy trì đăng nhập</label>
+                <div class="mb-3">
+                    <label asp-for="Password" class="adm-label">Mật khẩu</label>
+                    <div class="adm-input-wrap">
+                        <span class="adm-input-prefix"><i class="bi bi-lock"></i></span>
+                        <input asp-for="Password" id="admPassword" type="password" class="adm-input" placeholder="Nhập mật khẩu" autocomplete="current-password" />
+                        <button type="button" class="btn border-0 px-3" style="color:var(--stone);border-left:1px solid var(--border-line)!important;"
+                                onclick="var p=document.getElementById('admPassword');p.type=p.type==='password'?'text':'password';">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div class="form-check">
+                        <input asp-for="RememberMe" class="form-check-input" id="admRemember" style="background-color:var(--bg-carbon);border-color:var(--border-strong);border-radius:4px;" />
+                        <label asp-for="RememberMe" class="form-check-label small" for="admRemember" style="color:var(--stone);">Ghi nhớ phiên đăng nhập</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="adm-submit-btn mb-3">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập hệ thống
+                </button>
+            </form>
+
+            <div class="text-center pt-3" style="border-top:1px solid var(--border-line);">
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="text-decoration-none small" style="color:var(--gold);font-size:0.84rem;font-weight:600;">
+                    <i class="bi bi-arrow-left me-1"></i> Trở về trang chủ CinemaHub
+                </a>
             </div>
-
-            <button type="submit" class="btn w-100 rounded-4 py-3 fw-bold text-white mb-3"
-                    style="background:linear-gradient(135deg,#FF2E55,#FF6B35);box-shadow:0 10px 24px rgba(255,46,85,0.3);border:none;">
-                <span>Đăng Nhập Hệ Thống</span>
-            </button>
-        </form>
-
-        <div class="text-center pt-2 border-top border-white border-opacity-10">
-            <a asp-area="" asp-controller="Home" asp-action="Index" class="text-white-50 text-decoration-none small">
-                <i class="bi bi-arrow-left me-1"></i> Trở về trang chủ CinemaHub
-            </a>
         </div>
     </div>
 </body>

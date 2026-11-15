@@ -77,16 +77,16 @@
             <div class="d-flex flex-column gap-3">
                 @foreach (var m in topMovies.Take(6))
                 {
-                    <div class="d-flex align-items-center justify-content-between p-2 rounded-3 mb-2" style="background:#f8fafc;border:1px solid #f1f5f9;">
+                    <div class="d-flex align-items-center justify-content-between p-2 mb-2" style="background:#0d0c0a;border:1px solid rgba(243,239,230,0.14);border-radius:2px;">
                         <div class="d-flex align-items-center gap-3">
-                            <img src="@m.PosterUrl" alt="@m.MovieTitle" style="width:42px;height:58px;object-fit:cover;border-radius:8px;"
+                            <img src="@m.PosterUrl" alt="@m.MovieTitle" style="width:42px;height:58px;object-fit:cover;border-radius:2px;border:1px solid rgba(243,239,230,0.2);"
                                  onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=200'" />
                             <div>
-                                <div class="text-dark fw-bold small">@m.MovieTitle</div>
-                                <div class="text-muted" style="font-size:0.75rem;">@m.TicketCount vé đã bán</div>
+                                <div class="text-white fw-bold small">@m.MovieTitle</div>
+                                <div class="text-muted" style="font-size:0.75rem;font-family:'JetBrains Mono',monospace;">@m.TicketCount vé đã bán</div>
                             </div>
                         </div>
-                        <div class="text-danger fw-bold small">@m.TotalRevenue.ToString("N0") ₫</div>
+                        <div class="fw-bold small" style="color:#D4A359;font-family:'JetBrains Mono',monospace;">@m.TotalRevenue.ToString("N0") ₫</div>
                     </div>
                 }
             </div>
@@ -111,20 +111,20 @@
                     datasets: [{
                         label: 'Doanh thu (VNĐ)',
                         data: revData,
-                        backgroundColor: 'rgba(255, 46, 85, 0.75)',
-                        borderColor: '#FF2E55',
+                        backgroundColor: 'rgba(217, 56, 41, 0.78)',
+                        borderColor: '#D4A359',
                         borderWidth: 1,
-                        borderRadius: 8
+                        borderRadius: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { labels: { color: '#334155', font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600' } } }
+                        legend: { labels: { color: '#F3EFE6', font: { family: "'JetBrains Mono', monospace", weight: '600' } } }
                     },
                     scales: {
-                        x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(0,0,0,0.06)' } },
-                        y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(0,0,0,0.06)' } }
+                        x: { ticks: { color: '#B5AEA2', font: { family: "'JetBrains Mono', monospace" } }, grid: { color: 'rgba(243,239,230,0.08)' } },
+                        y: { ticks: { color: '#B5AEA2', font: { family: "'JetBrains Mono', monospace" } }, grid: { color: 'rgba(243,239,230,0.08)' } }
                     }
                 }
             });

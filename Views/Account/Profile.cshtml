@@ -1,68 +1,64 @@
 @model ProfileViewModel
 @{
-    ViewData["Title"] = "Hồ Sơ Thành Viên VIP";
+    ViewData["Title"] = "Thông tin tài khoản thành viên";
     var initial = !string.IsNullOrWhiteSpace(Model.FullName) ? Model.FullName.Trim()[0].ToString().ToUpper() : "U";
 }
 
-<div class="py-4 my-2">
+<section class="py-4 my-2">
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success rounded-4 py-2 px-3 small mb-4">
+        <div class="p-3 mb-4" style="background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.45);border-radius:10px;color:#6ee7b7;font-size:0.86rem;">
             <i class="bi bi-check-circle-fill me-1"></i> @TempData["Success"]
         </div>
     }
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger rounded-4 py-2 px-3 small mb-4">
+        <div class="p-3 mb-4" style="background:rgba(229,57,53,0.14);border:1px solid rgba(229,57,53,0.5);border-radius:10px;color:#fca5a5;font-size:0.86rem;">
             <i class="bi bi-exclamation-triangle-fill me-1"></i> @TempData["Error"]
         </div>
     }
 
     <div class="row g-4">
-        <!-- Left VIP Member Card -->
+        <!-- Left Member Card -->
         <div class="col-lg-4">
-            <div class="p-4 rounded-5 cinema-spotlight h-100 d-flex flex-column justify-content-between"
-                 style="background:radial-gradient(circle at 80% 15%,rgba(245,185,66,0.22),transparent 55%),rgba(15,22,41,0.88);border:1px solid rgba(245,185,66,0.35);">
+            <div class="ch-auth-dossier h-100 d-flex flex-column justify-content-between cinema-spotlight">
                 <div>
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <span class="badge rounded-pill px-3 py-1" style="background:rgba(245,185,66,0.2);color:#F5B942;">
-                            <i class="bi bi-stars me-1"></i>CINEMAHUB PASS
-                        </span>
-                        <span class="text-white-50 small font-monospace">ID #@Model.UserId.ToString("D4")</span>
+                    <div class="ch-auth-plate-bar">
+                        <span><i class="bi bi-stars me-1"></i> Thẻ thành viên CinemaHub</span>
+                        <span>Mã TV #@Model.UserId.ToString("D4")</span>
                     </div>
 
-                    <div class="d-flex align-items-center gap-3 mb-4">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bolder text-white"
-                             style="width:68px;height:68px;font-size:1.7rem;background:linear-gradient(135deg,#FF2E55,#FF6B35);">
-                            @initial
-                        </div>
-                        <div>
-                            <h4 class="text-white fw-bold mb-0">@Model.FullName</h4>
-                            <div class="text-white-50 small">@@@Model.Username • @Model.RoleName</div>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-4">
-                        <div class="col-6">
-                            <div class="p-3 rounded-4" style="background:rgba(255,255,255,0.04);">
-                                <div class="text-white-50 small">Vé đã đặt</div>
-                                <div class="text-white fw-bolder fs-4">@Model.TotalTickets</div>
+                    <div class="p-4">
+                        <div class="d-flex align-items-center gap-3 mb-4 pb-3" style="border-bottom:1px solid var(--border-glass);">
+                            <div class="d-flex align-items-center justify-content-center fw-bolder"
+                                 style="width:64px;height:64px;border-radius:14px;font-size:1.6rem;background:var(--primary);color:var(--text-main);">
+                                @initial
+                            </div>
+                            <div>
+                                <h4 class="fw-bold mb-1" style="color:var(--text-main);font-size:1.2rem;">@Model.FullName</h4>
+                                <div style="font-size:0.82rem;color:var(--gold);font-weight:600;">
+                                    @@@Model.Username &bull; @Model.RoleName
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="p-3 rounded-4" style="background:rgba(255,255,255,0.04);">
-                                <div class="text-white-50 small">Chi tiêu</div>
-                                <div class="text-warning fw-bolder fs-5">@Model.TotalSpent.ToString("N0") ₫</div>
+
+                        <div class="row g-0 mb-4" style="border:1px solid var(--border-glass-strong);background:#0f1117;border-radius:12px;overflow:hidden;">
+                            <div class="col-6 p-3" style="border-right:1px solid var(--border-glass);">
+                                <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">Số vé đã đặt</div>
+                                <div class="fw-bold mt-1" style="font-size:1.45rem;color:var(--text-main);">@Model.TotalTickets</div>
+                            </div>
+                            <div class="col-6 p-3">
+                                <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">Tổng chi tiêu</div>
+                                <div class="fw-bold mt-1" style="font-size:1.15rem;color:var(--gold);">@Model.TotalSpent.ToString("N0")đ</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="d-flex flex-column gap-2">
-                    <a asp-controller="Booking" asp-action="MyTickets"
-                       class="btn rounded-4 py-2 fw-bold text-white"
-                       style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);">
-                        <i class="bi bi-qr-code-scan me-1 text-info"></i> Mở Ví Vé Điện Tử
+                <div class="p-4 pt-0">
+                    <a asp-controller="Booking" asp-action="MyTickets" class="ch-auth-btn-primary">
+                        <i class="bi bi-qr-code-scan"></i>
+                        <span>Xem vé đã đặt</span>
                     </a>
                 </div>
             </div>
@@ -70,56 +66,68 @@
 
         <!-- Right Settings Forms -->
         <div class="col-lg-8">
-            <div class="p-4 rounded-5 cinema-spotlight mb-4"
-                 style="background:rgba(15,22,41,0.82);border:1px solid rgba(255,255,255,0.09);">
-                <h5 class="text-white fw-bold mb-3"><i class="bi bi-person-lines-fill text-info me-2"></i>Cập Nhật Thông Tin Cá Nhân</h5>
-                <form asp-action="UpdateProfile" method="post">
-                    @Html.AntiForgeryToken()
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label text-white-50 small fw-bold text-uppercase">Họ và tên</label>
-                            <input type="text" name="FullName" value="@Model.FullName" required class="form-control bg-transparent border-secondary border-opacity-25 text-white" />
+            <div class="ch-auth-dossier mb-4 cinema-spotlight">
+                <div class="ch-auth-plate-bar">
+                    <span><i class="bi bi-person-lines-fill me-1"></i> Thông tin cá nhân</span>
+                    <span>Cập nhật hồ sơ</span>
+                </div>
+                <div class="p-4">
+                    <form asp-action="UpdateProfile" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="ch-auth-label">Họ và tên</label>
+                                <input type="text" name="FullName" value="@Model.FullName" required class="ch-auth-input-standalone" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="ch-auth-label">Địa chỉ Email</label>
+                                <input type="email" name="Email" value="@Model.Email" required class="ch-auth-input-standalone" />
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-white-50 small fw-bold text-uppercase">Địa chỉ Email</label>
-                            <input type="email" name="Email" value="@Model.Email" required class="form-control bg-transparent border-secondary border-opacity-25 text-white" />
+                        <div class="mt-3">
+                            <button type="submit" class="ch-auth-btn-primary" style="width:auto;">
+                                <i class="bi bi-check2"></i>
+                                <span>Lưu thay đổi</span>
+                            </button>
                         </div>
-                    </div>
-                    <button type="submit" class="btn rounded-pill px-4 py-2 fw-bold text-white mt-3"
-                            style="background:linear-gradient(135deg,#FF2E55,#FF6B35);">
-                        <i class="bi bi-check2 me-1"></i> Lưu Thay Đổi
-                    </button>
-                </form>
+                    </form>
+                </div>
             </div>
 
-            <div class="p-4 rounded-5 cinema-spotlight"
-                 style="background:rgba(15,22,41,0.82);border:1px solid rgba(255,255,255,0.09);">
-                <h5 class="text-white fw-bold mb-3"><i class="bi bi-shield-lock-fill text-warning me-2"></i>Đổi Mật Khẩu Bảo Mật</h5>
-                <form asp-action="ChangePassword" method="post">
-                    @Html.AntiForgeryToken()
-                    <div class="row g-3">
-                        @if (Model.HasPassword)
-                        {
+            <div class="ch-auth-dossier cinema-spotlight">
+                <div class="ch-auth-plate-bar">
+                    <span><i class="bi bi-shield-lock-fill me-1"></i> Đổi mật khẩu bảo mật</span>
+                    <span>Bảo vệ tài khoản</span>
+                </div>
+                <div class="p-4">
+                    <form asp-action="ChangePassword" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row g-3">
+                            @if (Model.HasPassword)
+                            {
+                                <div class="col-md-4">
+                                    <label class="ch-auth-label">Mật khẩu hiện tại</label>
+                                    <input type="password" name="CurrentPassword" required class="ch-auth-input-standalone" />
+                                </div>
+                            }
                             <div class="col-md-4">
-                                <label class="form-label text-white-50 small fw-bold text-uppercase">Mật khẩu hiện tại</label>
-                                <input type="password" name="CurrentPassword" required class="form-control bg-transparent border-secondary border-opacity-25 text-white" />
+                                <label class="ch-auth-label">Mật khẩu mới</label>
+                                <input type="password" name="NewPassword" required minlength="6" class="ch-auth-input-standalone" />
                             </div>
-                        }
-                        <div class="col-md-4">
-                            <label class="form-label text-white-50 small fw-bold text-uppercase">Mật khẩu mới</label>
-                            <input type="password" name="NewPassword" required minlength="6" class="form-control bg-transparent border-secondary border-opacity-25 text-white" />
+                            <div class="col-md-4">
+                                <label class="ch-auth-label">Xác nhận mật khẩu</label>
+                                <input type="password" name="ConfirmPassword" required minlength="6" class="ch-auth-input-standalone" />
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-white-50 small fw-bold text-uppercase">Xác nhận mật khẩu</label>
-                            <input type="password" name="ConfirmPassword" required minlength="6" class="form-control bg-transparent border-secondary border-opacity-25 text-white" />
+                        <div class="mt-3">
+                            <button type="submit" class="ch-auth-btn-secondary" style="width:auto;">
+                                <i class="bi bi-key"></i>
+                                <span>Cập nhật mật khẩu</span>
+                            </button>
                         </div>
-                    </div>
-                    <button type="submit" class="btn rounded-pill px-4 py-2 fw-bold text-white mt-3"
-                            style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);">
-                        <i class="bi bi-key me-1"></i> Cập Nhật Mật Khẩu
-                    </button>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</section>

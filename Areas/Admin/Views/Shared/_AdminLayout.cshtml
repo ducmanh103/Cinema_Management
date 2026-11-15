@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="vi" data-bs-theme="light">
+<html lang="vi" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="@(Context.RequestServices.GetService<Microsoft.AspNetCore.Antiforgery.IAntiforgery>()?.GetAndStoreTokens(Context).RequestToken)" />
-    <title>@ViewData["Title"] — CinemaHub Quản Trị Hệ Thống</title>
+    <title>@ViewData["Title"] — Hệ Thống Quản Trị CinemaHub</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
@@ -17,81 +17,90 @@
 
     <style>
         :root {
-            --adm-bg: #f8fafc;
-            --adm-surface: #ffffff;
-            --adm-card: #ffffff;
-            --adm-border: #e2e8f0;
-            --adm-border-focus: #ff2e55;
-            --adm-text: #0f172a;
-            --adm-text-muted: #64748b;
-            --adm-red: #FF2E55;
-            --adm-orange: #FF6B35;
-            --adm-gold: #F5B942;
-            --adm-cyan: #0284c7;
+            --adm-bg: #0F1117;
+            --adm-surface: #141821;
+            --adm-card: #171B26;
+            --adm-card-elevated: #1E2433;
+            --adm-border: rgba(255, 255, 255, 0.09);
+            --adm-border-strong: rgba(255, 255, 255, 0.16);
+            --adm-border-focus: #F59E0B;
+            --adm-text: #F8FAFC;
+            --adm-text-secondary: #CBD5E1;
+            --adm-text-muted: #94A3B8;
+            --adm-red: #E53935;
+            --adm-red-hover: #F44336;
+            --adm-gold: #F59E0B;
+            --adm-cyan: #38BDF8;
             --adm-emerald: #10B981;
-            --adm-sidebar-w: 264px;
+            --adm-sidebar-w: 268px;
+            --font-display: 'Plus Jakarta Sans', 'Be Vietnam Pro', sans-serif;
+            --font-sans: 'Be Vietnam Pro', sans-serif;
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--adm-bg);
+            font-family: var(--font-sans);
+            background:
+                radial-gradient(ellipse 80% 50% at 80% 0%, rgba(245, 158, 11, 0.05), transparent 55%),
+                var(--adm-bg);
             color: var(--adm-text);
             min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* ─── Sidebar (Clean Modern Light Form) ─── */
+        /* ─── Admin Sidebar ─── */
         .adm-sidebar {
             position: fixed;
             top: 0;
             left: 0;
             bottom: 0;
             width: var(--adm-sidebar-w);
-            background: #ffffff;
-            border-right: 1px solid var(--adm-border);
+            background: var(--adm-surface);
+            border-right: 1px solid var(--adm-border-strong);
             display: flex;
             flex-direction: column;
             z-index: 1040;
             transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 1px 0 3px rgba(0, 0, 0, 0.02);
+            box-shadow: 16px 0 40px rgba(0, 0, 0, 0.45);
         }
 
         .adm-brand {
-            padding: 20px 22px 18px;
+            padding: 18px 20px;
             display: flex;
             align-items: center;
             gap: 12px;
             border-bottom: 1px solid var(--adm-border);
             text-decoration: none;
+            background: #11151E;
         }
 
         .adm-brand-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--adm-red), var(--adm-orange));
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #fff;
-            font-size: 1.2rem;
-            box-shadow: 0 8px 18px rgba(255, 46, 85, 0.3);
+            color: var(--adm-text);
+            font-size: 1.1rem;
+            box-shadow: 0 6px 16px rgba(229, 57, 53, 0.3);
+            flex-shrink: 0;
         }
 
         .adm-brand-title {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: var(--font-display);
             font-weight: 800;
-            font-size: 1.18rem;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
             color: var(--adm-text);
-            line-height: 1.1;
+            line-height: 1.15;
         }
 
         .adm-brand-sub {
-            font-size: 0.68rem;
-            color: var(--adm-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            font-weight: 700;
+            font-size: 0.72rem;
+            color: var(--adm-gold);
+            font-weight: 600;
+            margin-top: 2px;
         }
 
         .adm-nav {
@@ -104,12 +113,12 @@
         }
 
         .adm-nav-section {
-            font-size: 0.7rem;
-            font-weight: 800;
+            font-size: 0.72rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #94a3b8;
-            padding: 12px 12px 4px;
+            letter-spacing: 0.06em;
+            color: var(--adm-text-muted);
+            padding: 14px 12px 6px;
         }
 
         .adm-nav-link {
@@ -118,54 +127,56 @@
             gap: 12px;
             padding: 10px 14px;
             border-radius: 10px;
-            color: #475569;
+            border: 1px solid transparent;
+            color: var(--adm-text-secondary);
             font-weight: 600;
             font-size: 0.88rem;
             text-decoration: none;
             transition: all 0.2s ease;
+            position: relative;
         }
 
         .adm-nav-link i {
             font-size: 1.05rem;
             width: 20px;
             text-align: center;
-            color: #64748b;
+            color: var(--adm-text-muted);
             transition: color 0.2s ease;
         }
 
         .adm-nav-link:hover {
-            background: #f1f5f9;
-            color: #0f172a;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--adm-text);
         }
 
         .adm-nav-link:hover i {
-            color: #0f172a;
+            color: var(--adm-gold);
         }
 
         .adm-nav-link.active {
-            background: #fff1f2;
-            border: 1px solid #fecdd3;
-            color: #e11d48;
+            background: rgba(229, 57, 53, 0.14);
+            border: 1px solid rgba(229, 57, 53, 0.45);
+            color: var(--adm-text);
             font-weight: 700;
         }
 
         .adm-nav-link.active i {
-            color: #e11d48;
+            color: var(--adm-red);
         }
 
         .adm-sidebar-footer {
             padding: 14px 16px;
             border-top: 1px solid var(--adm-border);
-            background: #f8fafc;
+            background: #11151E;
         }
 
-        /* ─── Main Content Area ─── */
+        /* ─── Main Operations Area ─── */
         .adm-main {
             margin-left: var(--adm-sidebar-w);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background: var(--adm-bg);
+            background: transparent;
         }
 
         .adm-topbar {
@@ -173,13 +184,14 @@
             top: 0;
             z-index: 1020;
             padding: 14px 28px;
-            background: #ffffff;
-            border-bottom: 1px solid var(--adm-border);
+            background: rgba(20, 24, 33, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--adm-border-strong);
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
         }
 
         .adm-content {
@@ -187,129 +199,153 @@
             flex: 1;
         }
 
-        /* ─── Modern Light Cards & Forms ─── */
+        /* ─── Cards & KPI Blocks ─── */
         .adm-card {
             padding: 24px;
             border-radius: 16px;
-            background: #ffffff;
-            border: 1px solid var(--adm-border);
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+            background: var(--adm-card);
+            border: 1px solid var(--adm-border-strong);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
             color: var(--adm-text);
-            transition: transform 0.22s ease, box-shadow 0.22s ease;
+            transition: border-color 0.22s ease, box-shadow 0.22s ease;
         }
 
         .adm-card:hover {
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-        }
-
-        /* Modal Smooth Zoom Entrance */
-        .modal.fade .modal-dialog {
-            transform: scale(0.94) translateY(10px);
-            transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease;
-        }
-
-        .modal.show .modal-dialog {
-            transform: scale(1) translateY(0);
-        }
-
-        /* Tactile Button Press */
-        .adm-btn-primary:active,
-        .btn:active {
-            transform: scale(0.97) !important;
-        }
-
-        table.dataTable tbody tr {
-            transition: background-color 0.18s ease;
+            border-color: rgba(245, 158, 11, 0.35);
         }
 
         .adm-card-title {
-            font-weight: 700;
+            font-family: var(--font-display);
+            font-weight: 800;
             color: var(--adm-text);
             font-size: 1.15rem;
+            letter-spacing: -0.015em;
         }
 
         .adm-card-sub {
-            color: var(--adm-text-muted);
+            color: var(--adm-text-secondary);
             font-size: 0.85rem;
         }
 
         .adm-kpi-card {
             padding: 20px;
-            border-radius: 16px;
-            background: #ffffff;
-            border: 1px solid var(--adm-border);
+            border-radius: 14px;
+            background: var(--adm-card);
+            border: 1px solid var(--adm-border-strong);
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            transition: transform 0.22s ease, border-color 0.22s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .adm-kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--adm-gold);
+            opacity: 0.85;
         }
 
         .adm-kpi-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
-            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            border-color: rgba(245, 158, 11, 0.45);
         }
 
         .adm-kpi-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 14px;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
+            font-size: 1.35rem;
+            border: 1px solid var(--adm-border);
+            flex-shrink: 0;
         }
 
-        /* Modern Light Tables */
+        /* ─── Tables & DataTables ─── */
         .table-dark-glass,
         table.dataTable,
         .table {
-            --bs-table-bg: transparent;
-            --bs-table-color: #1e293b;
-            --bs-table-border-color: var(--adm-border);
+            --bs-table-bg: transparent !important;
+            --bs-table-color: var(--adm-text) !important;
+            --bs-table-border-color: var(--adm-border) !important;
+            color: var(--adm-text) !important;
             vertical-align: middle;
         }
 
         .table-dark-glass thead th,
         table.dataTable thead th,
         .table thead th {
-            background: #f8fafc !important;
-            color: #475569 !important;
-            font-size: 0.75rem !important;
+            background: #121620 !important;
+            color: var(--adm-text-secondary) !important;
+            font-size: 0.78rem !important;
             font-weight: 700 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.05em !important;
             padding: 12px 14px !important;
-            border-bottom: 2px solid var(--adm-border) !important;
+            border-bottom: 1px solid var(--adm-border-strong) !important;
+            border-top: 1px solid var(--adm-border) !important;
         }
 
         .table-dark-glass tbody td,
         table.dataTable tbody td,
         .table tbody td {
             padding: 12px 14px !important;
-            color: #1e293b !important;
-            border-bottom: 1px solid #f1f5f9 !important;
+            color: var(--adm-text) !important;
+            border-bottom: 1px solid var(--adm-border) !important;
+            background: transparent !important;
         }
 
-        .table tbody tr:hover,
-        .table-hover tbody tr:hover {
-            background-color: #f8fafc !important;
+        .table tbody tr:hover td,
+        .table-hover tbody tr:hover td {
+            background-color: rgba(255, 255, 255, 0.03) !important;
         }
 
-        /* Form Controls Standard Light Styling */
+        /* DataTables Pagination & Filter Controls */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: var(--adm-text-secondary) !important;
+            font-size: 0.84rem;
+            margin: 8px 0;
+        }
+
+        .page-item .page-link {
+            background: #121620;
+            border-color: var(--adm-border-strong);
+            color: var(--adm-text-secondary);
+            border-radius: 8px !important;
+            font-size: 0.82rem;
+            margin: 0 2px;
+        }
+
+        .page-item.active .page-link {
+            background: var(--adm-red);
+            border-color: var(--adm-red);
+            color: var(--adm-text);
+        }
+
+        /* ─── Form Controls & Modals ─── */
         .adm-content .form-control,
         .adm-content .form-select,
         .modal-content .form-control,
         .modal-content .form-select,
         .adm-card .form-control,
-        .adm-card .form-select {
-            background-color: #ffffff !important;
-            border: 1px solid #cbd5e1 !important;
-            color: #0f172a !important;
+        .adm-card .form-select,
+        .dataTables_wrapper input,
+        .dataTables_wrapper select {
+            background-color: #121620 !important;
+            border: 1px solid var(--adm-border-strong) !important;
+            color: var(--adm-text) !important;
             border-radius: 10px !important;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             transition: all 0.2s ease;
         }
 
@@ -319,77 +355,102 @@
         .modal-content .form-select:focus,
         .adm-card .form-control:focus,
         .adm-card .form-select:focus {
-            border-color: var(--adm-red) !important;
-            box-shadow: 0 0 0 3px rgba(255, 46, 85, 0.15) !important;
+            border-color: var(--adm-gold) !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18) !important;
             outline: none !important;
         }
 
         .adm-content label,
         .adm-card label,
         .modal-content label {
-            color: #475569 !important;
+            color: var(--adm-text-secondary) !important;
+            font-size: 0.82rem;
             font-weight: 600;
         }
 
-        /* Buttons */
+        .modal-content {
+            background: var(--adm-card) !important;
+            border: 1px solid var(--adm-border-strong) !important;
+            border-radius: 16px !important;
+            color: var(--adm-text) !important;
+            box-shadow: 0 28px 64px rgba(0, 0, 0, 0.75) !important;
+            overflow: hidden;
+        }
+
+        .modal-header,
+        .modal-footer {
+            border-color: var(--adm-border) !important;
+            background: #121620;
+        }
+
+        /* ─── Action Buttons ─── */
         .adm-btn-primary {
-            background: linear-gradient(135deg, var(--adm-red), var(--adm-orange));
+            background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
             border: none;
-            color: #fff !important;
+            color: var(--adm-text) !important;
             font-weight: 700;
+            font-size: 0.86rem;
             border-radius: 10px;
-            padding: 8px 18px;
-            font-size: 0.9rem;
-            box-shadow: 0 6px 16px rgba(255, 46, 85, 0.25);
+            padding: 9px 18px;
             transition: all 0.2s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
+            gap: 6px;
+            box-shadow: 0 8px 20px rgba(229, 57, 53, 0.25);
         }
 
         .adm-btn-primary:hover {
-            box-shadow: 0 8px 22px rgba(255, 46, 85, 0.35);
-            transform: translateY(-1px);
-            color: #fff !important;
+            background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+            transform: translateY(-2px);
+            color: var(--adm-text) !important;
         }
 
-        /* Overrides to adapt older dark-mode inline text classes to clean light theme */
+        /* Normalize legacy utility classes across all Admin sub-views */
+        .adm-main .text-dark,
         .adm-main .text-white,
+        .adm-card .text-dark,
         .adm-card .text-white,
+        .modal-content .text-dark,
         .modal-content .text-white {
-            color: #0f172a !important;
+            color: var(--adm-text) !important;
         }
 
+        .adm-main .text-muted,
+        .adm-main .text-secondary,
         .adm-main .text-white-50,
+        .adm-card .text-muted,
         .adm-card .text-white-50,
+        .modal-content .text-muted,
         .modal-content .text-white-50 {
-            color: #64748b !important;
+            color: var(--adm-text-secondary) !important;
         }
 
-        .adm-content .btn-outline-light {
-            color: #475569 !important;
-            border-color: #cbd5e1 !important;
-            background: #ffffff !important;
-        }
-
-        .adm-content .btn-outline-light:hover {
-            background: #f1f5f9 !important;
-            color: #0f172a !important;
-        }
-
-        .adm-content .bg-dark {
-            background-color: #ffffff !important;
-        }
-
-        .adm-content .border-secondary {
+        .adm-main .bg-light,
+        .adm-main .bg-white,
+        .adm-main .bg-dark {
+            background-color: #121620 !important;
             border-color: var(--adm-border) !important;
+            color: var(--adm-text) !important;
+        }
+
+        .adm-main .btn-light {
+            background: #1E2433 !important;
+            border-color: var(--adm-border-strong) !important;
+            color: var(--adm-text) !important;
+            border-radius: 10px;
+        }
+
+        .adm-main .btn-light:hover {
+            border-color: var(--adm-gold) !important;
+            color: var(--adm-gold) !important;
         }
 
         .adm-backdrop {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(2px);
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(4px);
             z-index: 1035;
             display: none;
         }
@@ -421,12 +482,12 @@
     @{
         var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
         var userName = User.Identity?.Name ?? "Admin";
-        var userRole = User.IsInRole("Admin") ? "Quản Trị Viên" : "Nhân Viên";
+        var userRole = User.IsInRole("Admin") ? "Quản trị viên" : "Nhân viên điều phối";
     }
 
     <div class="adm-backdrop" id="admSidebarBackdrop"></div>
 
-    <!-- Sidebar -->
+    <!-- Admin Sidebar -->
     <aside class="adm-sidebar" id="admSidebar">
         <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="adm-brand">
             <div class="adm-brand-icon">
@@ -434,68 +495,68 @@
             </div>
             <div>
                 <div class="adm-brand-title">CinemaHub</div>
-                <div class="adm-brand-sub">Quản Trị Hệ Thống</div>
+                <div class="adm-brand-sub">Hệ thống quản trị rạp</div>
             </div>
         </a>
 
         <nav class="adm-nav">
-            <div class="adm-nav-section">Điều Hành</div>
+            <div class="adm-nav-section">Quản lý vận hành</div>
             <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
                class="adm-nav-link @(currentController == "Dashboard" ? "active" : "")">
                 <i class="bi bi-grid-1x2"></i>
-                <span>Tổng Quan</span>
+                <span>Tổng quan hệ thống</span>
             </a>
 
             <a asp-area="Admin" asp-controller="Movies" asp-action="Index"
                class="adm-nav-link @(currentController == "Movies" ? "active" : "")">
                 <i class="bi bi-camera-reels"></i>
-                <span>Quản Lý Kho Phim</span>
+                <span>Quản lý danh sách phim</span>
             </a>
 
             <a asp-area="Admin" asp-controller="Showtimes" asp-action="Index"
                class="adm-nav-link @(currentController == "Showtimes" ? "active" : "")">
                 <i class="bi bi-calendar2-week"></i>
-                <span>Điều Phối Suất Chiếu</span>
+                <span>Quản lý lịch chiếu</span>
             </a>
 
             <a asp-area="Admin" asp-controller="Revenue" asp-action="Index"
                class="adm-nav-link @(currentController == "Revenue" ? "active" : "")">
                 <i class="bi bi-bar-chart-line"></i>
-                <span>Báo Cáo Doanh Thu</span>
+                <span>Thống kê doanh thu</span>
             </a>
 
             @if (User.IsInRole("Admin"))
             {
-                <div class="adm-nav-section mt-2">Quản Trị Cấp Cao</div>
+                <div class="adm-nav-section mt-2">Quản trị hệ thống</div>
                 <a asp-area="Admin" asp-controller="Users" asp-action="Index"
                    class="adm-nav-link @(currentController == "Users" ? "active" : "")">
                     <i class="bi bi-people"></i>
-                    <span>Tài Khoản &amp; Phân Quyền</span>
+                    <span>Tài khoản &amp; Phân quyền</span>
                 </a>
             }
 
-            <div class="adm-nav-section mt-2">Lối Tắt</div>
+            <div class="adm-nav-section mt-2">Trang khách hàng</div>
             <a asp-area="" asp-controller="Home" asp-action="Index" class="adm-nav-link">
                 <i class="bi bi-globe2"></i>
-                <span>Xem Giao Diện Khách</span>
+                <span>Xem trang chủ đặt vé</span>
             </a>
         </nav>
 
         <div class="adm-sidebar-footer">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                         style="width:34px;height:34px;background:linear-gradient(135deg,#FF2E55,#FF6B35);font-size:0.85rem;">
+                    <div class="d-flex align-items-center justify-content-center fw-bold"
+                         style="width:36px;height:36px;border-radius:10px;background:var(--adm-red);color:var(--adm-text);font-size:0.88rem;">
                         @(userName.Length > 0 ? userName[0].ToString().ToUpper() : "A")
                     </div>
                     <div>
-                        <div class="fw-bold text-dark small" style="line-height:1.2;">@userName</div>
-                        <div class="text-muted" style="font-size:0.72rem;">@userRole</div>
+                        <div class="fw-bold small" style="line-height:1.2;color:var(--adm-text);">@userName</div>
+                        <div style="font-size:0.72rem;color:var(--adm-gold);font-weight:600;">@userRole</div>
                     </div>
                 </div>
                 <form asp-area="Admin" asp-controller="Account" asp-action="Logout" method="post" class="m-0">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:8px;padding:4px 8px;" title="Đăng xuất">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:8px;padding:5px 10px;" title="Đăng xuất">
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
                 </form>
@@ -507,23 +568,28 @@
     <div class="adm-main">
         <header class="adm-topbar">
             <div class="d-flex align-items-center gap-3">
-                <button type="button" class="btn btn-sm btn-outline-secondary d-lg-none" id="admToggleBtn">
+                <button type="button" class="btn btn-sm btn-outline-secondary d-lg-none" id="admToggleBtn" style="border-radius:8px;color:var(--adm-text);">
                     <i class="bi bi-list fs-5"></i>
                 </button>
-                <h5 class="mb-0 fw-bold text-dark" style="font-family:'Space Grotesk',sans-serif;font-size:1.15rem;">
-                    @ViewData["Title"]
-                </h5>
+                <div>
+                    <div style="font-size:0.74rem;font-weight:600;color:var(--adm-gold);">
+                        Điều hành cụm rạp CinemaHub
+                    </div>
+                    <h5 class="mb-0 fw-bold" style="font-family:var(--font-display);font-size:1.15rem;color:var(--adm-text);">
+                        @ViewData["Title"]
+                    </h5>
+                </div>
             </div>
 
             <div class="d-flex align-items-center gap-3">
-                <span class="badge rounded-pill px-3 py-2 d-none d-sm-inline-flex align-items-center gap-2"
-                      style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-weight:600;">
-                    <span style="width:7px;height:7px;border-radius:50%;background:#10b981;"></span>
-                    Hệ thống trực tuyến
+                <span class="px-3 py-1 d-none d-sm-inline-flex align-items-center gap-2"
+                      style="background:rgba(16,185,129,0.12);color:#6ee7b7;border:1px solid rgba(16,185,129,0.4);border-radius:999px;font-size:0.75rem;font-weight:600;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></span>
+                    Hệ thống hoạt động bình thường
                 </span>
-                <a asp-area="" asp-controller="Showtimes" asp-action="Index" class="btn btn-sm rounded-pill px-3 text-secondary"
-                   style="background:#f1f5f9;border:1px solid #e2e8f0;font-weight:600;">
-                    <i class="bi bi-ticket-perforated me-1 text-danger"></i> Quầy Đặt Vé
+                <a asp-area="" asp-controller="Showtimes" asp-action="Index" class="btn btn-sm px-3"
+                   style="background:#1E2433;border:1px solid var(--adm-border-strong);border-radius:10px;color:var(--adm-text);font-size:0.8rem;font-weight:600;">
+                    <i class="bi bi-ticket-perforated me-1" style="color:var(--adm-gold);"></i> Lịch chiếu khách hàng
                 </a>
             </div>
         </header>

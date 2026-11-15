@@ -1,13 +1,14 @@
 /* ==========================================================================
-   CINEMAHUB PRO MAX — OPTIMIZED GLOBAL MOTION & INTERACTION ENGINE (site.js)
-   Hardware-accelerated, 60fps buttery smooth, zero layout thrashing
+   CINEMAHUB — 35MM ARCHIVAL EDITORIAL MOTION & INTERACTION ENGINE (site.js)
+   Hardware-accelerated 60fps choreography, staggered reveals & 3D tilt
    ========================================================================== */
 (function () {
     'use strict';
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReducedMotion = false;
 
     document.addEventListener('DOMContentLoaded', function () {
+        initStaggerGroups();
         initScrollAnimations();
         initLiveCounters();
         initMobileDockActions();
@@ -15,6 +16,23 @@
         initInteractiveSpotlight();
         initPerspectiveTilt();
     });
+
+    /* 0. Auto-assign Stagger Delays to Grid Children for Smooth Cascade */
+    function initStaggerGroups() {
+        if (prefersReducedMotion) return;
+        const grids = document.querySelectorAll('.lp-movie-grid, .lp-theater-grid, .lp-rank-list, .lp-journal-stack');
+        grids.forEach(function (grid) {
+            const items = Array.from(grid.children);
+            items.forEach(function (item, idx) {
+                if (!item.hasAttribute('data-animate')) {
+                    item.setAttribute('data-animate', 'fade-up');
+                }
+                if (!item.hasAttribute('data-delay')) {
+                    item.setAttribute('data-delay', String(Math.min(idx * 65, 360)));
+                }
+            });
+        });
+    }
 
     /* 1. Scroll Reveal Choreography (IntersectionObserver - Zero Polling) */
     function initScrollAnimations() {
@@ -40,8 +58,8 @@
                 }
             });
         }, {
-            threshold: 0.05,
-            rootMargin: '0px 0px -20px 0px'
+            threshold: 0.06,
+            rootMargin: '0px 0px -24px 0px'
         });
 
         elements.forEach(function (el) { observer.observe(el); });
@@ -66,7 +84,6 @@
 
             const step = function (now) {
                 const progress = Math.min((now - start) / duration, 1);
-                // easeOutExpo
                 const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
                 const current = Math.round(target * eased);
                 el.textContent = prefix + current.toLocaleString('vi-VN') + suffix;
@@ -96,12 +113,26 @@
         counters.forEach(function (c) { observer.observe(c); });
     }
 
+    /* 3. Mobile Dock & Curator AI Trigger Delegation */
+    function initMobileDockActions() {
+        document.addEventListener('click', function (e) {
+            const curatorBtn = e.target.closest('[data-open-curator]');
+            if (!curatorBtn) return;
+            e.preventDefault();
+            const promptText = curatorBtn.getAttribute('data-curator-prompt') || '';
+            if (window.CinemaCurator && typeof window.CinemaCurator.open === 'function') {
+                window.CinemaCurator.open(promptText);
+            } else if (typeof window.toggleCinemaChat === 'function') {
+                window.toggleCinemaChat();
+            }
+        });
+    }
+
     /* 4. Infinite Seamless Marquee Ticker (Desktop + Mobile) */
     function initMarqueeTicker() {
         const wrappers = document.querySelectorAll('.ch-marquee-wrap');
         wrappers.forEach(function (wrap) {
             const tracks = wrap.querySelectorAll('.ch-marquee-track');
-            // Nếu chỉ có 1 track, clone thêm track thứ 2 để chạy loop vô tận không bị hở trên PC
             if (tracks.length === 1) {
                 const clone = tracks[0].cloneNode(true);
                 clone.setAttribute('aria-hidden', 'true');
@@ -110,12 +141,15 @@
         });
     }
 
-    /* 5. Interactive Spotlight Effect (Tracks --mouse-x, --mouse-y for cinema-spotlight) */
+    /* 5. Interactive Warm Amber Spotlight Effect */
     function initInteractiveSpotlight() {
         if (prefersReducedMotion || !window.matchMedia('(pointer: fine)').matches) return;
 
-        const spotlights = document.querySelectorAll('.cinema-spotlight');
-        spotlights.forEach(function (card) {
+        const targets = document.querySelectorAll(
+            '.cinema-spotlight, .lp-movie-card, .lp-bento-panel, .lp-theater-card, .lp-journal-lead, .lp-journal-card'
+        );
+        targets.forEach(function (card) {
+            card.classList.add('cinema-spotlight');
             let ticking = false;
             card.addEventListener('mousemove', function (e) {
                 if (!ticking) {
@@ -133,11 +167,11 @@
         });
     }
 
-    /* 6. Buttery Smooth 3D Perspective Tilt on Movie Posters */
+    /* 6. Buttery Smooth 3D Perspective Tilt on Movie Contact Sheets & Posters */
     function initPerspectiveTilt() {
         if (prefersReducedMotion || !window.matchMedia('(pointer: fine)').matches) return;
 
-        const tiltElements = document.querySelectorAll('.cinema-tilt, .lp-poster-stage, .md-poster-frame');
+        const tiltElements = document.querySelectorAll('.cinema-tilt, .lp-contact-sheet, .md-poster-frame');
         tiltElements.forEach(function (el) {
             let rafId = null;
 
@@ -150,22 +184,21 @@
                     const mouseX = e.clientX - centerX;
                     const mouseY = e.clientY - centerY;
 
-                    // Giới hạn góc nghiêng tối đa 5 độ để chuyển động êm ái, sang trọng
-                    const rotateY = (mouseX / (rect.width / 2)) * 5;
-                    const rotateX = -(mouseY / (rect.height / 2)) * 5;
+                    const rotateY = (mouseX / (rect.width / 2)) * 4.5;
+                    const rotateX = -(mouseY / (rect.height / 2)) * 4.5;
 
-                    el.style.transform = 'perspective(1000px) rotateX(' + rotateX.toFixed(2) + 'deg) rotateY(' + rotateY.toFixed(2) + 'deg) scale3d(1.02, 1.02, 1.02)';
+                    el.style.transform = 'perspective(1100px) rotateX(' + rotateX.toFixed(2) + 'deg) rotateY(' + rotateY.toFixed(2) + 'deg) translate3d(0, -4px, 0)';
                 });
             }, { passive: true });
 
             el.addEventListener('mouseleave', function () {
                 if (rafId) cancelAnimationFrame(rafId);
-                el.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease';
-                el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                el.style.transition = 'transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.55s ease';
+                el.style.transform = 'perspective(1100px) rotateX(0deg) rotateY(0deg) translate3d(0, 0, 0)';
             });
 
             el.addEventListener('mouseenter', function () {
-                el.style.transition = 'transform 0.15s ease-out, box-shadow 0.3s ease';
+                el.style.transition = 'transform 0.12s ease-out, box-shadow 0.3s ease';
             });
         });
     }

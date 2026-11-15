@@ -1,55 +1,44 @@
-# CinemaHub — Master Design System (ui-ux-pro-max)
+# CinemaHub — Master Design System (`ui-ux-pro-max`)
 
-> **Project:** CinemaHub — Next-Gen Immersive Cinema & Ticket Booking Platform
-> **Skill:** `ui-ux-pro-max` (Variance: 7/10 | Motion: 8/10 | Density: 4/10)
-> **Visual Direction:** Obsidian Aurora & Spotlight Gold (OLED Dark + Frosted Glass + Kinetic Storytelling + Bento Grids)
+> **Project:** CinemaHub — Archival & Editorial Cinema Platform
+> **Skill:** `ui-ux-pro-max` (`--variance 9 --motion 8 --density 4`) + `ui-styling` (Canvas Design System: *Concrete Poetry & Analog Meditation*)
+> **Art Direction:** **35mm Archival Editorial (A24 × MUBI × Criterion Collection × Swiss Grid)**
+> **Anti-AI-Slop Manifesto:** Zero blue-navy SaaS backgrounds (`#050711`), zero purple/indigo/cyan neon glow blobs, zero floating glass SaaS badges on hero images, zero bubbly `999px` gradient pills, zero generic 4-box SaaS KPI counters.
 
 ---
 
-## 1. Color Token Architecture (OLED High-Contrast Dark Mode)
+## 1. Materiality & Color Token Architecture (Warm Analog Carbon & Paper Ivory)
 
 | Role | Token | Value | Usage |
 |------|-------|-------|-------|
-| Void Canvas | `--bg-void` | `#050711` | Deepest OLED background |
-| Primary Canvas | `--bg-obsidian` | `#090D1A` | Main page background |
-| Elevated Surface | `--bg-surface` | `rgba(17, 23, 43, 0.72)` | Glass cards, bento modules |
-| Interactive Surface | `--bg-surface-hover` | `rgba(26, 35, 64, 0.86)` | Card hover & active states |
-| Sticky Glass | `--bg-glass-heavy` | `rgba(8, 11, 22, 0.88)` | Navbar, bottom dock, modals |
-| Primary Brand CTA | `--brand-primary` | `#FF2E55` | Primary action (Laser Crimson-Rose) |
-| Primary Brand Gradient | `--brand-gradient` | `linear-gradient(135deg, #FF2E55 0%, #FF6B35 100%)` | Main booking CTAs |
-| Spotlight Gold | `--brand-gold` | `#F5B942` | IMDb ratings, VIP seats, luxury accents |
-| Dolby Cyan | `--brand-cyan` | `#38BDF8` | Tech formats (IMAX/Atmos), live counters |
-| Aurora Indigo | `--brand-indigo` | `#6366F1` | Ambient glow, AI Assistant, secondary accents |
-| Emerald Success | `--brand-emerald` | `#10B981` | Available seats, confirmed tickets |
-| Text Primary | `--text-primary` | `#F8FAFC` | Headlines & primary copy (AAA contrast) |
-| Text Secondary | `--text-secondary` | `#CBD5E1` | Body descriptions (≥ 7:1 contrast) |
-| Text Muted | `--text-muted` | `#94A3B8` | Metadata, captions (≥ 4.5:1 contrast) |
-| Border Subtle | `--border-glass` | `rgba(255, 255, 255, 0.09)` | Hairline glass borders |
-| Border Spotlight | `--border-glow` | `rgba(245, 185, 66, 0.45)` | Active/hover gold highlight |
+| Archival Carbon (Void) | `--bg-void` | `#0A0908` | Warm 35mm screening room black (zero blue tint) |
+| Matte Espresso (Canvas) | `--bg-obsidian` | `#11100E` | Primary editorial page background |
+| Elevated Studio Surface | `--bg-surface` | `#171513` | Solid architectural cards & ledger panels |
+| Interactive Surface | `--bg-surface-hover` | `#201D1A` | Hover & active editorial cells |
+| Masthead Surface | `--bg-glass-heavy` | `rgba(10, 9, 8, 0.94)` | Sticky editorial masthead & drawers |
+| Film Leader Vermilion | `--brand-primary` | `#D93829` | Solid editorial red CTA (no neon pink-orange gradient) |
+| Anamorphic Brass / Gold | `--brand-gold` | `#D4A359` | Archival classification, ratings, VIP seats, brass accents |
+| Silver Halide | `--brand-cyan` | `#C8C2B8` | Technical format specs (IMAX 70MM / DOLBY ATMOS) |
+| Warm Ivory (Primary Text) | `--text-primary` | `#F3EFE6` | Uncoated paper ivory for headlines & primary copy |
+| Warm Stone (Secondary) | `--text-secondary` | `#B5AEA2` | Editorial body copy & descriptions |
+| Archival Muted | `--text-muted` | `#7A7369` | Timecodes, catalog indices, footnotes |
+| Hairline Grid Border | `--border-glass` | `rgba(243, 239, 230, 0.12)` | Exposed `1px` Swiss grid lines & architectural frames |
+| Brass Highlight Border | `--border-glow` | `rgba(212, 163, 89, 0.45)` | Active/hover frame border |
 
 ---
 
-## 2. Typography System (Full Vietnamese Diacritics Support)
+## 2. Typography System (Editorial Contrast + Vietnamese Readability)
 
-- **Display / Headings:** `'Space Grotesk'`, `'Plus Jakarta Sans'`, `'Be Vietnam Pro'`, sans-serif
-- **Body / UI Controls:** `'Plus Jakarta Sans'`, `'Be Vietnam Pro'`, `'Inter'`, system-ui, sans-serif
-- **Monospace / Ticket Codes / Timers:** `'JetBrains Mono'`, monospace
-
----
-
-## 3. Motion Choreography Rules (`--motion 8`)
-
-1. **Scroll Reveal (`[data-animate]`)**: Staggered entrance (`y: 28px -> 0`, `opacity: 0 -> 1`, `duration: 0.65s`, `cubic-bezier(0.16, 1, 0.3, 1)`).
-2. **Interactive Spotlight Cards (`.cinema-spotlight`)**: Radial light follows pointer (`--mouse-x`, `--mouse-y`) on desktop.
-3. **3D Perspective Poster Tilt (`.cinema-tilt`)**: Subtle `rotateX`/`rotateY` on pointer move, smooth spring reset on leave.
-4. **Live Number Counters (`[data-count-to]`)**: Smoothly interpolates numbers when scrolled into view.
-5. **Reduced Motion Compliance**: `prefers-reduced-motion: reduce` disables parallax, 3D tilt, and autoplay transitions immediately.
+- **Editorial Serif / Accent Display:** `'Cormorant Garamond'`, `'Playfair Display'`, Georgia, serif *(for italic dramatic film titles, rankings, and editorial pull-quotes)*
+- **Architectural Display & UI Sans:** `'Be Vietnam Pro'`, `'Plus Jakarta Sans'`, system-ui, sans-serif *(for razor-sharp Vietnamese headlines, geometric uppercase labels, and body copy)*
+- **35mm Timecode & Ticket Stub Mono:** `'JetBrains Mono'`, monospace *(for reel numbers `REEL 01 // 06`, aspect ratios `2.39:1`, runtime `135 MIN`, prices, and seat coordinates)*
 
 ---
 
-## 4. Responsive & Mobile-First Ergonomics
+## 3. Structural & Layout Rules (`--variance 9`)
 
-- **Touch Targets**: All interactive controls ≥ `44x44px` (`48px` on mobile drawers and bottom dock).
-- **Mobile Bottom Navigation Dock**: Fixed native-like bottom bar on `< 992px` with `padding-bottom: env(safe-area-inset-bottom)`.
-- **3D Seat Map Viewport**: Horizontal pan/scroll + "Thu phóng vừa màn hình" (Fit-to-screen zoom toggle) on mobile phones (`375px`).
-- **No Emoji Icons**: 100% vector icons (`Bootstrap Icons` & inline SVGs).
+1. **Exposed 1px Hairline Swiss Grid**: Sections, dossier tables, and movie catalogs use visible `1px solid rgba(243, 239, 230, 0.12)` structural borders with corner registration marks (`+` / crop corners) instead of floating blurry drop-shadow cards.
+2. **Sharp Architectural Geometry**: Corner radii are `0px` to `4px` (or notched physical ticket stubs), eliminating bubbly `24px–32px` SaaS cards.
+3. **35mm Film Grain Overlay**: Subtle fixed SVG fractal noise overlay (`opacity: 0.028`) gives tactile analog warmth across all screens.
+4. **Physical Ticket Stub Mechanics**: Booking docks, showtime selectors, and vouchers mimic real perforated box-office tickets with dashed tear lines, serial numbers, and stamped age classifications (`P`, `T13`, `T16`, `T18`).
+5. **No Emoji Icons**: 100% vector icons and typographic index markers (`01 //`, `02 //`, `REEL`).

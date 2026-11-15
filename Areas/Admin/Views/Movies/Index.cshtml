@@ -76,7 +76,7 @@
                             {
                                 foreach (var g in m.Genres)
                                 {
-                                    <span class="badge rounded-pill me-1 mb-1" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;font-weight:500;">@g</span>
+                                    <span class="badge me-1 mb-1" style="background:#0d0c0a;color:#B5AEA2;border:1px solid rgba(243,239,230,0.16);border-radius:2px;font-family:'JetBrains Mono',monospace;font-weight:500;">@g</span>
                                 }
                             }
                             else
@@ -87,8 +87,8 @@
                         <td>@m.Duration phút</td>
                         <td>@(m.ReleaseDate?.ToString("dd/MM/yyyy") ?? "—")</td>
                         <td>
-                            <span class="badge rounded-pill px-3 py-1 fw-semibold"
-                                  style="background:@(m.Status == "Now Showing" ? "#f0fdf4" : m.Status == "Coming Soon" ? "#fffbeb" : "#f8fafc");color:@(m.Status == "Now Showing" ? "#16a34a" : m.Status == "Coming Soon" ? "#d97706" : "#64748b");border:1px solid @(m.Status == "Now Showing" ? "#bbf7d0" : m.Status == "Coming Soon" ? "#fde68a" : "#e2e8f0");">
+                            <span class="badge px-3 py-1 fw-semibold"
+                                  style="border-radius:2px;font-family:'JetBrains Mono',monospace;background:@(m.Status == "Now Showing" ? "rgba(46,158,91,0.16)" : m.Status == "Coming Soon" ? "rgba(212,163,89,0.16)" : "rgba(243,239,230,0.08)");color:@(m.Status == "Now Showing" ? "#6ee7b7" : m.Status == "Coming Soon" ? "#D4A359" : "#B5AEA2");border:1px solid @(m.Status == "Now Showing" ? "rgba(46,158,91,0.45)" : m.Status == "Coming Soon" ? "rgba(212,163,89,0.45)" : "rgba(243,239,230,0.2)");">
                                 @(m.Status == "Now Showing" ? "Đang chiếu" : m.Status == "Coming Soon" ? "Sắp chiếu" : "Ngừng chiếu")
                             </span>
                         </td>

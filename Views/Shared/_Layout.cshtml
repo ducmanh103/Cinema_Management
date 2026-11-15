@@ -4,7 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="csrf-token" content="@(Context.RequestServices.GetService<Microsoft.AspNetCore.Antiforgery.IAntiforgery>()?.GetAndStoreTokens(Context).RequestToken)" />
-    <title>@ViewData["Title"] — CinemaHub | Trải Nghiệm Điện Ảnh Thế Hệ Mới</title>
+    <title>@ViewData["Title"] — CinemaHub | Đặt Vé Xem Phim Trực Tuyến</title>
+    <!-- Google Fonts: Plus Jakarta Sans (Display/Headings) + Be Vietnam Pro (UI/Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
     <!-- Bootstrap 5 & Bootstrap Icons -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
@@ -12,117 +16,140 @@
     <link rel="stylesheet" href="~/css/chatbot.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
     <style>
+        .ch-topbar-info {
+            background: #090b10;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: var(--font-sans);
+            font-size: 0.74rem;
+            color: #A1A1AA;
+            padding: 0.28rem 0;
+        }
         .ch-navbar-wrapper {
             position: sticky;
             top: 0;
             z-index: 1040;
-            padding: 0.65rem 0;
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            background: linear-gradient(180deg, rgba(5, 7, 17, 0.92) 0%, rgba(5, 7, 17, 0.65) 100%);
-            backdrop-filter: blur(22px) saturate(180%);
-            -webkit-backdrop-filter: blur(22px) saturate(180%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            padding: 0;
+            transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            background: rgba(15, 17, 23, 0.92);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         .ch-navbar-wrapper.is-scrolled {
-            padding: 0.45rem 0;
-            background: rgba(5, 7, 17, 0.94);
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+            background: rgba(15, 17, 23, 0.98);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
             border-bottom-color: rgba(255, 255, 255, 0.12);
+        }
+        .ch-masthead-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 64px;
+            gap: 1rem;
         }
         .ch-brand {
             display: inline-flex;
             align-items: center;
-            gap: 0.65rem;
+            gap: 0.75rem;
             text-decoration: none;
-            font-family: var(--font-display);
-            font-weight: 800;
-            font-size: 1.45rem;
-            letter-spacing: -0.02em;
-            color: #ffffff !important;
+            color: var(--text-main) !important;
         }
         .ch-brand-emblem {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #FF2E55 0%, #FF6B35 100%);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 22px rgba(255, 46, 85, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35);
-            position: relative;
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: #ffffff;
+            font-size: 1.1rem;
+            box-shadow: 0 6px 16px rgba(229, 57, 53, 0.32);
+            transition: transform 0.22s ease;
         }
         .ch-brand:hover .ch-brand-emblem {
-            transform: rotate(-6deg) scale(1.06);
+            transform: scale(1.04);
         }
-        .ch-nav-capsule {
+        .ch-brand-text-wrap {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+        }
+        .ch-brand-main {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1.24rem;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+        }
+        .ch-brand-sub {
+            font-family: var(--font-sans);
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #A1A1AA;
+        }
+        .ch-nav-ledger {
             display: inline-flex;
             align-items: center;
             gap: 0.25rem;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 999px;
-            padding: 0.3rem;
         }
         .ch-nav-link {
-            color: #cbd5e1 !important;
-            font-weight: 600;
-            font-size: 0.86rem;
-            padding: 0.48rem 0.95rem;
-            border-radius: 999px;
+            color: #D4D4D8 !important;
+            font-family: var(--font-sans);
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.5rem 0.9rem;
+            border-radius: 10px;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 0.42rem;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            gap: 0.4rem;
+            transition: color 0.2s ease, background-color 0.2s ease;
             white-space: nowrap;
         }
         .ch-nav-link:hover {
             color: #ffffff !important;
-            background: rgba(255, 255, 255, 0.07);
+            background: rgba(255, 255, 255, 0.05);
         }
         .ch-nav-link.active {
             color: #ffffff !important;
-            background: linear-gradient(135deg, rgba(255, 46, 85, 0.24) 0%, rgba(255, 107, 53, 0.18) 100%);
-            border: 1px solid rgba(255, 46, 85, 0.45);
-            box-shadow: 0 4px 16px rgba(255, 46, 85, 0.22);
+            background: rgba(229, 57, 53, 0.14);
+            font-weight: 600;
         }
         .ch-search-pill {
             position: relative;
             width: 215px;
-            transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: width 0.25s ease;
         }
         @@media (min-width: 1400px) {
             .ch-search-pill:focus-within {
-                width: 275px;
+                width: 265px;
             }
         }
         .ch-search-input {
             width: 100%;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 999px;
-            padding: 0.48rem 0.95rem 0.48rem 2.25rem;
-            color: #f8fafc;
-            font-size: 0.84rem;
-            transition: all 0.25s ease;
+            border-radius: 10px;
+            padding: 0.5rem 0.9rem 0.5rem 2.2rem;
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
         }
         .ch-search-input::placeholder {
-            color: #94a3b8;
+            color: var(--text-muted);
         }
         .ch-search-input:focus {
             outline: none;
-            background: rgba(17, 24, 44, 0.95);
-            border-color: #FF2E55;
-            box-shadow: 0 0 0 3px rgba(255, 46, 85, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(245, 158, 11, 0.55);
         }
         /* Mobile Offcanvas Drawer */
         .ch-offcanvas {
-            background: rgba(7, 10, 22, 0.98) !important;
-            backdrop-filter: blur(28px);
-            -webkit-backdrop-filter: blur(28px);
+            background: #12151e !important;
             border-left: 1px solid rgba(255, 255, 255, 0.1);
-            color: #f8fafc;
+            color: var(--text-main);
             width: min(86vw, 340px) !important;
             max-width: 340px;
             z-index: 1065;
@@ -131,62 +158,49 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            min-height: 50px;
-            padding: 0.75rem 1rem;
-            border-radius: 14px;
-            color: #e2e8f0;
+            min-height: 48px;
+            padding: 0.75rem 0.95rem;
+            border-radius: 10px;
+            color: var(--text-secondary);
             text-decoration: none;
+            font-family: var(--font-sans);
             font-weight: 600;
-            font-size: 0.94rem;
-            border: 1px solid transparent;
-            transition: all 0.22s ease;
+            font-size: 0.92rem;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
         }
         .ch-drawer-link:hover,
         .ch-drawer-link.active {
-            background: rgba(255, 46, 85, 0.14);
-            border-color: rgba(255, 46, 85, 0.35);
-            color: #ffffff;
+            background: rgba(229, 57, 53, 0.14);
+            color: var(--text-main);
         }
         /* Footer */
         .ch-footer {
             position: relative;
-            background: linear-gradient(180deg, rgba(9, 13, 26, 0.6) 0%, #03040a 100%);
+            background: #0b0d12;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
-            color: #94a3b8;
+            color: var(--text-muted);
             overflow: hidden;
         }
-        .ch-footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 65%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 46, 85, 0.6), rgba(245, 185, 66, 0.6), transparent);
-        }
         .ch-footer-title {
-            color: #f8fafc;
+            color: var(--text-main);
             font-family: var(--font-display);
             font-weight: 700;
-            font-size: 0.92rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            margin-bottom: 1.15rem;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
         }
         .ch-footer-link {
-            color: #94a3b8;
+            color: var(--text-secondary);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 0.45rem;
-            margin-bottom: 0.62rem;
+            margin-bottom: 0.6rem;
             font-size: 0.88rem;
-            transition: color 0.2s ease, transform 0.2s ease;
+            transition: color 0.2s ease;
         }
         .ch-footer-link:hover {
-            color: #F5B942;
-            transform: translateX(4px);
+            color: #ffffff;
         }
     </style>
 </head>
@@ -204,57 +218,73 @@
         bool isAccount = currentController == "Account";
     }
 
-    <!-- A. FLOATING CAPSULE GLASS HEADER -->
+    <!-- TOP CUSTOMER INFO BAR -->
+    <div class="ch-topbar-info d-none d-md-block">
+        <div class="container d-flex align-items-center justify-content-between">
+            <span>Hệ thống đặt vé xem phim trực tuyến — Chọn ghế trước, nhận mã vé QR vào rạp ngay</span>
+            <div class="d-flex align-items-center gap-3">
+                <span>Giờ mở cửa: <strong style="color:#E4E4E7;font-weight:500;">08:00 – 23:30</strong></span>
+                <span class="opacity-25">|</span>
+                <span>Hotline hỗ trợ: <strong style="color:#E4E4E7;font-weight:600;">0344.596.643</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
     <header class="ch-navbar-wrapper" id="mainHeaderBar">
         <div class="container">
-            <div class="d-flex align-items-center justify-content-between gap-2">
-                <!-- Brand Emblem -->
+            <div class="ch-masthead-inner">
+                <!-- Brand -->
                 <a class="ch-brand" asp-controller="Home" asp-action="Index" aria-label="Trang chủ CinemaHub">
                     <span class="ch-brand-emblem">
-                        <i class="bi bi-film text-white fs-5" aria-hidden="true"></i>
+                        <i class="bi bi-film" aria-hidden="true"></i>
                     </span>
-                    <span>CINEMA<span class="text-gradient-gold">HUB</span></span>
+                    <span class="ch-brand-text-wrap">
+                        <span class="ch-brand-main">CinemaHub</span>
+                        <span class="ch-brand-sub">Đặt vé xem phim toàn quốc</span>
+                    </span>
                 </a>
 
-                <!-- Desktop Capsule Navigation (Clean & Modern Without Icon Clutter) -->
+                <!-- Desktop Navigation -->
                 <nav class="d-none d-lg-flex align-items-center" aria-label="Điều hướng chính">
-                    <div class="ch-nav-capsule">
+                    <div class="ch-nav-ledger">
                         <a class="ch-nav-link @(isHome ? "active" : "")" asp-controller="Home" asp-action="Index">
-                            <span>Khám phá</span>
+                            <span>Trang chủ</span>
                         </a>
                         <a class="ch-nav-link @(isMovies ? "active" : "")" asp-controller="Movies" asp-action="Index">
-                            <span>Phim</span>
+                            <span>Phim đang chiếu</span>
                         </a>
                         <a class="ch-nav-link @(isShowtimes ? "active" : "")" asp-controller="Showtimes" asp-action="Index">
                             <span>Lịch chiếu</span>
                         </a>
                         <a class="ch-nav-link @(isTheaters ? "active" : "")" asp-controller="Home" asp-action="Theaters">
-                            <span>Cụm rạp</span>
+                            <span>Rạp chiếu</span>
                         </a>
                         <a class="ch-nav-link @(isNews ? "active" : "")" asp-controller="Home" asp-action="News">
-                            <span>Tin tức &amp; Ưu đãi</span>
+                            <span>Tin tức điện ảnh</span>
                         </a>
                         <a class="ch-nav-link @(isAbout ? "active" : "")" asp-controller="Home" asp-action="About">
-                            <span>Công nghệ</span>
+                            <span>Giới thiệu</span>
                         </a>
                         @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
                         {
-                            <a class="ch-nav-link" style="color:#F5B942 !important;" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                            <a class="ch-nav-link" style="color:var(--gold) !important;" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                                <i class="bi bi-speedometer2"></i>
                                 <span>Quản trị</span>
                             </a>
                         }
                     </div>
                 </nav>
 
-                <!-- Desktop Right Tools: Smart Search + Member Pill -->
+                <!-- Desktop Right Tools -->
                 <div class="d-none d-lg-flex align-items-center gap-2">
                     <form asp-controller="Movies" asp-action="Index" method="get" class="ch-search-pill" role="search" id="headerMovieSearchForm">
-                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary" style="font-size:0.8rem;" aria-hidden="true"></i>
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 ps-1 text-secondary" style="font-size:0.82rem;" aria-hidden="true"></i>
                         <input type="search"
                                name="searchString"
                                id="headerMovieSearchInput"
                                class="ch-search-input"
-                               placeholder="Tìm phim, rạp..."
+                               placeholder="Tìm tên phim, thể loại..."
                                aria-label="Tìm kiếm phim"
                                autocomplete="off" />
                     </form>
@@ -262,32 +292,32 @@
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <div class="dropdown">
-                            <a class="d-inline-flex align-items-center gap-2 text-white text-decoration-none dropdown-toggle text-nowrap"
+                            <a class="d-inline-flex align-items-center gap-2 text-decoration-none dropdown-toggle text-nowrap"
                                href="#"
                                data-bs-toggle="dropdown"
                                aria-expanded="false"
-                               style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; padding: 0.32rem 0.9rem 0.32rem 0.38rem; min-height: 40px; white-space: nowrap;">
-                                <span style="width: 28px; height: 28px; background: var(--brand-gradient); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 0.8rem;">
+                               style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 0.35rem 0.85rem 0.35rem 0.45rem; min-height: 40px; color: var(--text-main);">
+                                <span style="width: 28px; height: 28px; background: var(--primary); border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 0.8rem;">
                                     @((User.FindFirst("FullName")?.Value ?? User.Identity.Name ?? "U").Substring(0, 1).ToUpper())
                                 </span>
-                                <span class="small fw-semibold text-truncate" style="max-width: 120px;">@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</span>
+                                <span class="small fw-semibold text-truncate" style="max-width: 120px; font-size: 0.84rem;">@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</span>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-lg p-2" style="background: rgba(11, 16, 32, 0.96); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; margin-top: 10px; min-width: 230px;">
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg p-2" style="background: #161922; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; margin-top: 8px; min-width: 230px;">
                                 <li class="px-3 py-2 border-bottom border-secondary border-opacity-25 mb-1">
                                     <div class="text-white fw-bold small">@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</div>
-                                    <div class="text-muted" style="font-size:0.72rem;">Thành viên CinemaHub</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">Thành viên CinemaHub</div>
                                 </li>
-                                <li><a class="dropdown-item text-light rounded-3 py-2" asp-controller="Account" asp-action="Profile"><i class="bi bi-person me-2" aria-hidden="true"></i> Hồ sơ tài khoản</a></li>
-                                <li><a class="dropdown-item text-light rounded-3 py-2" asp-controller="Booking" asp-action="MyTickets"><i class="bi bi-ticket-perforated me-2" aria-hidden="true"></i> Vé của tôi</a></li>
+                                <li><a class="dropdown-item text-light rounded-2 py-2" style="font-size:0.86rem;" asp-controller="Account" asp-action="Profile"><i class="bi bi-person me-2" aria-hidden="true"></i> Tài khoản của tôi</a></li>
+                                <li><a class="dropdown-item text-light rounded-2 py-2" style="font-size:0.86rem;" asp-controller="Booking" asp-action="MyTickets"><i class="bi bi-ticket-perforated me-2" aria-hidden="true"></i> Vé đã đặt</a></li>
                                 @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
                                 {
-                                    <li><a class="dropdown-item text-warning rounded-3 py-2" asp-area="Admin" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-speedometer2 me-2" aria-hidden="true"></i> Trung tâm Quản trị</a></li>
+                                    <li><a class="dropdown-item rounded-2 py-2" style="color:var(--gold);font-size:0.86rem;" asp-area="Admin" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-speedometer2 me-2" aria-hidden="true"></i> Trang quản trị</a></li>
                                 }
                                 <li><hr class="dropdown-divider border-secondary opacity-25 my-1"></li>
                                 <li>
                                     <form asp-controller="Account" asp-action="Logout" method="post">
                                         @Html.AntiForgeryToken()
-                                        <button class="dropdown-item text-danger fw-bold rounded-3 py-2" type="submit"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i> Đăng xuất</button>
+                                        <button class="dropdown-item text-danger fw-bold rounded-2 py-2" style="font-size:0.86rem;" type="submit"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i> Đăng xuất</button>
                                     </form>
                                 </li>
                             </ul>
@@ -295,7 +325,8 @@
                     }
                     else
                     {
-                        <a class="ch-btn-primary py-2 px-3 text-nowrap" style="font-size: 0.88rem; min-height: 40px; white-space: nowrap; flex-shrink: 0;" asp-controller="Account" asp-action="Login">
+                        <a class="ch-btn-primary py-2 px-3 text-nowrap" style="font-size: 0.85rem; min-height: 40px;" asp-controller="Account" asp-action="Login">
+                            <i class="bi bi-person-circle" aria-hidden="true"></i>
                             <span>Đăng nhập</span>
                         </a>
                     }
@@ -304,19 +335,19 @@
                 <!-- Mobile Quick Action & Drawer Button -->
                 <div class="d-flex d-lg-none align-items-center gap-2">
                     <a asp-controller="Showtimes" asp-action="Index"
-                       class="d-inline-flex align-items-center justify-content-center rounded-circle text-white text-decoration-none"
-                       style="width:42px;height:42px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);"
+                       class="d-inline-flex align-items-center justify-content-center text-white text-decoration-none"
+                       style="width:42px;height:42px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;"
                        aria-label="Lịch chiếu hôm nay">
                         <i class="bi bi-calendar2-week text-warning" aria-hidden="true"></i>
                     </a>
-                    <button class="d-inline-flex align-items-center justify-content-center rounded-3 text-white border-0"
+                    <button class="d-inline-flex align-items-center justify-content-center text-white border-0"
                             type="button"
-                            style="width:44px;height:44px;background:linear-gradient(135deg,rgba(255,46,85,0.22),rgba(255,107,53,0.18));border:1px solid rgba(255,46,85,0.45) !important;"
+                            style="width:42px;height:42px;background:var(--primary);border-radius:10px;"
                             data-bs-toggle="offcanvas"
                             data-bs-target="#cinemaMobileDrawer"
                             aria-controls="cinemaMobileDrawer"
                             aria-label="Mở menu điều hướng">
-                        <i class="bi bi-grid-fill fs-5" aria-hidden="true"></i>
+                        <i class="bi bi-list fs-4" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -327,11 +358,11 @@
     @if (TempData["Success"] != null)
     {
         <div class="position-fixed top-0 end-0 p-3" style="z-index: 1060; margin-top: 82px;">
-            <div class="alert alert-dismissible fade show shadow-lg border-0" role="alert" style="background: rgba(6, 78, 59, 0.94); border: 1px solid rgba(16, 185, 129, 0.45) !important; color: #d1fae5; border-radius: 16px; backdrop-filter: blur(16px);">
+            <div class="alert alert-dismissible fade show shadow-lg" role="alert" style="background: #112a20; border: 1px solid #10b981; color: #f8fafc; border-radius: 12px;">
                 <div class="d-flex align-items-center gap-3">
-                    <i class="bi bi-check-circle-fill fs-4 text-success" aria-hidden="true"></i>
+                    <i class="bi bi-check-circle-fill fs-5 text-success" aria-hidden="true"></i>
                     <div>
-                        <div class="fw-bold">Thành công!</div>
+                        <div class="fw-bold small">Thành công</div>
                         <div class="small">@TempData["Success"]</div>
                     </div>
                     <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Đóng"></button>
@@ -342,11 +373,11 @@
     @if (TempData["Error"] != null)
     {
         <div class="position-fixed top-0 end-0 p-3" style="z-index: 1060; margin-top: 82px;">
-            <div class="alert alert-dismissible fade show shadow-lg border-0" role="alert" style="background: rgba(76, 5, 25, 0.94); border: 1px solid rgba(255, 46, 85, 0.5) !important; color: #ffe4e6; border-radius: 16px; backdrop-filter: blur(16px);">
+            <div class="alert alert-dismissible fade show shadow-lg" role="alert" style="background: #2c1215; border: 1px solid #ef4444; color: #f8fafc; border-radius: 12px;">
                 <div class="d-flex align-items-center gap-3">
-                    <i class="bi bi-exclamation-triangle-fill fs-4 text-danger" aria-hidden="true"></i>
+                    <i class="bi bi-exclamation-triangle-fill fs-5 text-danger" aria-hidden="true"></i>
                     <div>
-                        <div class="fw-bold">Thông báo</div>
+                        <div class="fw-bold small">Thông báo</div>
                         <div class="small">@TempData["Error"]</div>
                     </div>
                     <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert" aria-label="Đóng"></button>
@@ -355,14 +386,17 @@
         </div>
     }
 
-    <!-- Mobile Offcanvas Drawer (Placed outside header so backdrop-filter does not trap position:fixed on mobile) -->
+    <!-- Mobile Offcanvas Drawer -->
     <div class="offcanvas offcanvas-end ch-offcanvas" tabindex="-1" id="cinemaMobileDrawer" aria-labelledby="cinemaMobileDrawerLabel">
         <div class="offcanvas-header border-bottom border-secondary border-opacity-25 px-4 py-3">
-            <a class="ch-brand" asp-controller="Home" asp-action="Index" id="cinemaMobileDrawerLabel">
+            <a class="ch-brand border-0 p-0" asp-controller="Home" asp-action="Index" id="cinemaMobileDrawerLabel">
                 <span class="ch-brand-emblem" style="width:34px;height:34px;">
-                    <i class="bi bi-film text-white" aria-hidden="true"></i>
+                    <i class="bi bi-film" aria-hidden="true"></i>
                 </span>
-                <span>CINEMA<span class="text-gradient-gold">HUB</span></span>
+                <span class="ch-brand-text-wrap">
+                    <span class="ch-brand-main" style="font-size:1.12rem;">CinemaHub</span>
+                    <span class="ch-brand-sub">Menu điều hướng</span>
+                </span>
             </a>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Đóng menu"></button>
         </div>
@@ -373,41 +407,41 @@
                         <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary" aria-hidden="true"></i>
                         <input type="search"
                                name="searchString"
-                               class="form-control text-white rounded-pill ps-5 py-2"
-                               style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);min-height:48px;"
-                               placeholder="Tìm kiếm phim, định dạng IMAX..." />
+                               class="form-control text-white ps-5 py-2"
+                               style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;min-height:44px;font-size:0.88rem;"
+                               placeholder="Tìm tên phim, thể loại..." />
                     </div>
                 </form>
 
-                <nav class="d-flex flex-column gap-1" aria-label="Menu di động">
+                <nav class="d-flex flex-column" aria-label="Menu di động">
                     <a class="ch-drawer-link @(isHome ? "active" : "")" asp-controller="Home" asp-action="Index">
-                        <span><i class="bi bi-compass me-3" aria-hidden="true"></i>Trang chủ Khám phá</span>
-                        <i class="bi bi-chevron-right small text-secondary" aria-hidden="true"></i>
+                        <span><i class="bi bi-house-door me-2"></i>Trang chủ</span>
+                        <i class="bi bi-chevron-right small" aria-hidden="true"></i>
                     </a>
                     <a class="ch-drawer-link @(isMovies ? "active" : "")" asp-controller="Movies" asp-action="Index">
-                        <span><i class="bi bi-film me-3" aria-hidden="true"></i>Kho Phim Đang &amp; Sắp Chiếu</span>
-                        <span class="badge rounded-pill bg-danger" style="font-size:0.68rem;">HOT</span>
+                        <span><i class="bi bi-film me-2"></i>Phim đang chiếu</span>
+                        <span class="badge bg-danger rounded-pill" style="font-size:0.7rem;">Hot</span>
                     </a>
                     <a class="ch-drawer-link @(isShowtimes ? "active" : "")" asp-controller="Showtimes" asp-action="Index">
-                        <span><i class="bi bi-calendar2-week me-3" aria-hidden="true"></i>Lịch Chiếu Toàn Quốc</span>
-                        <i class="bi bi-chevron-right small text-secondary" aria-hidden="true"></i>
+                        <span><i class="bi bi-calendar2-week me-2"></i>Lịch chiếu theo rạp</span>
+                        <i class="bi bi-chevron-right small" aria-hidden="true"></i>
                     </a>
                     <a class="ch-drawer-link @(isTheaters ? "active" : "")" asp-controller="Home" asp-action="Theaters">
-                        <span><i class="bi bi-building me-3" aria-hidden="true"></i>Hệ Thống Cụm Rạp</span>
-                        <i class="bi bi-chevron-right small text-secondary" aria-hidden="true"></i>
+                        <span><i class="bi bi-geo-alt me-2"></i>Hệ thống rạp chiếu</span>
+                        <i class="bi bi-chevron-right small" aria-hidden="true"></i>
                     </a>
                     <a class="ch-drawer-link @(isNews ? "active" : "")" asp-controller="Home" asp-action="News">
-                        <span><i class="bi bi-stars me-3" aria-hidden="true"></i>Tin Điện Ảnh &amp; Ưu Đãi</span>
-                        <i class="bi bi-chevron-right small text-secondary" aria-hidden="true"></i>
+                        <span><i class="bi bi-newspaper me-2"></i>Tin tức điện ảnh</span>
+                        <i class="bi bi-chevron-right small" aria-hidden="true"></i>
                     </a>
                     <a class="ch-drawer-link @(isAbout ? "active" : "")" asp-controller="Home" asp-action="About">
-                        <span><i class="bi bi-award me-3" aria-hidden="true"></i>Về Công Nghệ CinemaHub</span>
-                        <i class="bi bi-chevron-right small text-secondary" aria-hidden="true"></i>
+                        <span><i class="bi bi-stars me-2"></i>Giới thiệu phòng chiếu</span>
+                        <i class="bi bi-chevron-right small" aria-hidden="true"></i>
                     </a>
                     @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
                     {
-                        <a class="ch-drawer-link text-warning" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                            <span><i class="bi bi-speedometer2 me-3" aria-hidden="true"></i>Trung Tâm Quản Trị</span>
+                        <a class="ch-drawer-link" style="color:var(--gold);" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                            <span><i class="bi bi-speedometer2 me-2"></i>Quản trị hệ thống</span>
                             <i class="bi bi-chevron-right small" aria-hidden="true"></i>
                         </a>
                     }
@@ -419,19 +453,19 @@
                 {
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <a asp-controller="Account" asp-action="Profile" class="d-flex align-items-center gap-2 text-decoration-none">
-                            <span style="width: 40px; height: 40px; background: var(--brand-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800;">
+                            <span style="width: 38px; height: 38px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700;">
                                 @((User.FindFirst("FullName")?.Value ?? User.Identity.Name ?? "U").Substring(0, 1).ToUpper())
                             </span>
                             <div>
                                 <div class="fw-bold text-white small">@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</div>
-                                <div class="text-secondary" style="font-size:0.74rem;">Xem hồ sơ cá nhân</div>
+                                <div class="text-secondary" style="font-size:0.75rem;">Tài khoản thành viên</div>
                             </div>
                         </a>
-                        <a asp-controller="Booking" asp-action="MyTickets" class="btn btn-sm btn-outline-warning rounded-pill px-3">Vé của tôi</a>
+                        <a asp-controller="Booking" asp-action="MyTickets" class="ch-btn-glass py-1 px-3" style="font-size:0.78rem;">Vé của tôi</a>
                     </div>
                     <form asp-controller="Account" asp-action="Logout" method="post">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold" style="min-height:48px;">
+                        <button type="submit" class="ch-btn-glass w-100 text-danger border-danger" style="min-height:44px;">
                             <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Đăng xuất
                         </button>
                     </form>
@@ -439,11 +473,11 @@
                 else
                 {
                     <div class="d-grid gap-2">
-                        <a asp-controller="Account" asp-action="Login" class="ch-btn-primary w-100" style="min-height:48px;">
-                            <i class="bi bi-person-fill" aria-hidden="true"></i>
+                        <a asp-controller="Account" asp-action="Login" class="ch-btn-primary w-100" style="min-height:44px;">
+                            <i class="bi bi-person-circle" aria-hidden="true"></i>
                             <span>Đăng nhập tài khoản</span>
                         </a>
-                        <a asp-controller="Account" asp-action="Register" class="ch-btn-glass w-100" style="min-height:48px;">
+                        <a asp-controller="Account" asp-action="Register" class="ch-btn-glass w-100" style="min-height:44px;">
                             <span>Đăng ký thành viên mới</span>
                         </a>
                     </div>
@@ -466,97 +500,101 @@
         }
     </main>
 
-    <!-- Footer -->
+    <!-- FOOTER -->
     <footer class="ch-footer pt-5 pb-4 mt-auto" aria-label="Thông tin chân trang CinemaHub">
         <div class="container">
             <div class="row g-4 mb-4">
                 <div class="col-lg-4 col-md-6">
-                    <a class="ch-brand mb-3" asp-controller="Home" asp-action="Index">
-                        <span class="ch-brand-emblem" style="width:34px;height:34px;">
-                            <i class="bi bi-film text-white" aria-hidden="true"></i>
+                    <a class="ch-brand border-0 p-0 mb-3" asp-controller="Home" asp-action="Index">
+                        <span class="ch-brand-emblem" style="width:36px;height:36px;">
+                            <i class="bi bi-film" aria-hidden="true"></i>
                         </span>
-                        <span>CINEMA<span class="text-gradient-gold">HUB</span></span>
+                        <span class="ch-brand-text-wrap">
+                            <span class="ch-brand-main">CinemaHub</span>
+                            <span class="ch-brand-sub">Hệ thống rạp chiếu phim hiện đại</span>
+                        </span>
                     </a>
                     <p class="small text-secondary mb-3 pe-lg-4" style="line-height:1.7;">
-                        Tổ hợp điện ảnh công nghệ cao chuẩn IMAX Laser 4K, Dolby Atmos 64 kênh &amp; phòng chờ hạng thương gia. Đặt vé 30 giây.
+                        Đặt vé xem phim nhanh chóng, chọn vị trí ghế trực quan theo thời gian thực và nhận mã vé QR điện tử tiện lợi tại tất cả cụm rạp CinemaHub trên toàn quốc.
                     </p>
                     <div class="d-flex gap-2">
-                        <a href="https://www.facebook.com/people/Nguy%E1%BB%85n-M%E1%BA%A1nh/pfbid0vjQvuoG87KCXZBA8h7E3yDrpT33HQcdHZh4U66qAz2Q5GNsBxDYGAmAy3ugrMLWEl/" target="_blank" rel="noopener noreferrer" class="ch-btn-glass p-0 rounded-circle" style="width:40px;height:40px;" aria-label="Facebook">
+                        <a href="https://www.facebook.com/people/Nguy%E1%BB%85n-M%E1%BA%A1nh/pfbid0vjQvuoG87KCXZBA8h7E3yDrpT33HQcdHZh4U66qAz2Q5GNsBxDYGAmAy3ugrMLWEl/" target="_blank" rel="noopener noreferrer" class="ch-btn-glass p-0" style="width:38px;height:38px;" aria-label="Facebook">
                             <i class="bi bi-facebook" aria-hidden="true"></i>
                         </a>
-                        <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="ch-btn-glass p-0 rounded-circle" style="width:40px;height:40px;" aria-label="YouTube">
+                        <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="ch-btn-glass p-0" style="width:38px;height:38px;" aria-label="YouTube">
                             <i class="bi bi-youtube" aria-hidden="true"></i>
                         </a>
-                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="ch-btn-glass p-0 rounded-circle" style="width:40px;height:40px;" aria-label="Instagram">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="ch-btn-glass p-0" style="width:38px;height:38px;" aria-label="Instagram">
                             <i class="bi bi-instagram" aria-hidden="true"></i>
                         </a>
-                        <a href="https://www.tiktok.com/@@thorn111.4" target="_blank" rel="noopener noreferrer" class="ch-btn-glass p-0 rounded-circle" style="width:40px;height:40px;" aria-label="TikTok">
+                        <a href="https://www.tiktok.com/@@thorn111.4" target="_blank" rel="noopener noreferrer" class="ch-btn-glass p-0" style="width:38px;height:38px;" aria-label="TikTok">
                             <i class="bi bi-tiktok" aria-hidden="true"></i>
                         </a>
                     </div>
                 </div>
 
                 <div class="col-lg-2 col-md-6 col-6">
-                    <h5 class="ch-footer-title">Khám Phá</h5>
+                    <h5 class="ch-footer-title">Danh mục phim</h5>
                     <ul class="list-unstyled mb-0">
-                        <li><a asp-controller="Movies" asp-action="Index" class="ch-footer-link"><i class="bi bi-play-circle"></i> Phim đang chiếu</a></li>
-                        <li><a asp-controller="Showtimes" asp-action="Index" class="ch-footer-link"><i class="bi bi-calendar2-week"></i> Lịch chiếu toàn quốc</a></li>
-                        <li><a asp-controller="Home" asp-action="Theaters" class="ch-footer-link"><i class="bi bi-building"></i> Cụm rạp IMAX</a></li>
-                        <li><a asp-controller="Home" asp-action="News" class="ch-footer-link"><i class="bi bi-stars"></i> Ưu đãi thành viên</a></li>
-                        <li><a asp-controller="Home" asp-action="About" class="ch-footer-link"><i class="bi bi-info-circle"></i> Về CinemaHub</a></li>
+                        <li><a asp-controller="Movies" asp-action="Index" class="ch-footer-link">Phim đang chiếu</a></li>
+                        <li><a asp-controller="Showtimes" asp-action="Index" class="ch-footer-link">Lịch chiếu hôm nay</a></li>
+                        <li><a asp-controller="Home" asp-action="Theaters" class="ch-footer-link">Hệ thống cụm rạp</a></li>
+                        <li><a asp-controller="Home" asp-action="News" class="ch-footer-link">Tin tức điện ảnh</a></li>
+                        <li><a asp-controller="Home" asp-action="About" class="ch-footer-link">Giới thiệu CinemaHub</a></li>
                     </ul>
                 </div>
 
                 <div class="col-lg-3 col-md-6 col-6">
-                    <h5 class="ch-footer-title">Phân Loại Độ Tuổi</h5>
+                    <h5 class="ch-footer-title">Hỗ trợ khách hàng</h5>
                     <div class="d-flex flex-wrap gap-1 mb-3">
-                        <span class="badge rounded-pill badge-age-p px-2 py-1">P • Mọi lứa tuổi</span>
-                        <span class="badge rounded-pill badge-age-t13 px-2 py-1">T13 • 13+</span>
-                        <span class="badge rounded-pill badge-age-t16 px-2 py-1">T16 • 16+</span>
-                        <span class="badge rounded-pill badge-age-t18 px-2 py-1">T18 • 18+</span>
+                        <span class="badge badge-age-p px-2 py-1">P - Mọi lứa tuổi</span>
+                        <span class="badge badge-age-t13 px-2 py-1">T13 - Từ 13 tuổi</span>
+                        <span class="badge badge-age-t16 px-2 py-1">T16 - Từ 16 tuổi</span>
+                        <span class="badge badge-age-t18 px-2 py-1">T18 - Từ 18 tuổi</span>
                     </div>
                     <ul class="list-unstyled mb-0">
-                        <li><a asp-controller="Booking" asp-action="MyTickets" class="ch-footer-link"><i class="bi bi-ticket-perforated"></i> Quản lý &amp; hoàn vé online</a></li>
-                        <li><a asp-controller="Account" asp-action="Profile" class="ch-footer-link"><i class="bi bi-shield-check"></i> Bảo mật tài khoản</a></li>
-                        <li><a asp-controller="Home" asp-action="Privacy" class="ch-footer-link"><i class="bi bi-shield-lock"></i> Chính sách Bảo vệ Dữ liệu (NĐ 13)</a></li>
+                        <li><a asp-controller="Booking" asp-action="MyTickets" class="ch-footer-link">Tra cứu vé đã đặt</a></li>
+                        <li><a asp-controller="Account" asp-action="Profile" class="ch-footer-link">Thông tin thành viên</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy" class="ch-footer-link">Chính sách bảo mật</a></li>
                     </ul>
                 </div>
 
                 <div class="col-lg-3 col-md-6">
-                    <h5 class="ch-footer-title">Thanh Toán &amp; Hỗ Trợ</h5>
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        <span class="badge rounded-pill px-3 py-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#e2e8f0;">
-                            <i class="bi bi-qr-code-scan me-1"></i> VNPAY QR
+                    <h5 class="ch-footer-title">Thanh toán &amp; Liên hệ</h5>
+                    <div class="d-flex flex-wrap gap-2 mb-3" style="font-size:0.76rem;">
+                        <span class="px-2 py-1 rounded-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-main);">
+                            VNPAY-QR
                         </span>
-                        <span class="badge rounded-pill px-3 py-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#e2e8f0;">
-                            <i class="bi bi-wallet2 me-1"></i> MoMo
+                        <span class="px-2 py-1 rounded-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-main);">
+                            Ví MoMo
                         </span>
-                        <span class="badge rounded-pill px-3 py-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#e2e8f0;">
-                            <i class="bi bi-credit-card me-1"></i> Visa / Master
+                        <span class="px-2 py-1 rounded-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-main);">
+                            Thẻ ATM / Visa
                         </span>
                     </div>
-                    <p class="small mb-1 text-secondary"><i class="bi bi-geo-alt-fill me-2"></i> 235 Hoàng Quốc Việt, Hà Nội</p>
-                    <p class="small mb-1 text-secondary"><i class="bi bi-telephone-fill me-2"></i> Hotline: <strong class="text-white">0344596643</strong> (08:00 – 23:30)</p>
-                    <p class="small mb-0 text-secondary"><i class="bi bi-envelope-fill me-2"></i> support@cinemahubvn.io.vn</p>
+                    <p class="small mb-1 text-secondary"><i class="bi bi-geo-alt me-2 text-warning"></i> 235 Hoàng Quốc Việt, Cầu Giấy, Hà Nội</p>
+                    <p class="small mb-1 text-secondary"><i class="bi bi-telephone me-2 text-warning"></i> Tổng đài: <strong class="text-white">0344.596.643</strong></p>
+                    <p class="small mb-0 text-secondary"><i class="bi bi-envelope me-2 text-warning"></i> hotro@cinemahubvn.io.vn</p>
                 </div>
             </div>
 
-            <div class="pt-3 border-top border-secondary border-opacity-25 d-flex flex-column flex-md-row align-items-center justify-content-between gap-2 small text-secondary">
-                <div>&copy; 2026 CinemaHub Vietnam — Trải Nghiệm Điện Ảnh Thế Hệ Mới.</div>
+            <div class="pt-3 border-top border-secondary border-opacity-25 d-flex flex-column flex-md-row align-items-center justify-content-between gap-2" style="font-size:0.8rem;color:var(--text-muted);">
+                <div>&copy; 2026 CinemaHub Việt Nam. Hệ thống đặt vé xem phim trực tuyến.</div>
+                <div>Hỗ trợ đặt vé nhanh: 08:00 – 23:30 tất cả các ngày trong tuần</div>
             </div>
         </div>
     </footer>
 
     @if (ViewBag.HideMobileDock != true)
     {
-        <!-- Native-Like Mobile Bottom Navigation Bar (< 992px) -->
+        <!-- Mobile Bottom Navigation Bar (< 992px) -->
         <nav class="ch-mobile-dock d-lg-none" aria-label="Điều hướng di động nhanh">
             <a asp-controller="Home" asp-action="Index" class="ch-dock-item @(isHome ? "active" : "")">
-                <i class="bi @(isHome ? "bi-compass-fill" : "bi-compass")" aria-hidden="true"></i>
-                <span>Khám phá</span>
+                <i class="bi @(isHome ? "bi-house-door-fill" : "bi-house-door")" aria-hidden="true"></i>
+                <span>Trang chủ</span>
             </a>
             <a asp-controller="Movies" asp-action="Index" class="ch-dock-item @(isMovies ? "active" : "")">
-                <i class="bi @(isMovies ? "bi-film" : "bi-film")" aria-hidden="true"></i>
+                <i class="bi bi-film" aria-hidden="true"></i>
                 <span>Phim</span>
             </a>
             <a asp-controller="Showtimes" asp-action="Index" class="ch-dock-item @(isShowtimes ? "active" : "")">
@@ -577,9 +615,9 @@
                     <span>Tài khoản</span>
                 </a>
             }
-            <button type="button" id="mobileDockChatBtn" class="ch-dock-item" onclick="document.getElementById('chatbot-trigger')?.click()" aria-label="Mở Trợ lý AI CinemaHub">
-                <i class="bi bi-stars" style="color:#F5B942;" aria-hidden="true"></i>
-                <span>Trợ lý AI</span>
+            <button type="button" id="mobileDockChatBtn" class="ch-dock-item" aria-label="Mở Hỗ trợ đặt vé">
+                <i class="bi bi-chat-dots-fill text-warning" aria-hidden="true"></i>
+                <span>Hỗ trợ</span>
             </button>
         </nav>
     }
@@ -600,32 +638,70 @@
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 
-    <!-- AI Concierge Widget -->
-    <button id="chatbot-trigger" title="Trợ lý AI CinemaHub">Trợ lý AI</button>
+    <!-- Customer Support & Quick Showtime Assistant -->
+    <div id="chatbot-backdrop" class="chatbot-backdrop" aria-hidden="true"></div>
 
-    <div id="chatbot-panel" role="dialog" aria-label="Trợ lý ảo CinemaHub">
+    <button id="chatbot-trigger" type="button" title="Hỗ trợ tìm suất chiếu & đặt vé" aria-label="Mở hộp thoại hỗ trợ đặt vé">
+        <span class="chatbot-trigger-dot"></span>
+        <i class="bi bi-chat-dots-fill"></i>
+        <span>Hỗ trợ đặt vé</span>
+    </button>
+
+    <div id="chatbot-panel" class="@(ViewBag.HideMobileDock == true ? "no-mobile-dock" : "")" role="dialog" aria-label="Hỗ trợ đặt vé CinemaHub">
+        <div class="chatbot-sheet-handle d-md-none" aria-hidden="true">
+            <span></span>
+        </div>
+
         <div class="chatbot-header">
             <div class="chatbot-header-info">
-                <div class="chatbot-online-dot"></div>
+                <div class="chatbot-header-avatar">
+                    <i class="bi bi-headset"></i>
+                    <span class="chatbot-online-dot"></span>
+                </div>
                 <div class="chatbot-status-container">
-                    <h5 class="chatbot-name">CinemaHub AI Concierge</h5>
-                    <span class="chatbot-status">Trực tuyến 24/7</span>
+                    <h5 class="chatbot-name">Hỗ Trợ Đặt Vé CinemaHub</h5>
+                    <span class="chatbot-status">Trực tuyến &bull; Tư vấn phim &amp; lịch chiếu</span>
                 </div>
             </div>
             <div class="chatbot-header-actions">
-                <button id="chatbot-clear-btn" class="chatbot-action-btn" title="Làm mới hội thoại">Làm mới</button>
-                <button id="chatbot-close-btn" class="chatbot-action-btn" title="Đóng">Đóng</button>
+                <button id="chatbot-clear-btn" type="button" class="chatbot-icon-btn" title="Làm mới cuộc trò chuyện" aria-label="Làm mới cuộc trò chuyện">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+                <button id="chatbot-close-btn" type="button" class="chatbot-icon-btn" title="Đóng cửa sổ chat" aria-label="Đóng cửa sổ chat">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
         </div>
 
         <div id="chatbot-body" class="chatbot-body"></div>
 
+        <!-- Quick One-Tap Suggestion Chips -->
+        <div class="chatbot-quick-bar" id="chatbot-quick-bar" aria-label="Gợi ý tra cứu nhanh">
+            <button type="button" class="chatbot-quick-chip" data-query="phim đang chiếu">
+                <i class="bi bi-film"></i> Phim đang chiếu
+            </button>
+            <button type="button" class="chatbot-quick-chip" data-query="lịch chiếu hôm nay">
+                <i class="bi bi-calendar2-week"></i> Lịch chiếu hôm nay
+            </button>
+            <button type="button" class="chatbot-quick-chip" data-query="giá vé">
+                <i class="bi bi-ticket-perforated"></i> Giá vé
+            </button>
+            <button type="button" class="chatbot-quick-chip" data-query="vé của tôi">
+                <i class="bi bi-qr-code"></i> Vé của tôi
+            </button>
+        </div>
+
         <div class="chatbot-footer">
             <div class="chatbot-input-container">
-                <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Hỏi phim đang hot, lịch chiếu, giá vé..." autocomplete="off" />
-                <button id="chatbot-send-btn" class="chatbot-send-btn" title="Gửi">Gửi</button>
+                <input type="text"
+                       id="chatbot-input"
+                       class="chatbot-input"
+                       placeholder="Nhập tên phim, rạp hoặc câu hỏi..."
+                       autocomplete="off" />
+                <button id="chatbot-send-btn" type="button" class="chatbot-send-btn" title="Gửi tin nhắn" aria-label="Gửi tin nhắn">
+                    <i class="bi bi-send-fill"></i>
+                </button>
             </div>
-            <div class="chatbot-branding">Trí tuệ nhân tạo CinemaHub Aurora</div>
         </div>
     </div>
 

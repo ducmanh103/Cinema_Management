@@ -1,111 +1,143 @@
 @model RegisterViewModel
 @{
-    ViewData["Title"] = "Đăng Ký Thành Viên CinemaHub";
+    ViewData["Title"] = "Đăng ký thành viên";
 }
 
-<div class="py-4 my-3">
-    <div class="row g-0 mx-auto rounded-5 overflow-hidden cinema-spotlight"
-         style="max-width:1080px;background:rgba(13,19,36,0.88);border:1px solid rgba(255,255,255,0.12);box-shadow:0 30px 80px rgba(0,0,0,0.7);">
-        <!-- Left Perks Column -->
-        <div class="col-lg-5 d-none d-lg-flex flex-column justify-content-between p-5"
-             style="background:radial-gradient(circle at 80% 20%,rgba(245,185,66,0.28),transparent 55%),linear-gradient(160deg,#090d1a 0%,#151c36 100%);border-right:1px solid rgba(255,255,255,0.08);">
-            <div>
-                <span class="badge rounded-pill px-3 py-2 mb-3" style="background:rgba(245,185,66,0.18);color:#F5B942;">
-                    <i class="bi bi-gem me-1"></i>THẺ THÀNH VIÊN ĐIỆN TỬ
-                </span>
-                <h2 class="text-white fw-bolder mb-3" style="font-family:'Space Grotesk',sans-serif;line-height:1.15;">
-                    Trở Thành Thành Viên CinemaHub Chỉ Trong 30 Giây
-                </h2>
-                <p class="text-white-50 small" style="line-height:1.7;">
-                    Nhận ngay mã giảm giá 50.000đ cho lần đặt vé đầu tiên, quản lý ví vé QR trên mọi thiết bị và tích điểm nâng hạng VIP.
-                </p>
-            </div>
-
-            <div class="p-3 rounded-4" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);">
-                <div class="text-warning fw-bold small mb-1"><i class="bi bi-gift-fill me-1"></i>Đặc quyền thành viên mới</div>
-                <div class="text-white-50" style="font-size:0.78rem;">Nhập mã <strong class="text-white">CINEMA50</strong> hoặc dùng tính năng đặt vé nhanh AI 24/7.</div>
-            </div>
+<section class="ch-auth-stage">
+    <div class="ch-auth-dossier cinema-spotlight" style="max-width: 1080px;">
+        <div class="ch-auth-plate-bar">
+            <span><i class="bi bi-person-plus-fill me-1"></i> Đăng ký thành viên CinemaHub</span>
+            <span>Đặt vé trực tuyến • Quản lý vé QR cá nhân</span>
         </div>
 
-        <!-- Right Registration Form -->
-        <div class="col-lg-7 p-4 p-md-5">
-            <h3 class="text-white fw-bolder mb-1" style="font-family:'Space Grotesk',sans-serif;">Tạo Tài Khoản Mới</h3>
-            <p class="text-white-50 small mb-4">Điền thông tin bên dưới để kích hoạt ví vé điện tử của bạn.</p>
-
-            <form asp-action="Register" method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label asp-for="FullName" class="form-label text-white-50 small fw-bold text-uppercase">Họ và tên</label>
-                        <input asp-for="FullName" class="form-control bg-transparent border-secondary border-opacity-25 text-white py-2" placeholder="Nguyễn Văn A" />
-                        <span asp-validation-for="FullName" class="text-danger small"></span>
+        <div class="row g-0">
+            <!-- Left Member Perks Column -->
+            <div class="col-lg-5 d-none d-lg-flex ch-auth-poster-wing">
+                <div class="position-relative" style="z-index: 1;">
+                    <div class="ch-auth-kicker">
+                        <span class="ch-auth-kicker-dot"></span>
+                        <span>Thẻ thành viên điện tử</span>
                     </div>
 
-                    <div class="col-md-6">
-                        <label asp-for="Username" class="form-label text-white-50 small fw-bold text-uppercase">Tên đăng nhập</label>
-                        <input asp-for="Username" class="form-control bg-transparent border-secondary border-opacity-25 text-white py-2" placeholder="nguyenvana" />
-                        <span asp-validation-for="Username" class="text-danger small"></span>
-                    </div>
+                    <h2 class="ch-auth-editorial-title">
+                        Tạo Tài Khoản <em>Thành Viên CinemaHub</em>
+                    </h2>
 
-                    <div class="col-12">
-                        <label asp-for="Email" class="form-label text-white-50 small fw-bold text-uppercase">Địa chỉ Email (nhận mã OTP &amp; vé điện tử)</label>
-                        <input asp-for="Email" type="email" class="form-control bg-transparent border-secondary border-opacity-25 text-white py-2" placeholder="email@domain.com" />
-                        <span asp-validation-for="Email" class="text-danger small"></span>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label asp-for="Password" class="form-label text-white-50 small fw-bold text-uppercase">Mật khẩu</label>
-                        <input asp-for="Password" type="password" class="form-control bg-transparent border-secondary border-opacity-25 text-white py-2" placeholder="Tối thiểu 6 ký tự" />
-                        <span asp-validation-for="Password" class="text-danger small"></span>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label asp-for="ConfirmPassword" class="form-label text-white-50 small fw-bold text-uppercase">Xác nhận mật khẩu</label>
-                        <input asp-for="ConfirmPassword" type="password" class="form-control bg-transparent border-secondary border-opacity-25 text-white py-2" placeholder="Nhập lại mật khẩu" />
-                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
-                    </div>
+                    <p class="ch-auth-editorial-lead">
+                        Chỉ mất 30 giây để đăng ký. Quản lý vé điện tử QR trên điện thoại, chọn trước vị trí ghế đẹp và tra cứu lịch sử đặt vé bất cứ lúc nào.
+                    </p>
                 </div>
 
-                @if (!string.IsNullOrEmpty(ViewBag.RecaptchaSiteKey as string))
-                {
-                    <div class="mt-3">
-                        <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey" data-theme="dark"></div>
+                <div class="ch-auth-spec-list">
+                    <div class="ch-auth-spec-item">
+                        <div class="ch-auth-spec-icon">
+                            <i class="bi bi-qr-code-scan"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size:0.88rem;color:var(--text-main);">
+                                Lưu trữ vé điện tử QR tự động
+                            </div>
+                            <div style="font-size:0.8rem;color:var(--text-secondary);">
+                                Mở mã vé QR ngay trong mục "Vé đã đặt" để quét vào phòng chiếu
+                            </div>
+                        </div>
                     </div>
-                }
 
-                <button type="submit" class="btn w-100 py-3 fw-bold text-white mt-4 text-nowrap d-flex align-items-center justify-content-center"
-                        style="background:linear-gradient(135deg,#FF2E55,#FF6B35);box-shadow:0 10px 24px rgba(255,46,85,0.35);border:none;border-radius:14px;min-height:48px;font-size:0.98rem;">
-                    <span>Hoàn Tất Đăng Ký</span>
-                </button>
-            </form>
-
-            <div class="d-flex align-items-center gap-3 my-4">
-                <div class="flex-grow-1" style="height:1px;background:rgba(255,255,255,0.12);"></div>
-                <span class="text-white-50 text-uppercase fw-semibold text-nowrap" style="font-size:0.75rem;letter-spacing:0.06em;flex-shrink:0;white-space:nowrap !important;">HOẶC</span>
-                <div class="flex-grow-1" style="height:1px;background:rgba(255,255,255,0.12);"></div>
+                    <div class="ch-auth-spec-item">
+                        <div class="ch-auth-spec-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size:0.88rem;color:var(--text-main);">
+                                Bảo mật xác thực qua Email
+                            </div>
+                            <div style="font-size:0.8rem;color:var(--text-muted);">
+                                Vé điện tử và hóa đơn đặt vé được gửi tự động về Email cá nhân
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <form asp-action="GoogleLogin" method="post">
-                <button type="submit" class="btn w-100 py-2 fw-semibold text-white text-nowrap d-flex align-items-center justify-content-center gap-2"
-                        style="min-height:46px;border-radius:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);transition:all 0.2s ease;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                    <span>Đăng ký nhanh bằng Google</span>
-                </button>
-            </form>
+            <!-- Right Registration Form -->
+            <div class="col-lg-7 ch-auth-form-wing">
+                <h1 class="ch-auth-form-title">Đăng Ký Tài Khoản Mới</h1>
+                <p class="ch-auth-form-sub">Điền thông tin bên dưới để kích hoạt tài khoản thành viên của bạn.</p>
 
-            <p class="text-center text-white-50 small mt-4 mb-0">
-                Đã có tài khoản?
-                <a asp-action="Login" class="text-white fw-semibold text-decoration-none ms-1 text-decoration-underline">Đăng nhập ngay</a>
-            </p>
+                <form asp-action="Register" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="FullName" class="ch-auth-label">Họ và tên</label>
+                            <input asp-for="FullName" class="ch-auth-input-standalone" placeholder="Nguyễn Văn A" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Username" class="ch-auth-label">Tên đăng nhập</label>
+                            <input asp-for="Username" class="ch-auth-input-standalone" placeholder="nguyenvana" />
+                            <span asp-validation-for="Username" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Email" class="ch-auth-label">Địa chỉ Email (nhận mã OTP &amp; vé điện tử QR)</label>
+                            <input asp-for="Email" type="email" class="ch-auth-input-standalone" placeholder="email@domain.com" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Password" class="ch-auth-label">Mật khẩu</label>
+                            <input asp-for="Password" type="password" class="ch-auth-input-standalone" placeholder="Tối thiểu 6 ký tự" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="ConfirmPassword" class="ch-auth-label">Xác nhận mật khẩu</label>
+                            <input asp-for="ConfirmPassword" type="password" class="ch-auth-input-standalone" placeholder="Nhập lại mật khẩu" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(ViewBag.RecaptchaSiteKey as string))
+                    {
+                        <div class="mt-3">
+                            <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey" data-theme="dark"></div>
+                        </div>
+                    }
+
+                    <button type="submit" class="ch-auth-btn-primary mt-4">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Hoàn tất đăng ký</span>
+                    </button>
+                </form>
+
+                <div class="ch-auth-divider">
+                    <div class="ch-auth-divider-line"></div>
+                    <span class="ch-auth-divider-text">Hoặc</span>
+                    <div class="ch-auth-divider-line"></div>
+                </div>
+
+                <form asp-action="GoogleLogin" method="post">
+                    <button type="submit" class="ch-auth-btn-secondary">
+                        <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span>Đăng ký nhanh bằng Google</span>
+                    </button>
+                </form>
+
+                <p class="text-center small mt-4 mb-0" style="color:var(--text-muted);">
+                    Đã có tài khoản thành viên?
+                    <a asp-action="Login" class="ch-auth-link ms-1">Đăng nhập ngay &rarr;</a>
+                </p>
+            </div>
         </div>
     </div>
-</div>
+</section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

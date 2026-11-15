@@ -1,7 +1,7 @@
 @model VerifyAdminMfaViewModel
 @{
     Layout = null;
-    ViewData["Title"] = "Xác Thực Bảo Mật 2 Lớp (MFA) — CinemaHub Quản Trị";
+    ViewData["Title"] = "Xác thực bảo mật 2 lớp (MFA) — Quản trị CinemaHub";
 }
 <!DOCTYPE html>
 <html lang="vi" data-bs-theme="dark">
@@ -11,143 +11,171 @@
     <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
     <style>
+        :root {
+            --bg-void: #0F1117;
+            --bg-surface: #171B26;
+            --bg-carbon: #121620;
+            --ivory: #F8FAFC;
+            --stone: #CBD5E1;
+            --muted: #94A3B8;
+            --vermilion: #E53935;
+            --gold: #F59E0B;
+            --border-line: rgba(255, 255, 255, 0.09);
+            --border-strong: rgba(255, 255, 255, 0.16);
+        }
         body {
             background:
-                radial-gradient(circle at 80% 20%, rgba(255, 46, 85, 0.16), transparent 45%),
-                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.12), transparent 50%),
-                #070a14;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+                radial-gradient(circle at 80% 18%, rgba(245, 158, 11, 0.08), transparent 48%),
+                radial-gradient(circle at 18% 82%, rgba(229, 57, 53, 0.1), transparent 50%),
+                var(--bg-void);
+            font-family: 'Be Vietnam Pro', sans-serif;
             min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
             margin: 0;
-            color: #f8fafc;
+            color: var(--ivory);
         }
         .adm-mfa-box {
             width: 100%;
-            max-width: 460px;
-            padding: 38px 32px;
-            border-radius: 24px;
-            background: rgba(15, 23, 42, 0.88);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            animation: fadeIn 0.4s ease-out;
+            max-width: 480px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-strong);
+            border-radius: 18px;
+            box-shadow: 0 28px 64px rgba(0, 0, 0, 0.65);
+            overflow: hidden;
         }
-        @@keyframes fadeIn {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
+        .adm-mfa-plate {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 22px;
+            background: var(--bg-carbon);
+            border-bottom: 1px solid var(--border-line);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--gold);
+        }
+        .adm-mfa-body {
+            padding: 32px 28px;
         }
         .otp-input {
-            letter-spacing: 14px;
-            font-size: 2rem;
-            font-family: monospace;
+            letter-spacing: 12px;
+            font-size: 1.85rem;
             text-align: center;
             font-weight: 800;
-            color: #FF2E55 !important;
-            background: rgba(0, 0, 0, 0.35) !important;
-            border: 2px solid rgba(255, 46, 85, 0.3) !important;
-            border-radius: 14px;
+            color: var(--gold) !important;
+            background: var(--bg-carbon) !important;
+            border: 1px solid var(--border-strong) !important;
+            border-radius: 12px;
         }
         .otp-input:focus {
-            border-color: #FF2E55 !important;
-            box-shadow: 0 0 0 4px rgba(255, 46, 85, 0.25) !important;
+            border-color: var(--gold) !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
         }
         .btn-mfa-submit {
-            background: linear-gradient(135deg, #FF2E55 0%, #FF6B35 100%);
+            background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
             border: none;
-            color: #ffffff;
+            color: var(--ivory);
+            font-size: 0.92rem;
             font-weight: 700;
             border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 10px 24px rgba(255, 46, 85, 0.35);
+            padding: 13px;
             transition: all 0.2s ease;
+            box-shadow: 0 10px 24px rgba(229, 57, 53, 0.28);
         }
         .btn-mfa-submit:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 14px 28px rgba(255, 46, 85, 0.45);
-            color: #ffffff;
+            background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+            transform: translateY(-2px);
+            color: var(--ivory);
         }
     </style>
 </head>
 <body>
     <div class="adm-mfa-box">
-        <div class="text-center mb-4">
-            <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-4 text-white"
-                 style="width:58px;height:58px;background:linear-gradient(135deg,#FF2E55,#FF6B35);font-size:1.6rem;box-shadow:0 12px 28px rgba(255,46,85,0.4);">
-                <i class="bi bi-shield-check"></i>
-            </div>
-            <h3 class="text-white fw-bold mb-1" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;">Bảo Mật 2 Lớp (MFA)</h3>
-            <p class="text-white-50 small mb-0">Xác thực tài khoản quản trị viên trước khi vào hệ thống</p>
+        <div class="adm-mfa-plate">
+            <span><i class="bi bi-shield-lock me-1"></i> Xác thực bảo mật 2 lớp</span>
+            <span>Quản trị viên CinemaHub</span>
         </div>
 
-        <div class="alert alert-dark border-secondary border-opacity-25 py-2 px-3 small text-white-50 mb-4 rounded-3 d-flex align-items-center gap-2">
-            <i class="bi bi-info-circle-fill text-info fs-5 flex-shrink-0"></i>
-            <div>
-                Mã OTP 6 chữ số đã được gửi tới Email: <strong class="text-white font-monospace">@Model.MaskedEmail</strong> và kênh <strong class="text-white">Telegram Bot</strong> quản trị.
+        <div class="adm-mfa-body">
+            <div class="text-center mb-4">
+                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center"
+                     style="width:54px;height:54px;border-radius:14px;background:rgba(229,57,53,0.16);border:1px solid var(--vermilion);color:var(--gold);font-size:1.5rem;">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h3 class="fw-bold mb-1" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.45rem;color:var(--ivory);">Bảo Mật 2 Lớp (MFA)</h3>
+                <p class="small mb-0" style="color:var(--stone);">Xác thực quyền quản trị viên trước khi mở bảng điều khiển</p>
             </div>
-        </div>
 
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success py-2 px-3 small mb-3 rounded-3">
-                <i class="bi bi-check-circle-fill me-1"></i> @TempData["Success"]
-            </div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-danger py-2 px-3 small mb-3 rounded-3">
-                <i class="bi bi-exclamation-triangle-fill me-1"></i> @TempData["Error"]
-            </div>
-        }
-
-        <form asp-area="Admin" asp-controller="Account" asp-action="VerifyMfa" method="post" id="mfaForm">
-            @Html.AntiForgeryToken()
-            <input type="hidden" asp-for="ReturnUrl" />
-            <div asp-validation-summary="All" class="text-danger small mb-3"></div>
-
-            <div class="mb-4">
-                <label asp-for="OtpCode" class="form-label text-white-50 small fw-bold text-uppercase" style="letter-spacing:0.04em;">Nhập mã OTP 6 số</label>
-                <input asp-for="OtpCode" 
-                       id="mfaOtpInput"
-                       class="form-control otp-input py-2" 
-                       placeholder="••••••" 
-                       maxlength="6" 
-                       minlength="6"
-                       inputmode="numeric" 
-                       pattern="[0-9]{6}" 
-                       autocomplete="one-time-code" 
-                       value=""
-                       autofocus />
-                <span asp-validation-for="OtpCode" class="text-danger small"></span>
-                <div class="text-white-50 small mt-2 d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-clock me-1"></i> Hiệu lực trong 5 phút</span>
-                    <span id="countdownText" class="text-warning small font-monospace"></span>
+            <div class="p-3 mb-4 d-flex align-items-center gap-2" style="background:var(--bg-carbon);border:1px solid var(--border-line);border-radius:12px;font-size:0.84rem;color:var(--stone);">
+                <i class="bi bi-info-circle-fill fs-5 flex-shrink-0" style="color:var(--gold);"></i>
+                <div>
+                    Mã OTP 6 chữ số đã được gửi tới Email <strong style="color:var(--ivory);">@Model.MaskedEmail</strong> và kênh <strong style="color:var(--ivory);">Telegram Bot</strong> quản trị.
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-mfa-submit w-100 py-3 mb-3 d-flex align-items-center justify-content-center gap-2">
-                <span>Xác Thực &amp; Đăng Nhập</span>
-                <i class="bi bi-arrow-right"></i>
-            </button>
-        </form>
+            @if (TempData["Success"] != null)
+            {
+                <div class="p-2 px-3 small mb-3" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.45);border-radius:10px;color:#6ee7b7;">
+                    <i class="bi bi-check-circle-fill me-1"></i> @TempData["Success"]
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="p-2 px-3 small mb-3" style="background:rgba(229,57,53,0.15);border:1px solid rgba(229,57,53,0.5);border-radius:10px;color:#fca5a5;">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> @TempData["Error"]
+                </div>
+            }
 
-        <div class="d-flex justify-content-between align-items-center pt-3 border-top border-secondary border-opacity-25 mt-3">
-            <form asp-area="Admin" asp-controller="Account" asp-action="ResendMfaOtp" method="post" id="resendForm">
+            <form asp-area="Admin" asp-controller="Account" asp-action="VerifyMfa" method="post" id="mfaForm">
                 @Html.AntiForgeryToken()
-                <button type="submit" id="btnResend" class="btn btn-link text-decoration-none text-info p-0 small">
-                    <i class="bi bi-arrow-clockwise me-1"></i> Gửi lại mã OTP
+                <input type="hidden" asp-for="ReturnUrl" />
+                <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+                <div class="mb-4">
+                    <label asp-for="OtpCode" class="form-label small fw-bold" style="font-size:0.82rem;color:var(--stone);">
+                        Nhập mã OTP 6 chữ số
+                    </label>
+                    <input asp-for="OtpCode"
+                           id="mfaOtpInput"
+                           class="form-control otp-input py-2"
+                           placeholder="••••••"
+                           maxlength="6"
+                           minlength="6"
+                           inputmode="numeric"
+                           pattern="[0-9]{6}"
+                           autocomplete="one-time-code"
+                           value=""
+                           autofocus />
+                    <span asp-validation-for="OtpCode" class="text-danger small"></span>
+                    <div class="small mt-2 d-flex justify-content-between align-items-center" style="color:var(--muted);font-size:0.78rem;">
+                        <span><i class="bi bi-clock me-1"></i> Mã có hiệu lực trong 5 phút</span>
+                        <span id="countdownText" style="color:var(--gold);font-weight:700;"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-mfa-submit w-100 mb-3 d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-shield-check"></i>
+                    <span>Xác nhận &amp; Đăng nhập</span>
                 </button>
             </form>
 
-            <a asp-area="Admin" asp-controller="Account" asp-action="Login" class="text-decoration-none text-white-50 small hover-white">
-                <i class="bi bi-box-arrow-left me-1"></i> Đăng nhập lại
-            </a>
+            <div class="d-flex justify-content-between align-items-center pt-3 mt-2" style="border-top:1px solid var(--border-line);">
+                <form asp-area="Admin" asp-controller="Account" asp-action="ResendMfaOtp" method="post" id="resendForm">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" id="btnResend" class="btn btn-link text-decoration-none p-0 small" style="color:var(--gold);font-size:0.82rem;font-weight:600;">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Gửi lại mã OTP
+                    </button>
+                </form>
+
+                <a asp-area="Admin" asp-controller="Account" asp-action="Login" class="text-decoration-none small" style="color:var(--stone);font-size:0.82rem;">
+                    <i class="bi bi-box-arrow-left me-1"></i> Đăng nhập lại
+                </a>
+            </div>
         </div>
     </div>
 
@@ -159,46 +187,30 @@
             var isSubmitting = false;
 
             if (input) {
-                // Tự động làm sạch ô nhập khi tải trang và focus
                 input.value = '';
                 input.focus();
 
-                // Chặn bàn phím không cho nhập quá 6 ký tự
                 input.addEventListener('keydown', function (e) {
                     var allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'];
-                    if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) {
-                        return;
-                    }
-                    // Chặn phím không phải chữ số 0-9
-                    if (!/^[0-9]$/.test(e.key)) {
-                        e.preventDefault();
-                        return;
-                    }
-                    // Nếu đã đủ 6 số, chặn không cho gõ thêm
-                    if (this.value.length >= 6) {
+                    if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) return;
+                    if (!/^[0-9]$/.test(e.key) || this.value.length >= 6) {
                         e.preventDefault();
                     }
                 });
 
-                // Xử lý sự kiện input: ép kiểu chỉ nhận số và CẮT TỐI ĐA 6 SỐ
-                input.addEventListener('input', function (e) {
+                input.addEventListener('input', function () {
                     var sanitized = this.value.replace(/\D/g, '').slice(0, 6);
-                    if (this.value !== sanitized) {
-                        this.value = sanitized;
-                    }
-                    // Tự động submit khi nhập đủ đúng 6 chữ số
+                    if (this.value !== sanitized) this.value = sanitized;
                     if (this.value.length === 6 && !isSubmitting && form) {
                         isSubmitting = true;
                         form.submit();
                     }
                 });
 
-                // Xử lý khi paste văn bản vào ô
                 input.addEventListener('paste', function (e) {
                     e.preventDefault();
                     var paste = (e.clipboardData || window.clipboardData).getData('text') || '';
-                    var digitsOnly = paste.replace(/\D/g, '').slice(0, 6);
-                    this.value = digitsOnly;
+                    this.value = paste.replace(/\D/g, '').slice(0, 6);
                     if (this.value.length === 6 && !isSubmitting && form) {
                         isSubmitting = true;
                         form.submit();
@@ -206,7 +218,6 @@
                 });
             }
 
-            // Đếm lùi thời gian hiệu lực còn lại thực tế từ server
             var timeLeft = @Model.RemainingSeconds;
             var countdownEl = document.getElementById('countdownText');
             function updateTimer() {
@@ -219,7 +230,7 @@
                     timeLeft--;
                     setTimeout(updateTimer, 1000);
                 } else if (countdownEl) {
-                    countdownEl.textContent = 'Đã hết hạn';
+                    countdownEl.textContent = 'ĐÃ HẾT HẠN';
                     countdownEl.classList.add('text-danger');
                     if (input) input.disabled = true;
                     var submitBtn = document.querySelector('.btn-mfa-submit');
@@ -228,7 +239,6 @@
             }
             updateTimer();
 
-            // Đếm ngược thời gian chờ gửi lại mã OTP (cooldown)
             var cooldown = @Model.ResendCooldownSeconds;
             var btnResend = document.getElementById('btnResend');
             if (btnResend && cooldown > 0) {
@@ -252,4 +262,3 @@
     </script>
 </body>
 </html>
-
