@@ -351,8 +351,9 @@
     </div>
 </div>
 
-<form id="delete-showtime-form" class="d-none">
+<form id="delete-showtime-form" asp-area="Admin" asp-controller="Showtimes" asp-action="DeleteShowtime" method="post" class="d-none">
     @Html.AntiForgeryToken()
+    <input type="hidden" name="id" id="deleteShowtimeId" value="" />
 </form>
 
 @section Scripts {
@@ -391,15 +392,8 @@
             $(document).on('click', '.js-delete-showtime', function () {
                 var id = $(this).data('id');
                 if (!confirm('Bạn có chắc chắn muốn xóa suất chiếu #' + id + '?')) return;
-                var token = $('#delete-showtime-form input[name="__RequestVerificationToken"]').val();
-                $.post('@Url.Action("DeleteShowtime", "Showtimes", new { area = "Admin" })', {
-                    id: id,
-                    __RequestVerificationToken: token
-                }, function (res) {
-                    location.reload();
-                }).fail(function () {
-                    alert('Lỗi khi xóa suất chiếu.');
-                });
+                $('#deleteShowtimeId').val(id);
+                document.getElementById('delete-showtime-form').submit();
             });
         });
     </script>

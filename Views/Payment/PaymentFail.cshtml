@@ -14,7 +14,7 @@
             <span class="badge rounded-pill px-3 py-1 mb-2" style="background:rgba(239,68,68,0.18);color:#F87171;">GIAO DỊCH BỊ GIÁN ĐOẠN</span>
             <h2 class="text-white fw-bolder mb-1" style="font-family:'Space Grotesk',sans-serif;">Thanh Toán Chưa Thành Công</h2>
             <p class="text-white-50 small mb-0">
-                @(TempData["Message"]?.ToString() ?? "Giao dịch đã bị hủy hoặc hết thời gian chờ thanh toán. Ghế của bạn đã được giải phóng để đặt lại.")
+                @(TempData["Error"]?.ToString() ?? TempData["Message"]?.ToString() ?? "Giao dịch đã bị hủy hoặc hết thời gian chờ thanh toán. Ghế của bạn đã được giải phóng để đặt lại.")
             </p>
         </div>
 

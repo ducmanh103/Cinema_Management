@@ -49,7 +49,12 @@ namespace CinemaManagement.Areas.Admin.Controllers
         {
             if (User.Identity?.IsAuthenticated == true
                 && (User.IsInRole("Admin") || User.IsInRole("Staff")))
+            {
+                var safeReturn = GetSafeRedirectUrl(returnUrl);
+                if (!string.IsNullOrEmpty(safeReturn))
+                    return Redirect(safeReturn);
                 return RedirectToAction("Index", "Dashboard");
+            }
 
             ViewBag.ReturnUrl = returnUrl;
             return View();
@@ -60,6 +65,7 @@ namespace CinemaManagement.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
+            ViewBag.ReturnUrl = returnUrl;
             if (!ModelState.IsValid) return View(model);
 
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -183,8 +189,17 @@ namespace CinemaManagement.Areas.Admin.Controllers
             var mfaSessionId = HttpContext.Session.GetString("AdminMfaSessionId");
             if (string.IsNullOrEmpty(mfaSessionId) || !_cache.TryGetValue($"admin_mfa_{mfaSessionId}", out AdminMfaSession? session) || session == null)
             {
+                if (User.Identity?.IsAuthenticated == true
+                    && (User.IsInRole("Admin") || User.IsInRole("Staff")))
+                {
+                    var safeReturn = GetSafeRedirectUrl(returnUrl);
+                    if (!string.IsNullOrEmpty(safeReturn))
+                        return Redirect(safeReturn);
+                    return RedirectToAction("Index", "Dashboard");
+                }
+
                 TempData["Error"] = "Phiên xác thực bảo mật đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.";
-                return RedirectToAction(nameof(Login));
+                return RedirectToAction(nameof(Login), new { returnUrl });
             }
 
             var remaining = (int)Math.Max(0, (session.ExpiresAtUtc - DateTime.UtcNow).TotalSeconds);
@@ -193,14 +208,14 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 _cache.Remove($"admin_mfa_{mfaSessionId}");
                 HttpContext.Session.Remove("AdminMfaSessionId");
                 TempData["Error"] = "Mã xác thực đã hết hạn hiệu lực 5 phút. Vui lòng đăng nhập lại.";
-                return RedirectToAction(nameof(Login));
+                return RedirectToAction(nameof(Login), new { returnUrl });
             }
 
             var cooldown = (int)Math.Max(0, 45 - (DateTime.UtcNow - session.LastResentAtUtc).TotalSeconds);
 
             var model = new VerifyAdminMfaViewModel
             {
-                ReturnUrl = returnUrl ?? session.ReturnUrl,
+                ReturnUrl = !string.IsNullOrWhiteSpace(returnUrl) ? returnUrl : session.ReturnUrl,
                 MaskedEmail = MaskEmail(session.Email),
                 RemainingSeconds = remaining,
                 ResendCooldownSeconds = cooldown
@@ -279,6 +294,9 @@ namespace CinemaManagement.Areas.Admin.Controllers
             _cache.Remove($"admin_mfa_{mfaSessionId}");
             HttpContext.Session.Remove("AdminMfaSessionId");
 
+            // Xoá cache auth_stamp cũ trước khi cấp Cookie mới
+            _cache.Remove($"auth_stamp_{session.UserId}");
+
             // Thiết lập Cookie phiên làm việc chính thức
             var claims = new List<Claim>
             {
@@ -306,9 +324,10 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 Username: session.Username,
                 Path: "/Admin/Account/VerifyMfa"));
 
-            var targetUrl = model.ReturnUrl ?? session.ReturnUrl;
-            if (!string.IsNullOrEmpty(targetUrl) && Url.IsLocalUrl(targetUrl))
-                return Redirect(targetUrl);
+            var targetUrl = !string.IsNullOrWhiteSpace(model.ReturnUrl) ? model.ReturnUrl : session.ReturnUrl;
+            var safeTarget = GetSafeRedirectUrl(targetUrl);
+            if (!string.IsNullOrEmpty(safeTarget))
+                return Redirect(safeTarget);
 
             return RedirectToAction("Index", "Dashboard");
         }
@@ -379,6 +398,25 @@ namespace CinemaManagement.Areas.Admin.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
+        }
+
+        private string? GetSafeRedirectUrl(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url) || !Url.IsLocalUrl(url))
+                return null;
+
+            var pathOnly = url.Split('?', '#')[0].TrimEnd('/');
+            if (pathOnly.Equals("/Admin/Account/Login", StringComparison.OrdinalIgnoreCase)
+                || pathOnly.Equals("/Admin/Account/VerifyMfa", StringComparison.OrdinalIgnoreCase)
+                || pathOnly.Equals("/Admin/Account/Logout", StringComparison.OrdinalIgnoreCase)
+                || pathOnly.Equals("/Account/Login", StringComparison.OrdinalIgnoreCase)
+                || pathOnly.Equals("/Account/VerifyMfa", StringComparison.OrdinalIgnoreCase)
+                || pathOnly.Equals("/Account/Logout", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return url;
         }
 
         private static string MaskEmail(string? email)

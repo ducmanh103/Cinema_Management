@@ -67,4 +67,33 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) window.location.reload();
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            var anySubmitting = false;
+            document.querySelectorAll('section.ch-auth-stage form[method="post"]').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    if (anySubmitting) {
+                        e.preventDefault();
+                        return;
+                    }
+                    if (e.defaultPrevented) return;
+                    if (form.checkValidity && !form.checkValidity()) return;
+                    if (typeof jQuery !== 'undefined' && jQuery.fn.valid && jQuery(form).data('validator') && !jQuery(form).valid()) {
+                        return;
+                    }
+                    anySubmitting = true;
+                    document.querySelectorAll('section.ch-auth-stage form[method="post"] button[type="submit"]').forEach(function (b) {
+                        b.disabled = true;
+                    });
+                    var btn = form.querySelector('button[type="submit"]');
+                    if (btn) {
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span><span>Đang xử lý...</span>';
+                    }
+                });
+            });
+        });
+    </script>
 }

@@ -88,7 +88,7 @@
 
                         <div class="col-md-6">
                             <label asp-for="Password" class="ch-auth-label">Mật khẩu</label>
-                            <input asp-for="Password" type="password" class="ch-auth-input-standalone" placeholder="Tối thiểu 6 ký tự" />
+                            <input asp-for="Password" type="password" class="ch-auth-input-standalone" placeholder="Tối thiểu 8 ký tự (hoa, thường, số)" />
                             <span asp-validation-for="Password" class="text-danger small"></span>
                         </div>
 
@@ -145,4 +145,31 @@
     {
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     }
+    <script>
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) window.location.reload();
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('section.ch-auth-stage form[method="post"]').forEach(function (form) {
+                var isSubmitting = false;
+                form.addEventListener('submit', function (e) {
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        return;
+                    }
+                    if (e.defaultPrevented) return;
+                    if (form.checkValidity && !form.checkValidity()) return;
+                    if (typeof jQuery !== 'undefined' && jQuery.fn.valid && jQuery(form).data('validator') && !jQuery(form).valid()) {
+                        return;
+                    }
+                    isSubmitting = true;
+                    var btn = form.querySelector('button[type="submit"]');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span><span>Đang xử lý...</span>';
+                    }
+                });
+            });
+        });
+    </script>
 }

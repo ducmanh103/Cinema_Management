@@ -3,6 +3,7 @@ using CinemaManagement.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CinemaManagement.Areas.Admin.Controllers.Api
 {
@@ -12,8 +13,13 @@ namespace CinemaManagement.Areas.Admin.Controllers.Api
     public class UsersApiController : ControllerBase
     {
         private readonly CinemaDbContext _context;
+        private readonly IMemoryCache _cache;
 
-        public UsersApiController(CinemaDbContext context) => _context = context;
+        public UsersApiController(CinemaDbContext context, IMemoryCache cache)
+        {
+            _context = context;
+            _cache = cache;
+        }
 
         // GET api/UsersApi
         [HttpGet]
@@ -64,11 +70,14 @@ namespace CinemaManagement.Areas.Admin.Controllers.Api
             if (status != "Active" && status != "Inactive")
                 return BadRequest(new { message = "Status phải là 'Active' hoặc 'Inactive'." });
 
-            var affected = await _context.Users
-                .Where(u => u.UserId == id)
-                .ExecuteUpdateAsync(s => s.SetProperty(u => u.Status, status));
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == id);
+            if (user == null) return NotFound();
 
-            if (affected == 0) return NotFound();
+            user.Status = status;
+            user.SecurityStamp = Guid.NewGuid().ToString("N");
+            await _context.SaveChangesAsync();
+            _cache.Remove($"auth_stamp_{id}");
+
             return NoContent();
         }
 
@@ -76,15 +85,22 @@ namespace CinemaManagement.Areas.Admin.Controllers.Api
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.UserId == id);
+            if (user == null) return NotFound();
+
+            if (string.Equals(user.Role?.RoleName, "Admin", StringComparison.OrdinalIgnoreCase))
+                return Conflict(new { message = "Không được phép xoá tài khoản Quản trị viên (Admin)." });
+
             bool hasTickets = await _context.Tickets.AnyAsync(t => t.UserId == id);
             if (hasTickets)
                 return Conflict(new { message = "Không thể xoá người dùng đã có vé. Hãy khoá tài khoản thay vì xoá." });
 
-            var affected = await _context.Users
-                .Where(u => u.UserId == id)
-                .ExecuteDeleteAsync();
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            _cache.Remove($"auth_stamp_{id}");
 
-            if (affected == 0) return NotFound();
             return NoContent();
         }
     }

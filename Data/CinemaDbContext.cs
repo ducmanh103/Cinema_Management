@@ -171,6 +171,10 @@ namespace CinemaManagement.Data
 
             modelBuilder.Entity<User>(entity =>
             {
+                entity.ToTable(tb => tb.HasCheckConstraint(
+                    "CK_Users_Status",
+                    "\"Status\" IN ('Active', 'Locked', 'Inactive', 'Deleted')"));
+
                 entity.HasQueryFilter(u => !u.IsDeleted);
 
                 entity.Property(u => u.Email)

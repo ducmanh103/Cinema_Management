@@ -44,6 +44,35 @@ namespace CinemaManagement.Data
                     @"ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""DeletedAt"" TIMESTAMPTZ NULL;",
                     @"ALTER TABLE ""Users"" ALTER COLUMN ""Email"" TYPE VARCHAR(500);",
                     @"ALTER TABLE ""Users"" ALTER COLUMN ""FullName"" TYPE VARCHAR(500);",
+                    @"DO $$ DECLARE c RECORD;
+                    BEGIN
+                        FOR c IN (
+                            SELECT nsp.nspname, con.conname
+                            FROM pg_constraint con
+                            JOIN pg_class rel ON rel.oid = con.conrelid
+                            JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+                            WHERE nsp.nspname = current_schema()
+                              AND rel.relname = 'Users'
+                              AND con.contype = 'c'
+                              AND pg_get_constraintdef(con.oid) ILIKE '%Status%'
+                              AND pg_get_constraintdef(con.oid) NOT ILIKE '%Deleted%'
+                        ) LOOP
+                            EXECUTE format('ALTER TABLE %I.%I DROP CONSTRAINT IF EXISTS %I', c.nspname, 'Users', c.conname);
+                        END LOOP;
+                    END $$;",
+                    @"DO $$ BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1
+                            FROM pg_constraint con
+                            JOIN pg_class rel ON rel.oid = con.conrelid
+                            JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+                            WHERE nsp.nspname = current_schema()
+                              AND rel.relname = 'Users'
+                              AND con.conname = 'CK_Users_Status'
+                        ) THEN
+                            ALTER TABLE ""Users"" ADD CONSTRAINT ""CK_Users_Status"" CHECK (""Status"" IN ('Active', 'Locked', 'Inactive', 'Deleted'));
+                        END IF;
+                    END $$;",
                     @"CREATE INDEX IF NOT EXISTS ""IX_User_EmailHash"" ON ""Users""(""EmailHash"");",
                     @"ALTER TABLE ""Payments"" ADD COLUMN IF NOT EXISTS ""TransactionId"" VARCHAR(100) NULL;",
                     @"ALTER TABLE ""Movies"" ADD COLUMN IF NOT EXISTS ""TrailerUrl"" VARCHAR(500) NULL;",

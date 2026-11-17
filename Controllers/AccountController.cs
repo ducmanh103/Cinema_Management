@@ -66,7 +66,12 @@ namespace CinemaManagement.Controllers
         public IActionResult Login(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
+            {
+                var safeReturn = GetSafeRedirectUrl(returnUrl);
+                if (!string.IsNullOrEmpty(safeReturn))
+                    return Redirect(safeReturn);
                 return RedirectToAction("Index", "Home");
+            }
 
             ViewBag.ReturnUrl = returnUrl;
             return View();
@@ -77,6 +82,7 @@ namespace CinemaManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
+            ViewBag.ReturnUrl = returnUrl;
             if (!ModelState.IsValid) return View(model);
 
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -189,8 +195,9 @@ namespace CinemaManagement.Controllers
 
             await SignInUserAsync(user, model.RememberMe);
 
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                return Redirect(returnUrl);
+            var safeReturn = GetSafeRedirectUrl(returnUrl);
+            if (!string.IsNullOrEmpty(safeReturn))
+                return Redirect(safeReturn);
 
             return RedirectToAction("Index", "Home");
         }
@@ -358,8 +365,9 @@ namespace CinemaManagement.Controllers
 
             await SignInUserAsync(user, isPersistent: true);
 
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                return Redirect(returnUrl);
+            var safeReturn = GetSafeRedirectUrl(returnUrl);
+            if (!string.IsNullOrEmpty(safeReturn))
+                return Redirect(safeReturn);
 
             return RedirectToAction("Index", "Home");
         }
@@ -371,8 +379,18 @@ namespace CinemaManagement.Controllers
             var mfaSessionId = HttpContext.Session.GetString("AdminMfaSessionId");
             if (string.IsNullOrEmpty(mfaSessionId) || !_cache.TryGetValue($"admin_mfa_{mfaSessionId}", out AdminMfaSession? session) || session == null)
             {
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    var safeReturn = GetSafeRedirectUrl(returnUrl);
+                    if (!string.IsNullOrEmpty(safeReturn))
+                        return Redirect(safeReturn);
+                    if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                        return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+                    return RedirectToAction("Index", "Home");
+                }
+
                 TempData["Error"] = "Phiên xác thực bảo mật đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.";
-                return RedirectToAction(nameof(Login));
+                return RedirectToAction(nameof(Login), new { returnUrl });
             }
 
             var remaining = (int)Math.Max(0, (session.ExpiresAtUtc - DateTime.UtcNow).TotalSeconds);
@@ -381,14 +399,14 @@ namespace CinemaManagement.Controllers
                 _cache.Remove($"admin_mfa_{mfaSessionId}");
                 HttpContext.Session.Remove("AdminMfaSessionId");
                 TempData["Error"] = "Mã xác thực đã hết hạn hiệu lực 5 phút. Vui lòng đăng nhập lại.";
-                return RedirectToAction(nameof(Login));
+                return RedirectToAction(nameof(Login), new { returnUrl });
             }
 
             var cooldown = (int)Math.Max(0, 45 - (DateTime.UtcNow - session.LastResentAtUtc).TotalSeconds);
 
             var model = new VerifyAdminMfaViewModel
             {
-                ReturnUrl = returnUrl ?? session.ReturnUrl,
+                ReturnUrl = !string.IsNullOrWhiteSpace(returnUrl) ? returnUrl : session.ReturnUrl,
                 MaskedEmail = MaskEmail(session.Email),
                 RemainingSeconds = remaining,
                 ResendCooldownSeconds = cooldown
@@ -489,9 +507,10 @@ namespace CinemaManagement.Controllers
                 Username: session.Username,
                 Path: "/Account/VerifyMfa"));
 
-            var targetUrl = model.ReturnUrl ?? session.ReturnUrl;
-            if (!string.IsNullOrEmpty(targetUrl) && Url.IsLocalUrl(targetUrl))
-                return Redirect(targetUrl);
+            var targetUrl = !string.IsNullOrWhiteSpace(model.ReturnUrl) ? model.ReturnUrl : session.ReturnUrl;
+            var safeTarget = GetSafeRedirectUrl(targetUrl);
+            if (!string.IsNullOrEmpty(safeTarget))
+                return Redirect(safeTarget);
 
             if (session.RoleName == "Admin" || session.RoleName == "Staff")
                 return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
@@ -692,8 +711,9 @@ namespace CinemaManagement.Controllers
                 return RedirectToAction(nameof(Register));
 
             var emailLower = email.Trim().ToLowerInvariant();
+            var emailHash = _piiService.ComputeEmailHash(emailLower);
 
-            if (await _context.Users.AsNoTracking().AnyAsync(u => u.Email != null && u.Email.ToLower() == emailLower))
+            if (await _context.Users.AsNoTracking().AnyAsync(u => u.EmailHash != null && u.EmailHash == emailHash))
             {
                 TempData["Success"] = "Tài khoản Gmail này đã được xác thực và tạo thành công! Vui lòng đăng nhập.";
                 return RedirectToAction(nameof(Login));
@@ -719,12 +739,19 @@ namespace CinemaManagement.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var emailLower = model.Email.Trim().ToLowerInvariant();
+            var emailHash = _piiService.ComputeEmailHash(emailLower);
             var pendingCacheKey = $"pending_reg_email_{emailLower}";
 
             if (!_cache.TryGetValue<PendingRegistrationEntry>(pendingCacheKey, out var pending)
                 || pending == null
                 || pending.ExpiresAt <= VietnamTime.UtcNow)
             {
+                if (await _context.Users.AsNoTracking().AnyAsync(u => u.EmailHash != null && u.EmailHash == emailHash))
+                {
+                    TempData["Success"] = "Tài khoản Gmail này đã được xác thực và tạo thành công! Vui lòng đăng nhập.";
+                    return RedirectToAction(nameof(Login));
+                }
+
                 TempData["Error"] = "Mã xác thực đã hết hạn (quá 15 phút). Vui lòng thực hiện đăng ký lại.";
                 return RedirectToAction(nameof(Register));
             }
@@ -773,8 +800,9 @@ namespace CinemaManagement.Controllers
             }
 
             var emailLower = email.Trim().ToLowerInvariant();
+            var emailHash = _piiService.ComputeEmailHash(emailLower);
 
-            if (await _context.Users.AsNoTracking().AnyAsync(u => u.Email != null && u.Email.ToLower() == emailLower))
+            if (await _context.Users.AsNoTracking().AnyAsync(u => u.EmailHash != null && u.EmailHash == emailHash))
             {
                 TempData["Success"] = "Tài khoản của bạn đã được xác thực và khởi tạo thành công! Vui lòng đăng nhập.";
                 return RedirectToAction(nameof(Login));
@@ -1286,6 +1314,8 @@ namespace CinemaManagement.Controllers
 
         private async Task SignInUserAsync(User user, bool isPersistent)
         {
+            _cache.Remove($"auth_stamp_{user.UserId}");
+
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
@@ -1366,6 +1396,25 @@ namespace CinemaManagement.Controllers
             {
                 return (false, "Lỗi xác thực Google reCAPTCHA. Vui lòng thử lại.");
             }
+        }
+
+        private string? GetSafeRedirectUrl(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url) || !Url.IsLocalUrl(url))
+                return null;
+
+            var pathOnly = url.Split('?', '#')[0].TrimEnd('/');
+            if (pathOnly.Equals("/Account/Login", StringComparison.OrdinalIgnoreCase)
+                || pathOnly.Equals("/Account/VerifyMfa", StringComparison.OrdinalIgnoreCase)
+                || pathOnly.Equals("/Account/Logout", StringComparison.OrdinalIgnoreCase)
+                || pathOnly.Equals("/Admin/Account/Login", StringComparison.OrdinalIgnoreCase)
+                || pathOnly.Equals("/Admin/Account/VerifyMfa", StringComparison.OrdinalIgnoreCase)
+                || pathOnly.Equals("/Admin/Account/Logout", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return url;
         }
 
         private static string MaskEmail(string? email)

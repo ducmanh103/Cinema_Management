@@ -161,8 +161,6 @@ namespace CinemaManagement.Areas.Admin.Controllers
         {
             var targetUser = await _context.Users
                 .Include(u => u.Role)
-                .Include(u => u.Tickets)
-                    .ThenInclude(t => t.Payment)
                 .Include(u => u.PasswordResetTokens)
                 .FirstOrDefaultAsync(u => u.UserId == id);
 
@@ -187,7 +185,7 @@ namespace CinemaManagement.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            int ticketCount = targetUser.Tickets.Count;
+            int ticketCount = await _context.Tickets.CountAsync(t => t.UserId == targetUser.UserId);
 
             // Xóa mềm (Soft Delete) & Ẩn danh hoá dữ liệu cá nhân theo Nghị định 13/2023/NĐ-CP
             // Giữ lại toàn bộ dữ liệu Vé & Thanh toán để bảo toàn báo cáo tài chính kế toán
@@ -207,6 +205,7 @@ namespace CinemaManagement.Areas.Admin.Controllers
             }
 
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            if (ip.Length > 45) ip = ip[..45];
 
             // Ghi nhật ký kiểm toán bất biến (Audit Log) vào cơ sở dữ liệu
             _context.AuditLogs.Add(new CinemaManagement.Models.AuditLog

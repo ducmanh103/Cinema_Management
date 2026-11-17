@@ -180,17 +180,88 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script>
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) window.location.reload();
+        });
+
         document.addEventListener('DOMContentLoaded', function () {
             var input = document.getElementById('mfaOtpInput');
             var form = document.getElementById('mfaForm');
+            var resendForm = document.getElementById('resendForm');
+            var submitBtn = document.querySelector('.btn-mfa-submit');
+            var btnResend = document.getElementById('btnResend');
             var isSubmitting = false;
+
+            function submitMfaForm() {
+                if (isSubmitting || !form) return;
+                if (input) {
+                    var sanitized = input.value.replace(/\D/g, '').slice(0, 6);
+                    input.value = sanitized;
+                    if (!/^\d{6}$/.test(sanitized)) return;
+                    input.readOnly = true;
+                }
+                isSubmitting = true;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> <span>Đang xác thực...</span>';
+                }
+                if (btnResend) {
+                    btnResend.disabled = true;
+                    btnResend.classList.add('opacity-50', 'pe-none');
+                }
+                form.submit();
+            }
+
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        return;
+                    }
+                    var val = input ? input.value.replace(/\D/g, '').slice(0, 6) : '';
+                    if (/^\d{6}$/.test(val)) {
+                        e.preventDefault();
+                        submitMfaForm();
+                    }
+                });
+            }
+
+            if (resendForm) {
+                resendForm.addEventListener('submit', function (e) {
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        return;
+                    }
+                    isSubmitting = true;
+                    if (input) input.readOnly = true;
+                    if (submitBtn) submitBtn.disabled = true;
+                    if (btnResend) {
+                        btnResend.disabled = true;
+                        btnResend.classList.add('opacity-50', 'pe-none');
+                        btnResend.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Đang gửi lại...';
+                    }
+                });
+            }
 
             if (input) {
                 input.value = '';
                 input.focus();
 
                 input.addEventListener('keydown', function (e) {
-                    var allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'];
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!isSubmitting && /^\d{6}$/.test(this.value.replace(/\D/g, ''))) {
+                            submitMfaForm();
+                        } else if (!isSubmitting && form && form.reportValidity) {
+                            form.reportValidity();
+                        }
+                        return;
+                    }
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        return;
+                    }
+                    var allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
                     if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) return;
                     if (!/^[0-9]$/.test(e.key) || this.value.length >= 6) {
                         e.preventDefault();
@@ -198,21 +269,21 @@
                 });
 
                 input.addEventListener('input', function () {
+                    if (isSubmitting) return;
                     var sanitized = this.value.replace(/\D/g, '').slice(0, 6);
                     if (this.value !== sanitized) this.value = sanitized;
-                    if (this.value.length === 6 && !isSubmitting && form) {
-                        isSubmitting = true;
-                        form.submit();
+                    if (this.value.length === 6) {
+                        submitMfaForm();
                     }
                 });
 
                 input.addEventListener('paste', function (e) {
                     e.preventDefault();
+                    if (isSubmitting) return;
                     var paste = (e.clipboardData || window.clipboardData).getData('text') || '';
                     this.value = paste.replace(/\D/g, '').slice(0, 6);
-                    if (this.value.length === 6 && !isSubmitting && form) {
-                        isSubmitting = true;
-                        form.submit();
+                    if (this.value.length === 6) {
+                        submitMfaForm();
                     }
                 });
             }
@@ -228,23 +299,22 @@
                 if (timeLeft > 0) {
                     timeLeft--;
                     setTimeout(updateTimer, 1000);
-                } else if (countdownEl) {
+                } else if (countdownEl && !isSubmitting) {
                     countdownEl.textContent = 'ĐÃ HẾT HẠN';
                     countdownEl.classList.add('text-danger');
                     if (input) input.disabled = true;
-                    var submitBtn = document.querySelector('.btn-mfa-submit');
                     if (submitBtn) submitBtn.disabled = true;
                 }
             }
             updateTimer();
 
             var cooldown = @Model.ResendCooldownSeconds;
-            var btnResend = document.getElementById('btnResend');
             if (btnResend && cooldown > 0) {
                 btnResend.disabled = true;
                 btnResend.classList.add('opacity-50', 'pe-none');
                 var origText = '<i class="bi bi-arrow-clockwise me-1"></i> Gửi lại mã OTP';
                 function updateCooldown() {
+                    if (isSubmitting) return;
                     if (cooldown > 0) {
                         btnResend.innerHTML = '<i class="bi bi-clock me-1"></i> Gửi lại sau ' + cooldown + 's';
                         cooldown--;

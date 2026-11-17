@@ -46,7 +46,7 @@ CREATE TABLE "Users" (
     "RoleId"          INT          NOT NULL,
     "Status"          VARCHAR(20)  DEFAULT 'Active',
     CONSTRAINT "FK_Users_Roles" FOREIGN KEY ("RoleId") REFERENCES "Roles"("RoleId"),
-    CONSTRAINT "CK_Users_Status" CHECK ("Status" IN ('Active', 'Locked', 'Inactive'))
+    CONSTRAINT "CK_Users_Status" CHECK ("Status" IN ('Active', 'Locked', 'Inactive', 'Deleted'))
 );
 
 -- DataProtectionKeys

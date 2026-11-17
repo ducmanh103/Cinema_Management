@@ -179,5 +179,29 @@
             </div>
         </div>
     </div>
+    <script>
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) window.location.reload();
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('adminLoginForm');
+            if (!form) return;
+            var isSubmitting = false;
+            form.addEventListener('submit', function (e) {
+                if (isSubmitting) {
+                    e.preventDefault();
+                    return;
+                }
+                if (e.defaultPrevented) return;
+                if (form.checkValidity && !form.checkValidity()) return;
+                isSubmitting = true;
+                var btn = form.querySelector('button[type="submit"]');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Đang đăng nhập...';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

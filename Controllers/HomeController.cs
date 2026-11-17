@@ -250,11 +250,14 @@ namespace CinemaManagement.Controllers
             if (exFeature?.Error != null)
             {
                 _logger.LogError(exFeature.Error, "Unhandled exception on path {Path}", exFeature.Path);
+                var innerDetail = exFeature.Error.InnerException != null
+                    ? $" | Inner: {exFeature.Error.InnerException.GetType().Name}: {exFeature.Error.InnerException.Message}"
+                    : string.Empty;
                 HttpContext.RequestServices.GetService<ISecurityAlertService>()?.EnqueueAlert(new SecurityAlert(
                     SecurityAlertLevel.Critical,
                     "UNHANDLED_SERVER_EXCEPTION",
                     "Lỗi hệ thống 500 chưa xử lý (Unhandled Exception)",
-                    $"{exFeature.Error.GetType().Name}: {exFeature.Error.Message}",
+                    $"{exFeature.Error.GetType().Name}: {exFeature.Error.Message}{innerDetail}",
                     IpAddress: HttpContext.Connection.RemoteIpAddress?.ToString(),
                     Username: User.Identity?.Name,
                     Path: exFeature.Path));

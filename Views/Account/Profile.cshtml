@@ -81,7 +81,17 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="ch-auth-label">Địa chỉ Email</label>
-                                <input type="email" name="Email" value="@Model.Email" required class="ch-auth-input-standalone" />
+                                @if (Model.IsGoogleAccount)
+                                {
+                                    <input type="email" name="Email" value="@Model.Email" readonly class="ch-auth-input-standalone opacity-75" />
+                                    <div class="small mt-1" style="color:var(--text-muted);font-size:0.76rem;">
+                                        Tài khoản liên kết Google — không thể thay đổi Email tại đây.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <input type="email" name="Email" value="@Model.Email" required class="ch-auth-input-standalone" />
+                                }
                             </div>
                         </div>
                         <div class="mt-3">
@@ -100,32 +110,39 @@
                     <span>Bảo vệ tài khoản</span>
                 </div>
                 <div class="p-4">
-                    <form asp-action="ChangePassword" method="post">
-                        @Html.AntiForgeryToken()
-                        <div class="row g-3">
-                            @if (Model.HasPassword)
-                            {
+                    @if (Model.HasPassword)
+                    {
+                        <form asp-action="ChangePassword" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="ch-auth-label">Mật khẩu hiện tại</label>
                                     <input type="password" name="CurrentPassword" required class="ch-auth-input-standalone" />
                                 </div>
-                            }
-                            <div class="col-md-4">
-                                <label class="ch-auth-label">Mật khẩu mới</label>
-                                <input type="password" name="NewPassword" required minlength="6" class="ch-auth-input-standalone" />
+                                <div class="col-md-4">
+                                    <label class="ch-auth-label">Mật khẩu mới</label>
+                                    <input type="password" name="NewPassword" required minlength="8" class="ch-auth-input-standalone" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="ch-auth-label">Xác nhận mật khẩu</label>
+                                    <input type="password" name="ConfirmPassword" required minlength="8" class="ch-auth-input-standalone" />
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="ch-auth-label">Xác nhận mật khẩu</label>
-                                <input type="password" name="ConfirmPassword" required minlength="6" class="ch-auth-input-standalone" />
+                            <div class="mt-3">
+                                <button type="submit" class="ch-auth-btn-secondary" style="width:auto;">
+                                    <i class="bi bi-key"></i>
+                                    <span>Cập nhật mật khẩu</span>
+                                </button>
                             </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="p-3 rounded-3 small" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--text-secondary);">
+                            <i class="bi bi-google me-2 text-warning"></i>
+                            Tài khoản này đang đăng nhập thông qua Google (không sử dụng mật khẩu riêng). Mọi thao tác bảo mật mật khẩu được quản lý trực tiếp bởi Google.
                         </div>
-                        <div class="mt-3">
-                            <button type="submit" class="ch-auth-btn-secondary" style="width:auto;">
-                                <i class="bi bi-key"></i>
-                                <span>Cập nhật mật khẩu</span>
-                            </button>
-                        </div>
-                    </form>
+                    }
                 </div>
             </div>
         </div>
